@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>YOS Tools</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23123052'/%3E%3Ctext x='16' y='22' font-family='DM Sans,Arial' font-size='16' font-weight='700' fill='%23fff' text-anchor='middle'%3EY%3C/text%3E%3C/svg%3E">
+  <style>
+    :root{
+      --navy:#123052; --blue:#2f6fed; --bg:#f4f7fb; --paper:#fff; --line:#dde5ef;
+      --ink:#1a2635; --muted:#748196; --faint:#9aa7b7; --soft:#eef3f9;
+      font-family:'Zen Kaku Gothic New','Yu Gothic','Hiragino Kaku Gothic ProN','Noto Sans CJK JP','Noto Sans JP',Meiryo,sans-serif;
+      color:var(--ink); background:var(--bg); font-synthesis:none;
+    }
+    @media (prefers-color-scheme:dark){
+      :root{--navy:#3b6fd4; --blue:#6b9bff; --bg:#0f141b; --paper:#161d27; --line:#26303d;
+        --ink:#e7ecf3; --muted:#9aa7b7; --faint:#6a7789; --soft:#1c2430;}
+    }
+    *{box-sizing:border-box}
+    body{margin:0; min-height:100vh; background:var(--bg); line-height:1.6;
+      -webkit-font-smoothing:antialiased}
+    a{color:inherit; text-decoration:none}
+    .wrap{max-width:940px; margin:0 auto; padding:56px 24px 80px}
+
+    header.site{display:flex; align-items:center; gap:12px; margin-bottom:52px}
+    .mark{width:34px; height:34px; display:grid; place-items:center; border-radius:9px;
+      background:var(--navy); color:#fff; font:700 19px/1 'DM Sans','Yu Gothic',sans-serif;
+      box-shadow:0 3px 9px #12305233}
+    header.site strong{font:700 19px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:.2px}
+    header.site small{display:block; margin-top:3px; color:var(--faint); font-size:10px; letter-spacing:1.4px}
+
+    .hero{margin-bottom:42px}
+    .hero h1{margin:0 0 12px; font-size:30px; letter-spacing:-.6px}
+    .hero p{margin:0; max-width:620px; color:var(--muted); font-size:14px}
+    .privacy{display:inline-flex; align-items:center; gap:8px; margin-top:20px;
+      padding:8px 13px; border:1px solid var(--line); border-radius:999px;
+      background:var(--paper); color:var(--muted); font-size:11px}
+    .privacy b{color:var(--ink)}
+
+    .section-label{margin:0 0 16px; color:var(--faint); font:700 10px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:1.6px}
+
+    .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:18px}
+    .card{display:flex; flex-direction:column; gap:14px; padding:22px; border:1px solid var(--line);
+      border-radius:14px; background:var(--paper); box-shadow:0 4px 16px #1c355910; transition:.16s}
+    a.card:hover{transform:translateY(-3px); border-color:var(--blue); box-shadow:0 10px 26px #2f6fed24}
+    .card.disabled{opacity:.62; cursor:default}
+    .card-top{display:flex; align-items:center; justify-content:space-between}
+    .tile{width:42px; height:42px; display:grid; place-items:center; border-radius:11px;
+      background:var(--soft); color:var(--blue); font-size:20px}
+    .badge{padding:3px 9px; border-radius:999px; font:700 10px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:.4px}
+    .badge.live{color:#1f7a4d; background:#e3f5ec}
+    .badge.soon{color:var(--faint); background:var(--soft)}
+    @media (prefers-color-scheme:dark){ .badge.live{color:#7ee3ab; background:#12352268} }
+    .card h2{margin:0; font-size:16px}
+    .card p{margin:0; flex:1; color:var(--muted); font-size:12.5px}
+    .tags{display:flex; flex-wrap:wrap; gap:6px}
+    .tags span{padding:3px 8px; border:1px solid var(--line); border-radius:6px; color:var(--muted); font-size:10px}
+    .go{display:inline-flex; align-items:center; gap:6px; color:var(--blue); font:700 12px 'DM Sans','Yu Gothic',sans-serif}
+
+    footer.site{margin-top:56px; padding-top:22px; border-top:1px solid var(--line);
+      color:var(--faint); font-size:11px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <div class="mark">Y</div>
+      <div><strong>YOS Tools</strong><small>LOCAL WEB TOOLS</small></div>
+    </header>
+
+    <section class="hero">
+      <h1>ブラウザだけで完結する道具箱</h1>
+      <p>インストール不要・ビルド不要。ファイルは外部サーバーへ送信されず、すべてあなたの端末の中だけで処理されます。使いたいツールを選んでください。</p>
+      <span class="privacy">◇ <span><b>端末内処理</b> ／ データは外部に送信されません</span></span>
+    </section>
+
+    <p class="section-label">TOOLS</p>
+    <div class="grid" id="grid"></div>
+
+    <footer class="site">YOS Tools — 静的Webツール集。各ツールは単体でも動作します。</footer>
+  </div>
+
+  <script>
+    /* ツールを追加するときはこの配列に1件足すだけ。
+       status: 'live' = 公開 / 'soon' = 準備中（リンク無効）
+       path  : このindex.htmlからの相対パス */
+    const tools = [
+      {
+        name: 'PDF Craft',
+        icon: '▤',
+        status: 'live',
+        path: 'PDF_Craft/index.html',
+        desc: 'PDFの結合・分割・ページ並べ替え・削除・複製・回転・抽出。元PDFは変更せず新しいファイルとして保存します。',
+        tags: ['結合', '分割', 'ページ整理', '回転', '抽出'],
+      },
+      {
+        name: 'Color Palette Master',
+        icon: '◨',
+        status: 'live',
+        path: 'ColorPaletteMaster/index.html',
+        desc: 'カラーピッカー・配色ハーモニー・グラデーション生成・コントラスト比チェック・パレット管理。HEX/RGB/HSLで出力し、インポート／エクスポートにも対応。',
+        tags: ['ピッカー', 'ハーモニー', 'グラデーション', 'コントラスト', 'パレット'],
+      },
+      {
+        name: '（ツール準備中）',
+        icon: '＋',
+        status: 'soon',
+        desc: '次のツールを準備中です。',
+        tags: [],
+      },
+    ];
+
+    const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    document.getElementById('grid').innerHTML = tools.map((t) => {
+      const inner = `
+        <div class="card-top">
+          <div class="tile">${esc(t.icon || '□')}</div>
+          <span class="badge ${t.status === 'live' ? 'live' : 'soon'}">${t.status === 'live' ? 'PUBLIC' : 'SOON'}</span>
+        </div>
+        <h2>${esc(t.name)}</h2>
+        <p>${esc(t.desc || '')}</p>
+        ${t.tags && t.tags.length ? `<div class="tags">${t.tags.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
+        ${t.status === 'live' ? '<span class="go">開く →</span>' : ''}`;
+      return t.status === 'live'
+        ? `<a class="card" href="${esc(t.path)}">${inner}</a>`
+        : `<div class="card disabled">${inner}</div>`;
+    }).join('');
+  </script>
+</body>
+</html>

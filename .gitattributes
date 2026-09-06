@@ -1,0 +1,5 @@
+# Normalize line endings to LF in the repository
+* text=auto eol=lf
+
+# Vendored minified libraries: store verbatim, never convert
+PDF_Craft/lib/** -text
