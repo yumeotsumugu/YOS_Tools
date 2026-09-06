@@ -29,9 +29,9 @@ python -m http.server 8000
 # → http://localhost:8000/
 ```
 
-GitHub Pages などで公開する場合、各ツールの「← ツール一覧」リンクは
-`href="../"`（`../index.html` ではなく）にしておくと URL に `index.html` が出ない。
-トップページには、`/index.html` 付きで開かれた場合に URL を整える小さなスクリプトを入れてある。
+各ツールの「← ツール一覧」リンクは `href="../index.html"`（完全ローカルでも動くように）。
+GitHub Pages で URL に `index.html` を出さないための整形は、トップページの小さな
+スクリプトが担当する（`/index.html` 付きで開かれたらアドレスバーを `/` に整える）。
 
 ## デザインの統一
 
@@ -49,7 +49,7 @@ GitHub Pages などで公開する場合、各ツールの「← ツール一覧
 
 1. `YOS_Tools/` 直下にツール用フォルダを作り、`index.html` を置く
 2. `index.html` の `<head>` で `../assets/common.css` と `../assets/theme.js` を読み込み、
-   ヘッダーに共通の `img.yt-mark`（`../assets/icon.png`）・`.yt-back` リンク（`href="../"`）・
+   ヘッダーに共通の `img.yt-mark`（`../assets/icon.png`）・`.yt-back` リンク（`href="../index.html"`）・
    `<button data-yos-theme-toggle></button>` を置く
 3. `YOS_Tools/index.html` の `tools` 配列に1件追加する
 

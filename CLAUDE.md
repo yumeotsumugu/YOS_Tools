@@ -72,10 +72,11 @@ YOS_Tools/
 ### ブランド・ナビゲーション
 
 - ブランドマークは `assets/icon.png`（favicon も同じ）。`.yt-mark` クラスを付ける。
-- 「← ツール一覧」リンクは **`href="../"`**（`../index.html` とは書かない）。
-  こうすると GitHub Pages で URL に `index.html` が出ない。
-  トップページ側に、`/index.html` 付きで開かれたときアドレスバーを整える
-  小さなスクリプトを入れてある。
+- 「← ツール一覧」リンクは **`href="../index.html"`** にする
+  （`href="../"` だと完全ローカル `file://` でフォルダ一覧が開いてしまう）。
+  GitHub Pages で URL に `index.html` を出さないための整形は、トップページ側の
+  スクリプトが担当する（`http(s)` で `/index.html` 付きに来たら
+  `history.replaceState` でアドレスバーを `/` に整える。`file://` では何もしない）。
 - 各ツールに「端末内処理／データは外部に送信されません」を明記する（`.yt-privacy` など）。
 
 ### ライセンス・クレジット
@@ -89,7 +90,7 @@ YOS_Tools/
 1. `YOS_Tools/` 直下にツール用フォルダを作り、`index.html` を置く（単体で動くこと）。
 2. `<head>` で `../assets/common.css` と `../assets/theme.js` を読み込む。
 3. ヘッダーに共通の `img.yt-mark`（`../assets/icon.png`）、
-   `.yt-back`（`href="../"`）、`<button data-yos-theme-toggle></button>` を置く。
+   `.yt-back`（`href="../index.html"`）、`<button data-yos-theme-toggle></button>` を置く。
 4. ダークモード対応・「端末内処理」明記・トークンでの配色を守る。
 5. トップページ `index.html` の `tools` 配列に1件追加する
    （`name` / `icon` / `status`（`'live'` or `'soon'`）/ `path` / `desc` / `tags`）。
