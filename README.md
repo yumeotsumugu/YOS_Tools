@@ -7,8 +7,9 @@
 ```text
 YOS_Tools/
 ├── index.html             トップページ（各ツールへのリンク）
-├── PDF_Craft/             PDF加工ツール（単体でも動作 / 独立したGitリポジトリ）
-└── ColorPaletteMaster/    カラーパレット作成ツール（単体でも動作）
+├── PDF_Craft/             PDF加工ツール（単体でも動作）
+├── ColorPaletteMaster/    カラーパレット作成ツール（単体でも動作）
+└── ImageMaker/            TRPG・ココフォリア素材メーカー（単体でも動作）
 ```
 
 ## 使い方

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ImageMaker — TRPG素材をサクッと作る</title>
+<link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Kosugi+Maru&family=M+PLUS+Rounded+1c:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@400;700&family=RocknRoll+One&family=Sawarabi+Mincho&family=Shippori+Mincho:wght@400;700&family=Yusei+Magic&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- スタート画面 -->
+<!-- ============================================================ -->
+<div id="startScreen" class="start-screen">
+  <div class="start-card">
+    <a href="../index.html" class="start-guide-btn" style="display:inline-block;text-decoration:none;margin-bottom:12px;">← ツール一覧</a>
+    <div class="start-header-row">
+      <h1 class="start-logo">
+        <img src="assets/icons/icon.svg" alt="" class="start-logo-icon" />
+        ImageMaker
+      </h1>
+      <button class="guide-open-btn start-guide-btn" title="使い方ガイド">❓ 使い方</button>
+    </div>
+    <p class="start-tagline">ココフォリアルーム作成向き！ 素材をサクッと作れる簡単ツール。</p>
+
+    <section class="start-section">
+      <h2 class="start-section-title">プロジェクト名</h2>
+      <input type="text" id="projectNameInput" class="project-name-input" value="無題のプロジェクト" placeholder="プロジェクト名" />
+    </section>
+
+    <section class="start-section">
+      <h2 class="start-section-title">キャンバスサイズ</h2>
+      <div id="presetList" class="preset-list"></div>
+
+      <div class="custom-size-row">
+        <label class="custom-size-field">
+          <span>幅</span>
+          <input type="number" id="customWidth" min="10" max="8000" />
+        </label>
+        <span class="custom-size-x">×</span>
+        <label class="custom-size-field">
+          <span>高さ</span>
+          <input type="number" id="customHeight" min="10" max="8000" />
+        </label>
+      </div>
+    </section>
+
+    <section class="start-section">
+      <h2 class="start-section-title">背景</h2>
+      <div class="bg-choice-row">
+        <label class="bg-choice">
+          <input type="radio" name="bgType" value="transparent" checked />
+          <span>透明</span>
+        </label>
+        <label class="bg-choice">
+          <input type="radio" name="bgType" value="color" />
+          <span>単色</span>
+        </label>
+        <input type="color" id="bgColorPicker" value="#ffffff" />
+      </div>
+    </section>
+
+    <button id="startCreateBtn" class="start-create-btn">新しく作る</button>
+
+    <div class="start-secondary-row">
+      <button id="openProjectBtn" class="start-secondary-btn">📂 プロジェクトを開く</button>
+      <input type="file" id="openProjectFileInput" accept="application/json,.json" hidden />
+    </div>
+
+    <section class="start-section start-recent-section" id="recentProjectsSection" style="display:none;">
+      <h2 class="start-section-title">最近のプロジェクト</h2>
+      <ul id="recentProjectsList" class="recent-projects-list"></ul>
+    </section>
+
+    <p class="start-privacy-note">画像データは外部へ送信されません。すべてブラウザ内で処理されます。</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- メイン編集画面 -->
+<!-- ============================================================ -->
+<div id="editorScreen" class="editor-screen hidden">
+
+  <header class="editor-header">
+    <button id="homeBtn" class="header-icon-btn" title="ホームへ戻る">🏠</button>
+    <img src="assets/icons/icon.svg" alt="" class="editor-title-icon" />
+    <span class="editor-title">ImageMaker</span>
+    <input type="text" id="projectNameHeaderInput" class="project-name-header-input" placeholder="プロジェクト名" title="プロジェクト名(クリックして変更)" />
+    <span class="editor-canvas-size" id="canvasSizeLabel"></span>
+    <div class="history-controls">
+      <button id="undoBtn" class="header-icon-btn" title="元に戻す (Ctrl+Z)">↺</button>
+      <button id="redoBtn" class="header-icon-btn" title="やり直す (Ctrl+Y)">↻</button>
+    </div>
+    <button id="apngOpenBtn" class="header-btn">🎞 APNG</button>
+    <button id="saveProjectBtn" class="header-btn">💾 保存</button>
+    <button class="header-icon-btn guide-open-btn" title="使い方ガイド">❓</button>
+    <div class="editor-header-spacer"></div>
+    <input type="text" id="exportFilenameInput" class="filename-input" value="imagemaker_output" placeholder="ファイル名" title="書き出しファイル名" />
+    <button id="exportBtn" class="header-btn header-btn--primary">PNGで書き出す</button>
+  </header>
+
+  <div class="editor-body">
+
+    <!-- 左：追加パネル -->
+    <aside class="panel panel-left">
+      <h3 class="panel-title">追加</h3>
+      <button id="addImageBtn" class="tool-btn">🖼 画像</button>
+      <input type="file" id="imageFileInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+      <button id="addTextBtn" class="tool-btn">T テキスト</button>
+      <button id="addRectBtn" class="tool-btn">▭ 四角形</button>
+      <button id="addCircleBtn" class="tool-btn">◯ 円</button>
+      <button id="addTableBtn" class="tool-btn">⊞ テーブル</button>
+      <button id="penToolBtn" class="tool-btn" title="ドラッグして自由に描く">✏️ ペン</button>
+      <div id="penOptions" class="pen-options hidden">
+        <label class="property-row">
+          <span>太さ</span>
+          <input type="range" id="penWidthInput" min="1" max="30" value="4" />
+        </label>
+        <label class="property-row">
+          <span>色</span>
+          <input type="color" id="penColorInput" value="#1a1a1a" title="ペンの色" />
+        </label>
+        <label class="property-row property-row--checkbox">
+          <input type="checkbox" id="penDashedInput" />
+          <span>破線にする</span>
+        </label>
+      </div>
+      <div id="shapeButtonList" class="shape-button-list"></div>
+      <input type="file" id="customFontFileInput" accept=".ttf,.otf,.woff,.woff2" multiple hidden />
+    </aside>
+
+    <!-- レイヤーパネル(開閉可能) -->
+    <aside class="panel panel-layers" id="layersPanel">
+      <div class="panel-layers-header">
+        <h3 class="panel-title panel-layers-title">レイヤー</h3>
+        <button id="layersToggleBtn" class="layers-toggle-btn" title="レイヤーパネルを閉じる">◀</button>
+      </div>
+      <ul id="layerList" class="layer-list"></ul>
+      <div id="layersResizeHandle" class="layers-resize-handle" title="ドラッグして幅を調整"></div>
+    </aside>
+
+    <!-- 中央：キャンバス -->
+    <main class="canvas-area">
+      <div id="canvasWrap" class="canvas-wrap">
+        <canvas id="mainCanvas"></canvas>
+      </div>
+    </main>
+
+    <!-- 右：プロパティ -->
+    <aside class="panel panel-right">
+      <div class="panel-section panel-section--grow">
+        <h3 class="panel-title">プロパティ</h3>
+        <div id="propertiesPanel" class="properties-panel"></div>
+      </div>
+    </aside>
+
+  </div>
+
+  <footer class="editor-footer">
+    <div class="zoom-controls">
+      <button id="zoomOutBtn" class="footer-btn">－</button>
+      <input type="number" id="zoomLabel" class="zoom-input" min="5" max="1000" value="100" title="ズーム倍率を直接入力できます" />%
+      <button id="zoomInBtn" class="footer-btn">＋</button>
+    </div>
+    <label class="snap-toggle">
+      <input type="checkbox" id="snapToggle" />
+      <span>スナップ</span>
+    </label>
+    <span id="autosaveStatus" class="autosave-status"></span>
+    <div class="footer-hint">Shift+クリックで複数選択 / Delete削除 / Ctrl+Zで元に戻す / Ctrl+Dで複製</div>
+  </footer>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ============================================================ -->
+<!-- APNG作成モーダル -->
+<!-- ============================================================ -->
+<div id="apngModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title">APNGを作る</h2>
+      <button id="apngCloseBtn" class="modal-close-btn" title="閉じる">×</button>
+    </div>
+
+    <div class="modal-tabs">
+      <button id="apngTabBtnObject" class="modal-tab-btn modal-tab-btn--active" data-tab="object">
+        選択オブジェクトを動かす
+      </button>
+      <button id="apngTabBtnImages" class="modal-tab-btn" data-tab="images">
+        複数画像から作る
+      </button>
+    </div>
+
+    <!-- タブA: 選択中オブジェクトにプリセットアニメーションを付ける -->
+    <div id="apngPanelObject" class="modal-tab-panel">
+      <p id="apngObjectTargetNote" class="apng-note"></p>
+
+      <div class="apng-controls">
+        <label class="property-row">
+          <span>エフェクト</span>
+          <select id="apngPresetSelect"></select>
+        </label>
+        <label class="property-row">
+          <span>速度</span>
+          <select id="apngSpeedSelect">
+            <option value="1">ゆっくり</option>
+            <option value="2" selected>普通</option>
+            <option value="4">速い</option>
+          </select>
+        </label>
+        <label class="property-row">
+          <span>強さ</span>
+          <input type="range" id="apngStrengthRange" min="0" max="100" value="60" />
+        </label>
+        <label class="property-row">
+          <span>長さ(秒)</span>
+          <input type="range" id="apngLengthRange" min="0.5" max="5" step="0.1" value="1.5" />
+        </label>
+        <div class="property-row">
+          <span>ループ</span>
+          <div class="apng-loop-controls">
+            <label><input type="radio" name="apngObjLoopType" value="infinite" checked /> 無限</label>
+            <label><input type="radio" name="apngObjLoopType" value="count" /> 回数</label>
+            <input type="number" id="apngObjLoopCount" min="1" value="3" disabled />
+          </div>
+        </div>
+        <label class="property-row">
+          <span>ファイル名</span>
+          <input type="text" id="apngObjFilenameInput" value="imagemaker_animation" placeholder="ファイル名" />
+        </label>
+      </div>
+
+      <div class="apng-preview-wrap">
+        <canvas id="apngObjectPreviewCanvas"></canvas>
+      </div>
+
+      <div class="apng-actions">
+        <button id="apngObjPreviewBtn" class="header-btn">▶ プレビュー</button>
+        <button id="apngObjStopBtn" class="header-btn">■ 停止</button>
+        <button id="apngObjGenerateBtn" class="header-btn header-btn--primary">APNG生成</button>
+      </div>
+    </div>
+
+    <!-- タブB: 複数画像からAPNGを作る -->
+    <div id="apngPanelImages" class="modal-tab-panel hidden">
+      <div class="apng-image-toolbar">
+        <button id="apngAddImagesBtn" class="header-btn">画像を追加</button>
+        <input type="file" id="apngImagesFileInput" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden />
+      </div>
+
+      <ul id="apngImageList" class="apng-image-list"></ul>
+
+      <div class="apng-controls">
+        <label class="property-row">
+          <span>フレーム間隔(ms)</span>
+          <input type="number" id="apngIntervalInput" min="10" value="100" />
+        </label>
+        <div class="property-row">
+          <span>ループ</span>
+          <div class="apng-loop-controls">
+            <label><input type="radio" name="apngImgLoopType" value="infinite" checked /> 無限</label>
+            <label><input type="radio" name="apngImgLoopType" value="count" /> 回数</label>
+            <input type="number" id="apngImgLoopCount" min="1" value="3" disabled />
+          </div>
+        </div>
+        <label class="property-row">
+          <span>ファイル名</span>
+          <input type="text" id="apngImgFilenameInput" value="imagemaker_apng" placeholder="ファイル名" />
+        </label>
+      </div>
+
+      <div class="apng-preview-wrap">
+        <canvas id="apngImagesPreviewCanvas"></canvas>
+      </div>
+
+      <div class="apng-actions">
+        <button id="apngImgPreviewBtn" class="header-btn">▶ プレビュー</button>
+        <button id="apngImgStopBtn" class="header-btn">■ 停止</button>
+        <button id="apngImgGenerateBtn" class="header-btn header-btn--primary">APNG生成</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 使い方ガイド -->
+<!-- ============================================================ -->
+<div id="guideModal" class="modal-overlay hidden">
+  <div class="modal-card guide-modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title">使い方ガイド</h2>
+      <button id="guideCloseBtn" class="modal-close-btn" title="閉じる">×</button>
+    </div>
+
+    <div class="guide-content">
+      <section class="guide-section">
+        <h3>ImageMakerについて</h3>
+        <p>
+          ココフォリアで使うルーム素材やTRPG素材を、専門的な画像編集ソフトなしでブラウザだけで作れるツールです。
+          画像データは外部へ送信されず、すべてブラウザ内で処理されます。
+        </p>
+      </section>
+
+      <section class="guide-section">
+        <h3>基本操作</h3>
+        <ul>
+          <li>左の「追加」パネルから画像・テキスト・図形・テーブルを選んでキャンバスに追加します。</li>
+          <li>オブジェクトはクリックで選択、ドラッグで移動できます。</li>
+          <li>選択中は四隅のハンドルで拡大縮小、上の丸いハンドルで回転できます。</li>
+          <li>Shift+クリックで複数のオブジェクトを選択できます(キャンバス上・レイヤーパネルどちらでも)。</li>
+          <li>Shiftを押しながら拡縮すると縦横比を固定、回転は15度刻みでスナップします。</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
+        <h3>レイヤーパネル</h3>
+        <ul>
+          <li>「追加」パネルの右隣にあります。「◀/▶」ボタンで開閉、右端をドラッグして幅を調整できます(幅は記憶されます)。</li>
+          <li>ドラッグ&ドロップで重ね順を並び替え、👁で表示/非表示、🔒でロック/解除、✕で削除できます。</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
+        <h3>プロパティパネル(右側)</h3>
+        <p>選択中のオブジェクトの詳細設定(位置・サイズ・色・フォントなど)を編集できます。何も選択していない時は空欄です。</p>
+      </section>
+
+      <section class="guide-section">
+        <h3>「配置」(複数選択時に表示)</h3>
+        <ul>
+          <li><b>重ね順</b>：前面へ／背面へ／最前面へ／最背面へ</li>
+          <li><b>整列</b>：上下左右・中央揃え(1件選択時はキャンバス基準、複数選択時は選択範囲基準)</li>
+          <li><b>均等配置</b>：垂直に／水平に(3件以上)、整列する(1列に並べる、2件以上)</li>
+          <li><b>レイヤー結合</b>：複数選択したオブジェクトを1枚の画像に合成します。「🔓 結合を解除」でいつでも元に戻せます。</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
+        <h3>図形・テーブル</h3>
+        <ul>
+          <li>四角形・円のほか、「図形」欄から矢印・吹き出し・星・多角形・線・付箋など17種類を追加できます。</li>
+          <li>図形ごとの形状(星の頂点数、吹き出しのしっぽの位置など)や、左右反転・上下反転もプロパティパネルから調整できます。</li>
+          <li>テーブルは行数・列数、見出し行、罫線・配色を設定でき、セルごとに背景色・文字色・揃えを個別指定できます(背景の透過表示も可能)。</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
+        <h3>テキスト・フォント</h3>
+        <ul>
+          <li>ボックスの幅に合わせて自動的に折り返します(プロパティパネルでOFFにも切替可)。</li>
+          <li>定番フォントを標準搭載。「＋ フォントを追加」で.ttf/.otf/.woff/.woff2ファイルを追加すると、ブラウザに保存されて次回以降も使えます。</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
+        <h3>書き出し</h3>
+        <ul>
+          <li>「PNGで書き出す」で静止画として保存(背景透過対応)。ファイル名は入力欄で指定できます。</li>
+          <li>「🎞 APNG」から、選択オブジェクトへのアニメーション(点滅・回転など)や、複数画像を並べたアニメーションを作成できます。</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
+        <h3>プロジェクトの保存</h3>
+        <ul>
+          <li>編集内容は自動的にブラウザ内(IndexedDB)に保存され、フッターに保存時刻が表示されます。</li>
+          <li>「💾 保存」でJSONファイルとしてダウンロードでき、画像も含めてJSON単体で復元できます。</li>
+          <li>スタート画面の「プロジェクトを開く」や「最近のプロジェクト」から続きを再開できます。</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
+        <h3>キーボードショートカット</h3>
+        <table class="guide-shortcut-table">
+          <tr><td>Ctrl + Z</td><td>元に戻す</td></tr>
+          <tr><td>Ctrl + Y / Ctrl + Shift + Z</td><td>やり直す</td></tr>
+          <tr><td>Ctrl + C / Ctrl + V</td><td>コピー / 貼り付け</td></tr>
+          <tr><td>Ctrl + D</td><td>複製</td></tr>
+          <tr><td>Delete / Backspace</td><td>削除</td></tr>
+          <tr><td>Shift + クリック</td><td>複数選択</td></tr>
+        </table>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/objects.js"></script>
+<script src="js/canvas.js"></script>
+<script src="js/shapes.js"></script>
+<script src="js/layers.js"></script>
+<script src="js/export.js"></script>
+<script src="js/apng.js"></script>
+<script src="js/history.js"></script>
+<script src="js/project.js"></script>
+<script src="js/fonts.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

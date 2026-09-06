@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>APNGループ回数チェッカー</title>
+<style>
+  body { font-family: system-ui, sans-serif; background:#f6f6f8; margin:0; padding:32px; color:#26262e; }
+  .card { max-width: 560px; margin: 0 auto; background:#fff; border:1px solid #dcdce3; border-radius:10px; padding:24px 28px; }
+  h1 { font-size:18px; margin:0 0 6px; }
+  p.desc { font-size:13px; color:#7a7a86; margin:0 0 20px; line-height:1.6; }
+  .drop-zone {
+    border: 2px dashed #dcdce3; border-radius:10px; padding: 28px; text-align:center;
+    color:#7a7a86; font-size:13px; cursor:pointer; margin-bottom:18px; transition: border-color .15s;
+  }
+  .drop-zone.drag-over { border-color:#5b6bf5; color:#5b6bf5; }
+  input[type=file] { display:none; }
+  .info-grid { display:grid; grid-template-columns: 120px 1fr; gap:6px 10px; font-size:13px; margin-bottom:18px; }
+  .info-grid dt { color:#7a7a86; }
+  .info-grid dd { margin:0; font-weight:600; }
+  .canvas-wrap { display:flex; justify-content:center; background:#e9e9ee; border-radius:8px; padding:16px; margin-bottom:12px; }
+  canvas { max-width:100%; background:
+    linear-gradient(45deg,#f0f0f2 25%,transparent 25%),
+    linear-gradient(-45deg,#f0f0f2 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#f0f0f2 75%),
+    linear-gradient(-45deg,transparent 75%,#f0f0f2 75%);
+    background-size:16px 16px; background-position:0 0,0 8px,8px -8px,-8px 0;
+  }
+  .status { font-size:13px; text-align:center; color:#7a7a86; }
+  .error { color:#e5484d; font-size:13px; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>APNGループ回数チェッカー</h1>
+  <p class="desc">
+    ImageMakerで生成したAPNGファイルを読み込むと、ファイルに実際に埋め込まれている
+    「フレーム数」「ループ設定」を解析して表示し、その設定通りに再生します。<br />
+    ここで指定回数どおりに止まれば、エンコード自体は正しく行われています
+    （それでも他のビューアで無限ループして見える場合は、そのビューア側がAPNGのループ回数に対応していない可能性が高いです）。
+  </p>
+
+  <div id="dropZone" class="drop-zone">
+    ここにAPNGファイルをドラッグ＆ドロップ、またはクリックして選択
+  </div>
+  <input type="file" id="fileInput" accept="image/png" />
+
+  <dl class="info-grid" id="infoGrid" style="display:none;">
+    <dt>フレーム数</dt><dd id="infoFrames">-</dd>
+    <dt>ループ設定</dt><dd id="infoLoop">-</dd>
+    <dt>再生状況</dt><dd id="infoStatus">-</dd>
+  </dl>
+
+  <div class="canvas-wrap" id="canvasWrap" style="display:none;">
+    <canvas id="previewCanvas"></canvas>
+  </div>
+  <p class="error" id="errorMsg"></p>
+</div>
+
+<script>
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+const infoGrid = document.getElementById("infoGrid");
+const infoFrames = document.getElementById("infoFrames");
+const infoLoop = document.getElementById("infoLoop");
+const infoStatus = document.getElementById("infoStatus");
+const canvasWrap = document.getElementById("canvasWrap");
+const previewCanvas = document.getElementById("previewCanvas");
+const errorMsg = document.getElementById("errorMsg");
+
+dropZone.addEventListener("click", () => fileInput.click());
+dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+dropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropZone.classList.remove("drag-over");
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+});
+
+let currentTimer = null;
+
+async function handleFile(file) {
+  errorMsg.textContent = "";
+  if (currentTimer) { clearTimeout(currentTimer); currentTimer = null; }
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const parsed = parseApng(bytes);
+    infoGrid.style.display = "grid";
+    infoFrames.textContent = `${parsed.numFrames}枚`;
+    infoLoop.textContent = parsed.numPlays === 0 ? "無限ループ" : `${parsed.numPlays}回`;
+    canvasWrap.style.display = "flex";
+    playApng(parsed);
+  } catch (err) {
+    errorMsg.textContent = "解析に失敗しました: " + err.message + "（APNGとして生成されたPNGファイルを選択してください）";
+    infoGrid.style.display = "none";
+    canvasWrap.style.display = "none";
+  }
+}
+
+// --- PNGチャンク解析(ImageMakerのapng.jsと同じロジック) ---
+function parsePngChunks(bytes) {
+  const chunks = [];
+  let offset = 8;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  while (offset < bytes.length) {
+    const length = view.getUint32(offset);
+    const type = String.fromCharCode(bytes[offset+4], bytes[offset+5], bytes[offset+6], bytes[offset+7]);
+    const dataStart = offset + 8;
+    const data = bytes.subarray(dataStart, dataStart + length);
+    const chunkEnd = dataStart + length + 4;
+    const raw = bytes.subarray(offset, chunkEnd);
+    chunks.push({ type, data, raw });
+    offset = chunkEnd;
+  }
+  return chunks;
+}
+
+function crc32(bytes) {
+  let c = 0xffffffff;
+  for (let i = 0; i < bytes.length; i++) {
+    c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+  }
+  return (c ^ 0xffffffff) >>> 0;
+}
+const CRC_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+function u32be(n) { return new Uint8Array([(n>>>24)&0xff,(n>>>16)&0xff,(n>>>8)&0xff,n&0xff]); }
+function concatBytes(arrays) {
+  let total = 0; for (const a of arrays) total += a.length;
+  const out = new Uint8Array(total); let o=0;
+  for (const a of arrays) { out.set(a,o); o+=a.length; }
+  return out;
+}
+function asciiBytes(str) {
+  const out = new Uint8Array(str.length);
+  for (let i=0;i<str.length;i++) out[i]=str.charCodeAt(i);
+  return out;
+}
+function buildChunk(type, data) {
+  const body = concatBytes([asciiBytes(type), data]);
+  return concatBytes([u32be(data.length), body, u32be(crc32(body))]);
+}
+
+function parseApng(bytes) {
+  const chunks = parsePngChunks(bytes);
+  const ihdr = chunks.find(c => c.type === "IHDR");
+  const iend = chunks.find(c => c.type === "IEND");
+  const actl = chunks.find(c => c.type === "acTL");
+  if (!ihdr || !iend) throw new Error("PNGとして不正です");
+  if (!actl) throw new Error("APNGではありません(acTLチャンクがありません)");
+
+  const actlView = new DataView(actl.data.buffer, actl.data.byteOffset, actl.data.byteLength);
+  const numFrames = actlView.getUint32(0);
+  const numPlays = actlView.getUint32(4);
+
+  // フレームごとに fcTL + (IDAT群 or fdAT群) をグルーピングする
+  const frames = [];
+  let pendingFcTL = null;
+  let pendingData = [];
+
+  function flushFrame() {
+    if (pendingFcTL) {
+      const v = new DataView(pendingFcTL.buffer, pendingFcTL.byteOffset, pendingFcTL.byteLength);
+      const delayNum = v.getUint16(20);
+      const delayDen = v.getUint16(22) || 100;
+      frames.push({ dataChunks: pendingData, delayMs: (delayNum / delayDen) * 1000 });
+    }
+    pendingFcTL = null;
+    pendingData = [];
+  }
+
+  for (const c of chunks) {
+    if (c.type === "fcTL") {
+      flushFrame();
+      pendingFcTL = c.data;
+    } else if (c.type === "IDAT" || c.type === "fdAT") {
+      const payload = c.type === "fdAT" ? c.data.subarray(4) : c.data;
+      pendingData.push(payload);
+    }
+  }
+  flushFrame();
+
+  if (frames.length !== numFrames) {
+    // 不一致でも致命的ではないため警告のみ(表示は実際に見つかったフレーム数を使う)
+    console.warn("acTLのnum_framesと実フレーム数が一致しません", numFrames, frames.length);
+  }
+
+  return { numFrames: frames.length, numPlays, frames, ihdrRaw: ihdr.raw, iendRaw: iend.raw };
+}
+
+/** 1フレーム分のデータチャンクから単体PNGのバイト列を作り、Imageとして読み込む */
+function frameToImage(ihdrRaw, dataChunks, iendRaw) {
+  return new Promise((resolve, reject) => {
+    const parts = [new Uint8Array([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]), ihdrRaw];
+    for (const d of dataChunks) parts.push(buildChunk("IDAT", d));
+    parts.push(iendRaw);
+    const blob = new Blob([concatBytes(parts)], { type: "image/png" });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("フレーム画像の読み込みに失敗しました")); };
+    img.src = url;
+  });
+}
+
+async function playApng(parsed) {
+  const images = await Promise.all(
+    parsed.frames.map(f => frameToImage(parsed.ihdrRaw, f.dataChunks, parsed.iendRaw))
+  );
+  const w = images[0].width, h = images[0].height;
+  previewCanvas.width = w;
+  previewCanvas.height = h;
+  const ctx = previewCanvas.getContext("2d");
+
+  let idx = 0;
+  let playCount = parsed.numPlays === 0 ? Infinity : parsed.numPlays;
+  let currentPlay = 1;
+
+  function drawNext() {
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(images[idx], 0, 0);
+    infoStatus.textContent = parsed.numPlays === 0
+      ? `再生中(無限ループ) - フレーム ${idx + 1}/${images.length}`
+      : `${currentPlay}回目/${parsed.numPlays}回 - フレーム ${idx + 1}/${images.length}`;
+
+    const delay = parsed.frames[idx].delayMs || 100;
+    const nextIdx = idx + 1;
+
+    if (nextIdx >= images.length) {
+      if (currentPlay >= playCount) {
+        currentTimer = setTimeout(() => {
+          infoStatus.textContent = parsed.numPlays === 0
+            ? "再生中(無限ループ)"
+            : `再生完了(${parsed.numPlays}回再生して停止しました)`;
+        }, delay);
+        return;
+      }
+      currentPlay++;
+      idx = 0;
+    } else {
+      idx = nextIdx;
+    }
+    currentTimer = setTimeout(drawNext, delay);
+  }
+  drawNext();
+}
+</script>
+</body>
+</html>
