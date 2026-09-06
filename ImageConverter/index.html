@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Image Converter | ローカル画像形式変換</title>
+  <link rel="icon" sizes="32x32" href="../assets/icon-32.png">
+  <link rel="icon" sizes="256x256" href="../assets/icon.png">
+  <link rel="apple-touch-icon" href="../assets/icon.png">
+  <link rel="stylesheet" href="../assets/common.css">
+  <script src="../assets/theme.js"></script>
+  <style>
+    body{min-height:100vh}
+    .wrap{max-width:1000px; margin:0 auto; padding:40px 24px 80px}
+
+    header.site{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+    .mark{width:34px; height:34px; border-radius:9px; object-fit:cover; display:block;
+      background:var(--navy); box-shadow:0 3px 9px #12305233}
+    header.site strong{font:700 18px/1 var(--font-head); letter-spacing:.2px}
+    .back{display:inline-flex; align-items:center; gap:6px; padding:8px 12px;
+      border:1px solid var(--line); border-radius:999px; background:var(--paper);
+      color:var(--muted); font-size:12px; text-decoration:none}
+    .back:hover{border-color:var(--blue); color:var(--blue)}
+
+    .hero{margin-bottom:22px}
+    .hero h1{margin:0 0 8px; font-size:24px; letter-spacing:-.4px}
+    .hero p{margin:0; max-width:680px; color:var(--muted); font-size:13px}
+
+    .card{padding:20px; border:1px solid var(--line); border-radius:14px; background:var(--paper);
+      box-shadow:0 4px 16px #1c355910}
+
+    /* オプション（2列固定。PNG時に下段が消えても上段の幅は変わらない） */
+    .opts{display:grid; grid-template-columns:1fr 1fr; gap:18px 22px}
+    @media (max-width:640px){ .opts{grid-template-columns:1fr} }
+    .fld{display:block; min-width:0}
+    .fld > span{display:block; margin-bottom:6px; color:var(--faint);
+      font:700 10px/1 var(--font-head); letter-spacing:1.2px}
+    .seg{display:flex; gap:6px}
+    .seg button{flex:1; padding:9px 6px; border:1px solid var(--line); border-radius:8px;
+      background:var(--bg); color:var(--muted); font:700 12px var(--font-head); cursor:pointer}
+    .seg button:hover{border-color:var(--blue); color:var(--blue)}
+    .seg button.active{background:var(--navy); border-color:var(--navy); color:#fff}
+    .row-inline{display:flex; align-items:center; gap:10px}
+    input[type=range]{flex:1; accent-color:var(--blue)}
+    input[type=color]{width:44px; height:32px; padding:2px; border:1px solid var(--line);
+      border-radius:7px; background:var(--bg); cursor:pointer; flex:0 0 auto}
+    select{width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px;
+      font:inherit; font-size:13px; background:var(--bg); color:var(--ink)}
+    select:focus, input:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+    output.qv{font:600 12px/1 var(--font-head); color:var(--muted); min-width:34px; text-align:right}
+    .hint{margin:6px 0 0; font-size:10.5px; color:var(--faint)}
+
+    /* ドロップ / 追加 */
+    .drop{margin-top:16px; display:flex; align-items:center; justify-content:center; gap:10px;
+      padding:18px; border:1px dashed var(--line); border-radius:12px; background:var(--soft);
+      color:var(--muted); font-size:12.5px; text-align:center; transition:.15s}
+    .drop.drag{border-color:var(--blue); background:color-mix(in srgb, var(--blue) 10%, var(--paper)); color:var(--blue)}
+    .drop button{padding:8px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper);
+      color:var(--ink); font:700 12px var(--font-head); cursor:pointer}
+    .drop button:hover{border-color:var(--blue); color:var(--blue)}
+
+    /* ファイル一覧 */
+    .list{list-style:none; margin:16px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+    .list:empty{display:none}
+    .item{display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--line);
+      border-radius:10px; background:var(--paper)}
+    .item .thumb{width:44px; height:44px; flex:0 0 auto; border-radius:7px; object-fit:cover;
+      background:var(--soft)}
+    .item .meta{flex:1; min-width:0}
+    .item .fname{display:block; font-weight:500; font-size:12.5px; white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis}
+    .item .sub{display:block; margin-top:2px; color:var(--faint); font-size:10.5px}
+    .item .sub b{color:var(--muted); font-weight:700}
+    .item .note{display:block; margin-top:2px; color:var(--warn); font-size:10px}
+    .item .note:empty{display:none}
+    .status{flex:0 0 auto; padding:3px 9px; border-radius:999px;
+      font:700 10px/1 var(--font-head); letter-spacing:.3px}
+    .status.waiting{color:var(--muted); background:var(--soft)}
+    .status.working{color:var(--blue); background:color-mix(in srgb, var(--blue) 14%, var(--paper))}
+    .status.done{color:var(--ok); background:var(--ok-bg)}
+    .status.error{color:var(--ng); background:var(--ng-bg)}
+    .icon-btn{flex:0 0 auto; width:30px; height:30px; display:grid; place-items:center;
+      border:1px solid var(--line); border-radius:7px; background:var(--paper);
+      color:var(--muted); font-size:14px; cursor:pointer}
+    .icon-btn:hover:not(:disabled){border-color:var(--blue); color:var(--blue)}
+    .icon-btn:disabled{opacity:.35; cursor:default}
+
+    /* アクション */
+    .actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px}
+    .actions .sp{flex:1}
+    button.btn{padding:10px 16px; border:1px solid var(--line); border-radius:8px;
+      background:var(--paper); color:var(--ink); font:700 12px var(--font-head); cursor:pointer}
+    button.btn:hover:not(:disabled){border-color:var(--blue); color:var(--blue)}
+    button.btn.primary{background:var(--navy); color:#fff; border-color:var(--navy)}
+    button.btn.primary:hover:not(:disabled){background:var(--blue); border-color:var(--blue); color:#fff}
+    button.btn:disabled{opacity:.45; cursor:default}
+    button.btn.link{border-color:transparent; background:transparent; color:var(--muted); font-weight:500}
+    button.btn.link:hover:not(:disabled){color:var(--blue)}
+
+    .privacy{display:inline-flex; align-items:center; gap:8px; margin-top:22px;
+      padding:8px 13px; border:1px solid var(--line); border-radius:999px;
+      background:var(--paper); color:var(--muted); font-size:11px}
+    .privacy b{color:var(--ink)}
+
+    .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(10px);
+      padding:10px 16px; border-radius:8px; background:var(--navy); color:#fff; font-size:12px;
+      opacity:0; pointer-events:none; transition:.2s; z-index:999; max-width:90vw}
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+    .toast.err{background:var(--ng)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <img class="mark" src="../assets/icon.png" alt="">
+      <strong>Image Converter</strong>
+      <button data-yos-theme-toggle style="margin-left:auto"></button>
+      <a class="back" href="../index.html">← ツール一覧</a>
+    </header>
+
+    <section class="hero">
+      <h1>画像コンバーター</h1>
+      <p>HEIC・WebP・JPEG・PNG などの画像を JPG / JPEG / PNG へまとめて変換します。JPEG と JPG の相互変換は再エンコードせず拡張子だけ変更。処理はすべてこの端末の中だけで行われ、画像は外部に送信されません。</p>
+    </section>
+
+    <div class="card">
+      <div class="opts">
+        <label class="fld">
+          <span>出力形式</span>
+          <div class="seg" id="fmtSeg">
+            <button type="button" data-fmt="jpg">JPG</button>
+            <button type="button" data-fmt="jpeg">JPEG</button>
+            <button type="button" data-fmt="png">PNG</button>
+          </div>
+        </label>
+
+        <label class="fld">
+          <span>EXIF情報</span>
+          <select id="exif">
+            <option value="keep">そのまま保持</option>
+            <option value="strip">削除</option>
+            <option value="gps">GPS情報のみ削除</option>
+          </select>
+          <p class="hint" id="exifHint"></p>
+        </label>
+
+        <label class="fld" id="qualityFld">
+          <span>画質（JPG / JPEG・再エンコード時）</span>
+          <div class="row-inline">
+            <input type="range" id="quality" min="0.5" max="1" step="0.01" value="0.92">
+            <output class="qv" id="qualityVal">92</output>
+          </div>
+          <p class="hint">JPEG ⇄ JPG の拡張子変更だけの場合は再エンコードしません（この値は無視）。</p>
+        </label>
+
+        <label class="fld" id="bgFld">
+          <span>透過部分の背景色（JPG / JPEG）</span>
+          <div class="row-inline">
+            <input type="color" id="bg" value="#ffffff">
+            <output class="qv" id="bgVal">#ffffff</output>
+          </div>
+        </label>
+      </div>
+
+      <div class="drop" id="drop">
+        <span>ここに画像をドラッグ＆ドロップ</span>
+        <button type="button" id="pick">ファイルを選択</button>
+        <input type="file" id="file" accept="image/*,.heic,.heif,.HEIC,.HEIF" multiple hidden>
+      </div>
+
+      <ul class="list" id="list"></ul>
+
+      <div class="actions">
+        <button class="btn primary" id="convert" disabled>変換する</button>
+        <button class="btn" id="zip" disabled>ZIPで保存</button>
+        <span class="sp"></span>
+        <button class="btn link" id="clear" disabled>すべてクリア</button>
+      </div>
+    </div>
+
+    <span class="privacy">◇ <span><b>端末内処理</b> ／ 画像は外部に送信されません</span></span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="lib/heic2any.min.js"></script>
+  <script src="lib/piexif.js"></script>
+  <script src="lib/jszip.min.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var OPTS_KEY = 'yos.imageconv.opts.v1';
+    var $ = function (id) { return document.getElementById(id); };
+
+    var els = {
+      fmtSeg: $('fmtSeg'), quality: $('quality'), qualityVal: $('qualityVal'),
+      qualityFld: $('qualityFld'), bg: $('bg'), bgVal: $('bgVal'), bgFld: $('bgFld'),
+      exif: $('exif'), exifHint: $('exifHint'),
+      drop: $('drop'), pick: $('pick'), file: $('file'), list: $('list'),
+      convert: $('convert'), zip: $('zip'), clear: $('clear'), toast: $('toast')
+    };
+
+    var state = { fmt: 'jpg', items: [], seq: 0 };
+    var toastTimer = null;
+    function toast(msg, isErr) {
+      els.toast.textContent = msg;
+      els.toast.classList.toggle('err', !!isErr);
+      els.toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { els.toast.classList.remove('show'); }, 2200);
+    }
+
+    /* ---------- ユーティリティ ---------- */
+    function fmtBytes(n) {
+      if (n == null) return '—';
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB';
+      return (n / 1048576).toFixed(2) + ' MB';
+    }
+    function baseName(name) { return name.replace(/\.[^.\/\\]+$/, ''); }
+    function extFor(fmt) { return fmt === 'png' ? '.png' : fmt === 'jpeg' ? '.jpeg' : '.jpg'; }
+    function outMime(fmt) { return fmt === 'png' ? 'image/png' : 'image/jpeg'; }
+
+    function readHead(file, n) {
+      return new Promise(function (res) {
+        var r = new FileReader();
+        r.onload = function () { res(new Uint8Array(r.result)); };
+        r.onerror = function () { res(new Uint8Array(0)); };
+        r.readAsArrayBuffer(file.slice(0, n));
+      });
+    }
+    function readArrayBuffer(blob) {
+      return new Promise(function (res, rej) {
+        var r = new FileReader();
+        r.onload = function () { res(r.result); };
+        r.onerror = function () { rej(r.error); };
+        r.readAsArrayBuffer(blob);
+      });
+    }
+    function blobToDataURL(blob) {
+      return new Promise(function (res, rej) {
+        var r = new FileReader();
+        r.onload = function () { res(r.result); };
+        r.onerror = function () { rej(r.error); };
+        r.readAsDataURL(blob);
+      });
+    }
+    function ab2bstr(buf) {
+      var b = (buf instanceof Uint8Array) ? buf : new Uint8Array(buf), s = '', CH = 0x8000;
+      for (var i = 0; i < b.length; i += CH) s += String.fromCharCode.apply(null, b.subarray(i, i + CH));
+      return s;
+    }
+    function dataURLToBlob(url) {
+      var parts = url.split(','), mime = /:(.*?);/.exec(parts[0])[1];
+      var bin = atob(parts[1]), u8 = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return new Blob([u8], { type: mime });
+    }
+
+    async function sniffFormat(file) {
+      var h = await readHead(file, 32);
+      var a = function (i) { return h[i]; };
+      var str = function (i, len) {
+        var s = ''; for (var k = 0; k < len; k++) s += String.fromCharCode(h[i + k] || 0); return s;
+      };
+      if (a(0) === 0xFF && a(1) === 0xD8 && a(2) === 0xFF) return 'jpeg';
+      if (a(0) === 0x89 && a(1) === 0x50 && a(2) === 0x4E && a(3) === 0x47) return 'png';
+      if (str(0, 4) === 'RIFF' && str(8, 4) === 'WEBP') return 'webp';
+      if (str(4, 4) === 'ftyp') {
+        var brand = str(8, 4);
+        if (/^(heic|heix|heim|heis|hevc|hevx|hevm|hevs|mif1|msf1|heif)$/.test(brand)) return 'heic';
+      }
+      // 拡張子フォールバック
+      var m = /\.(\w+)$/.exec(file.name.toLowerCase());
+      var ext = m ? m[1] : '';
+      if (ext === 'heic' || ext === 'heif') return 'heic';
+      if (ext === 'webp') return 'webp';
+      if (ext === 'png') return 'png';
+      if (ext === 'jpg' || ext === 'jpeg') return 'jpeg';
+      return 'unknown';
+    }
+    var LABEL = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP', heic: 'HEIC', unknown: '不明' };
+
+    /* ---------- HEIC から EXIF を取り出す（ベストエフォート） ---------- */
+    function u32(dv, p) { return dv.getUint32(p, false); }
+    function box4(dv, p) { return String.fromCharCode(dv.getUint8(p), dv.getUint8(p + 1), dv.getUint8(p + 2), dv.getUint8(p + 3)); }
+
+    function findBox(dv, start, end, type) {
+      var p = start;
+      while (p + 8 <= end) {
+        var size = u32(dv, p);
+        var t = box4(dv, p + 4);
+        var hdr = 8;
+        if (size === 1) { // 64bit size
+          size = u32(dv, p + 8) * 4294967296 + u32(dv, p + 12);
+          hdr = 16;
+        } else if (size === 0) {
+          size = end - p;
+        }
+        if (t === type) return { start: p, end: p + size, dataStart: p + hdr };
+        if (size < 8) break;
+        p += size;
+      }
+      return null;
+    }
+
+    // HEIC(ISOBMFF) を軽くパースして Exif アイテムの TIFF ブロックを返す（見つからなければ null）
+    function extractHeicExif(buf) {
+      try {
+        var dv = new DataView(buf);
+        var meta = findBox(dv, 0, dv.byteLength, 'meta');
+        if (!meta) return null;
+        var childStart = meta.dataStart + 4; // meta は FullBox（version/flags 4byte）
+        // iinf: item_type が 'Exif' の item_ID を得る
+        var iinf = findBox(dv, childStart, meta.end, 'iinf');
+        if (!iinf) return null;
+        var exifItemId = null;
+        // iinf は FullBox：version(1)+flags(3)、続いて entry_count（v0:16bit / v1+:32bit）
+        var iinfVer = dv.getUint8(iinf.dataStart);
+        var q = iinf.dataStart + 4;
+        var count = iinfVer === 0 ? dv.getUint16(q, false) : dv.getUint32(q, false);
+        q += iinfVer === 0 ? 2 : 4;
+        for (var i = 0; i < count && q + 8 <= iinf.end; i++) {
+          var isize = u32(dv, q);
+          var itype = box4(dv, q + 4);
+          if (itype === 'infe') {
+            // infe v2: version(1)+flags(3), item_ID(16), protection_index(16), item_type(4 chars)
+            var itemId = dv.getUint16(q + 12, false);
+            var it = box4(dv, q + 16);
+            if (it === 'Exif') exifItemId = itemId;
+          }
+          if (isize < 8) break;
+          q += isize;
+        }
+        if (exifItemId == null) return null;
+
+        // iloc: item の file offset / length
+        var iloc = findBox(dv, childStart, meta.end, 'iloc');
+        if (!iloc) return null;
+        var lp = iloc.dataStart;
+        var lver = dv.getUint8(lp);
+        lp += 4;
+        var b1 = dv.getUint8(lp), b2 = dv.getUint8(lp + 1);
+        var offsetSize = b1 >> 4, lengthSize = b1 & 0xf;
+        var baseOffsetSize = b2 >> 4, indexSize = b2 & 0xf;
+        lp += 2;
+        var itemCount = (lver < 2) ? dv.getUint16(lp, false) : dv.getUint32(lp, false);
+        lp += (lver < 2) ? 2 : 4;
+        function readInt(size) {
+          var v = 0;
+          for (var k = 0; k < size; k++) v = v * 256 + dv.getUint8(lp + k);
+          lp += size;
+          return v;
+        }
+        for (var j = 0; j < itemCount; j++) {
+          var itId = (lver < 2) ? dv.getUint16(lp, false) : dv.getUint32(lp, false);
+          lp += (lver < 2) ? 2 : 4;
+          if (lver === 1 || lver === 2) lp += 2; // construction_method
+          lp += 2; // data_reference_index
+          var baseOffset = readInt(baseOffsetSize);
+          var extentCount = dv.getUint16(lp, false); lp += 2;
+          var gotOff = null, gotLen = null;
+          for (var e = 0; e < extentCount; e++) {
+            if (indexSize) lp += indexSize;
+            var extOff = readInt(offsetSize);
+            var extLen = readInt(lengthSize);
+            if (e === 0) { gotOff = baseOffset + extOff; gotLen = extLen; }
+          }
+          if (itId === exifItemId && gotOff != null) {
+            var payload = new DataView(buf, gotOff, gotLen);
+            // Exif item: 先頭 4byte = TIFF ヘッダーまでのオフセット
+            var tiffOffset = payload.getUint32(0, false);
+            var tiffStart = gotOff + 4 + tiffOffset;
+            var tiffLen = gotLen - 4 - tiffOffset;
+            if (tiffLen <= 8) return null;
+            return new Uint8Array(buf, tiffStart, tiffLen);
+          }
+        }
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // 中身が空の最小 JPEG（piexif で EXIF を出し入れするための土台）
+    var MIN_JPEG = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAT8AH//Z';
+
+    // HEIC 由来の TIFF(Uint8Array) から piexif の exifObj を得る
+    function tiffToExifObj(tiff) {
+      try {
+        var merged = piexif.insert('Exif\x00\x00' + ab2bstr(tiff), MIN_JPEG);
+        return piexif.load(merged);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    /* ---------- 変換 ---------- */
+    function makeItem(file, srcFormat) {
+      return {
+        id: ++state.seq, file: file, srcFormat: srcFormat, srcSize: file.size,
+        status: 'waiting', note: '', outBlob: null, outName: '', outSize: null, url: null, thumbUrl: null
+      };
+    }
+
+    async function decodeToCanvas(blob, orient) {
+      var bmp;
+      try {
+        bmp = await createImageBitmap(blob, orient ? { imageOrientation: 'from-image' } : undefined);
+      } catch (e) {
+        bmp = await createImageBitmap(blob);
+      }
+      var cv = document.createElement('canvas');
+      cv.width = bmp.width; cv.height = bmp.height;
+      return { bmp: bmp, cv: cv };
+    }
+
+    function canvasToBlob(cv, mime, quality) {
+      return new Promise(function (res, rej) {
+        cv.toBlob(function (b) { b ? res(b) : rej(new Error('toBlob failed')); }, mime, quality);
+      });
+    }
+
+    async function convertOne(it, opts) {
+      var outFmt = opts.fmt;
+      var toJpeg = outFmt !== 'png';
+      var mime = outMime(outFmt);
+      var outName = baseName(it.file.name) + extFor(outFmt);
+
+      // 1) 実JPEG → JPG/JPEG：再エンコードなし（拡張子のみ変更）
+      if (it.srcFormat === 'jpeg' && toJpeg) {
+        var blob = it.file;
+        if (opts.exif === 'strip') {
+          var du = await blobToDataURL(it.file);
+          blob = dataURLToBlob(piexif.remove(du));
+        } else if (opts.exif === 'gps') {
+          var du2 = await blobToDataURL(it.file);
+          try {
+            var obj = piexif.load(du2);
+            obj.GPS = {};
+            blob = dataURLToBlob(piexif.insert(piexif.dump(obj), piexif.remove(du2)));
+          } catch (e) { blob = it.file; it.note = 'EXIF: GPS削除に失敗（元のまま）'; }
+        }
+        return { blob: new Blob([blob], { type: 'image/jpeg' }), name: outName };
+      }
+
+      // 1b) PNG → PNG：中身は同じなので拡張子（名前）だけ整えて返す
+      if (it.srcFormat === 'png' && outFmt === 'png') {
+        return { blob: new Blob([it.file], { type: 'image/png' }), name: outName };
+      }
+
+      // 2) デコード
+      var srcExifObj = null;
+      if (it.srcFormat === 'heic') {
+        if (typeof heic2any !== 'function') throw new Error('HEICライブラリを読み込めませんでした');
+        if (toJpeg && opts.exif !== 'strip') {
+          try {
+            var ab = await readArrayBuffer(it.file);
+            var tiff = extractHeicExif(ab);
+            if (tiff) srcExifObj = tiffToExifObj(tiff);
+          } catch (e) { /* noop */ }
+          if (toJpeg && opts.exif !== 'strip' && !srcExifObj) it.note = 'EXIF: 取得できませんでした';
+        }
+        var heicBlob = await heic2any({ blob: it.file, toType: mime, quality: toJpeg ? opts.quality : undefined });
+        if (Array.isArray(heicBlob)) heicBlob = heicBlob[0];
+        var outBlob = heicBlob;
+        if (toJpeg && srcExifObj) {
+          try {
+            srcExifObj['0th'] = srcExifObj['0th'] || {};
+            srcExifObj['0th'][piexif.ImageIFD.Orientation] = 1; // heic2any が回転済みのため
+            if (opts.exif === 'gps') srcExifObj.GPS = {};
+            var du3 = await blobToDataURL(heicBlob);
+            outBlob = dataURLToBlob(piexif.insert(piexif.dump(srcExifObj), du3));
+          } catch (e) { /* EXIFなしで続行 */ }
+        }
+        return { blob: outBlob, name: outName };
+      }
+
+      // WebP / PNG（および拡張子詐称でここに来た画像）→ canvas 経由
+      var d = await decodeToCanvas(it.file, true);
+      var ctx = d.cv.getContext('2d');
+      if (toJpeg) { ctx.fillStyle = opts.bg; ctx.fillRect(0, 0, d.cv.width, d.cv.height); }
+      ctx.drawImage(d.bmp, 0, 0);
+      if (d.bmp.close) d.bmp.close();
+      var cvBlob = await canvasToBlob(d.cv, mime, toJpeg ? opts.quality : undefined);
+      return { blob: cvBlob, name: outName };
+    }
+
+    async function runConvert() {
+      var opts = readOpts();
+      setBusy(true);
+      var okCount = 0;
+      for (var i = 0; i < state.items.length; i++) {
+        var it = state.items[i];
+        if (it.status === 'done') { okCount++; continue; }
+        it.status = 'working'; it.note = ''; renderRow(it);
+        try {
+          var r = await convertOne(it, opts);
+          it.outBlob = r.blob;
+          it.outName = r.name;
+          it.outSize = r.blob.size;
+          if (it.url) URL.revokeObjectURL(it.url);
+          it.url = URL.createObjectURL(r.blob);
+          if (!it.thumbUrl && r.blob.type === 'image/jpeg') it.thumbUrl = it.url; // HEIC など
+          it.status = 'done';
+          okCount++;
+        } catch (e) {
+          it.status = 'error';
+          it.note = (e && e.message) ? e.message : '変換に失敗しました';
+        }
+        renderRow(it);
+      }
+      setBusy(false);
+      updateActions();
+      if (okCount) toast(okCount + ' 件を変換しました');
+      else toast('変換に失敗しました', true);
+    }
+
+    function setBusy(b) {
+      els.convert.disabled = b || !state.items.length;
+      els.clear.disabled = b || !state.items.length;
+      els.zip.disabled = b || !state.items.some(function (x) { return x.status === 'done'; });
+      els.pick.disabled = b;
+      els.convert.textContent = b ? '変換中…' : '変換する';
+    }
+
+    /* ---------- ダウンロード ---------- */
+    function triggerDownload(blob, name) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+
+    function dedupeNames(items) {
+      var seen = Object.create(null), out = [];
+      items.forEach(function (it) {
+        var name = it.outName, base = name.replace(/\.[^.]+$/, ''), ext = name.slice(base.length), n = 1, cand = name;
+        while (seen[cand]) cand = base + ' (' + (++n) + ')' + ext;
+        seen[cand] = true; out.push(cand);
+      });
+      return out;
+    }
+
+    async function saveZip() {
+      var done = state.items.filter(function (x) { return x.status === 'done' && x.outBlob; });
+      if (!done.length) return;
+      els.zip.disabled = true;
+      var zip = new JSZip();
+      var names = dedupeNames(done);
+      done.forEach(function (it, i) { zip.file(names[i], it.outBlob); });
+      try {
+        var blob = await zip.generateAsync({ type: 'blob' });
+        var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+        triggerDownload(blob, 'images_' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + '.zip');
+      } catch (e) {
+        toast('ZIPの作成に失敗しました', true);
+      }
+      els.zip.disabled = false;
+    }
+
+    /* ---------- 描画 ---------- */
+    function rowEl(it) { return els.list.querySelector('[data-id="' + it.id + '"]'); }
+
+    function renderRow(it) {
+      var li = rowEl(it);
+      if (!li) {
+        li = document.createElement('li');
+        li.className = 'item';
+        li.dataset.id = it.id;
+        li.innerHTML =
+          '<img class="thumb" alt="">' +
+          '<div class="meta"><b class="fname"></b><small class="sub"></small><small class="note"></small></div>' +
+          '<span class="status"></span>' +
+          '<button class="icon-btn dl" title="保存" disabled>↓</button>' +
+          '<button class="icon-btn rm" title="削除">✕</button>';
+        els.list.appendChild(li);
+        li.querySelector('.rm').addEventListener('click', function () { removeItem(it.id); });
+        li.querySelector('.dl').addEventListener('click', function () {
+          if (it.outBlob) triggerDownload(it.outBlob, it.outName);
+        });
+      }
+      var thumb = li.querySelector('.thumb');
+      if (it.thumbUrl && thumb.src !== it.thumbUrl) thumb.src = it.thumbUrl;
+      li.querySelector('.fname').textContent = it.file.name;
+      var outLabel = state.fmt.toUpperCase();
+      var sizeTxt = it.outSize != null
+        ? '<b>' + fmtBytes(it.srcSize) + '</b> → <b>' + fmtBytes(it.outSize) + '</b>'
+        : '<b>' + fmtBytes(it.srcSize) + '</b>';
+      li.querySelector('.sub').innerHTML = LABEL[it.srcFormat] + ' → ' + outLabel + ' ・ ' + sizeTxt;
+      li.querySelector('.note').textContent = it.note || '';
+      var st = li.querySelector('.status');
+      st.className = 'status ' + it.status;
+      st.textContent = { waiting: '待機', working: '変換中', done: '完了', error: 'エラー' }[it.status];
+      li.querySelector('.dl').disabled = it.status !== 'done';
+    }
+
+    function renderAll() { state.items.forEach(renderRow); updateActions(); }
+
+    function updateActions() {
+      var n = state.items.length;
+      els.convert.disabled = !n;
+      els.clear.disabled = !n;
+      els.zip.disabled = !state.items.some(function (x) { return x.status === 'done' && x.outBlob; });
+    }
+
+    function removeItem(id) {
+      var idx = state.items.findIndex(function (x) { return x.id === id; });
+      if (idx < 0) return;
+      var it = state.items[idx];
+      if (it.url) URL.revokeObjectURL(it.url);
+      if (it.thumbUrl) URL.revokeObjectURL(it.thumbUrl);
+      state.items.splice(idx, 1);
+      var li = rowEl(it); if (li) li.remove();
+      updateActions();
+    }
+
+    function clearAll() {
+      state.items.forEach(function (it) {
+        if (it.url) URL.revokeObjectURL(it.url);
+        if (it.thumbUrl) URL.revokeObjectURL(it.thumbUrl);
+      });
+      state.items = [];
+      els.list.innerHTML = '';
+      updateActions();
+    }
+
+    /* ---------- ファイル追加 ---------- */
+    async function addFiles(fileList) {
+      var arr = Array.prototype.slice.call(fileList).filter(function (f) { return f && f.size >= 0; });
+      for (var i = 0; i < arr.length; i++) {
+        var f = arr[i];
+        var fmt = await sniffFormat(f);
+        if (fmt === 'unknown') { toast('未対応の形式です: ' + f.name, true); continue; }
+        var it = makeItem(f, fmt);
+        state.items.push(it);
+        renderRow(it);
+        makeThumb(it);
+      }
+      updateActions();
+    }
+
+    function makeThumb(it) {
+      // HEIC はブラウザが直接描画できないので、変換後の画像をサムネに使う（後段で設定）
+      if (it.srcFormat === 'heic') return;
+      try {
+        it.thumbUrl = URL.createObjectURL(it.file);
+        var li = rowEl(it);
+        if (li) li.querySelector('.thumb').src = it.thumbUrl;
+      } catch (e) { /* サムネなしでも可 */ }
+    }
+
+    /* ---------- オプション ---------- */
+    function readOpts() {
+      return {
+        fmt: state.fmt,
+        quality: clamp(parseFloat(els.quality.value), 0.5, 1, 0.92),
+        bg: els.bg.value || '#ffffff',
+        exif: els.exif.value
+      };
+    }
+    function clamp(v, lo, hi, d) { v = isNaN(v) ? d : v; return Math.min(hi, Math.max(lo, v)); }
+
+    function saveOpts() {
+      try { localStorage.setItem(OPTS_KEY, JSON.stringify(readOpts())); } catch (e) {}
+    }
+    function loadOpts() {
+      var o;
+      try { o = JSON.parse(localStorage.getItem(OPTS_KEY) || 'null'); } catch (e) { o = null; }
+      if (!o) return;
+      if (o.fmt && /^(jpg|jpeg|png)$/.test(o.fmt)) state.fmt = o.fmt;
+      if (typeof o.quality === 'number') els.quality.value = o.quality;
+      if (o.bg) els.bg.value = o.bg;
+      if (o.exif && /^(keep|strip|gps)$/.test(o.exif)) els.exif.value = o.exif;
+    }
+
+    function syncOptUI() {
+      Array.prototype.forEach.call(els.fmtSeg.children, function (b) {
+        b.classList.toggle('active', b.dataset.fmt === state.fmt);
+      });
+      var isJpeg = state.fmt !== 'png';
+      els.qualityFld.hidden = !isJpeg;
+      els.bgFld.hidden = !isJpeg;
+      els.qualityVal.textContent = Math.round(parseFloat(els.quality.value) * 100);
+      els.bgVal.textContent = els.bg.value;
+      els.exifHint.textContent = state.fmt === 'png'
+        ? '※ PNG 出力では EXIF は保持されません'
+        : 'JPEG ⇄ JPG の拡張子変更だけの場合、EXIF は変更されません';
+      // 出力形式が変わったら再変換が必要
+      state.items.forEach(function (it) {
+        if (it.status === 'done') {
+          it.status = 'waiting'; it.note = ''; it.outBlob = null; it.outSize = null;
+          if (it.url) { URL.revokeObjectURL(it.url); it.url = null; }
+        }
+      });
+      renderAll();
+      saveOpts();
+    }
+
+    /* ---------- 配線 ---------- */
+    els.fmtSeg.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-fmt]');
+      if (!b) return;
+      state.fmt = b.dataset.fmt;
+      syncOptUI();
+    });
+    els.quality.addEventListener('input', function () {
+      els.qualityVal.textContent = Math.round(parseFloat(els.quality.value) * 100);
+      saveOpts();
+    });
+    els.bg.addEventListener('input', function () { els.bgVal.textContent = els.bg.value; saveOpts(); });
+    els.exif.addEventListener('change', saveOpts);
+
+    els.pick.addEventListener('click', function () { els.file.click(); });
+    els.file.addEventListener('change', function () { addFiles(els.file.files); els.file.value = ''; });
+
+    ['dragenter', 'dragover'].forEach(function (ev) {
+      els.drop.addEventListener(ev, function (e) { e.preventDefault(); els.drop.classList.add('drag'); });
+    });
+    ['dragleave', 'dragend', 'drop'].forEach(function (ev) {
+      els.drop.addEventListener(ev, function (e) { e.preventDefault(); els.drop.classList.remove('drag'); });
+    });
+    els.drop.addEventListener('drop', function (e) {
+      if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+    });
+    window.addEventListener('dragover', function (e) { e.preventDefault(); });
+    window.addEventListener('drop', function (e) { e.preventDefault(); });
+
+    els.convert.addEventListener('click', function () { if (!els.convert.disabled) runConvert(); });
+    els.zip.addEventListener('click', function () { if (!els.zip.disabled) saveZip(); });
+    els.clear.addEventListener('click', function () { if (!els.clear.disabled) clearAll(); });
+
+    /* ---------- 初期化 ---------- */
+    loadOpts();
+    syncOptUI();
+  })();
+  </script>
+</body>
+</html>
