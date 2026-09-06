@@ -3,3 +3,8 @@
 
 # Vendored minified libraries: store verbatim, never convert
 PDF_Craft/lib/** -text
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.ico binary
