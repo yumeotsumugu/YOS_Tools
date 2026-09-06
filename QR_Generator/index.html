@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>QR Generator | ローカルQRコード生成</title>
+  <link rel="icon" sizes="32x32" href="../assets/icon-32.png">
+  <link rel="icon" sizes="256x256" href="../assets/icon.png">
+  <link rel="apple-touch-icon" href="../assets/icon.png">
+  <style>
+    :root{
+      --navy:#123052; --blue:#2f6fed; --bg:#f4f7fb; --paper:#fff; --line:#dde5ef;
+      --ink:#1a2635; --muted:#748196; --faint:#9aa7b7; --soft:#eef3f9;
+      font-family:'Zen Kaku Gothic New','Yu Gothic','Hiragino Kaku Gothic ProN','Noto Sans CJK JP','Noto Sans JP',Meiryo,sans-serif;
+      color:var(--ink); background:var(--bg); font-synthesis:none;
+    }
+    @media (prefers-color-scheme:dark){
+      :root{--navy:#3b6fd4; --blue:#6b9bff; --bg:#0f141b; --paper:#161d27; --line:#26303d;
+        --ink:#e7ecf3; --muted:#9aa7b7; --faint:#6a7789; --soft:#1c2430;}
+    }
+    *{box-sizing:border-box}
+    body{margin:0; min-height:100vh; background:var(--bg); line-height:1.6; -webkit-font-smoothing:antialiased}
+    a{color:inherit}
+    .wrap{max-width:940px; margin:0 auto; padding:40px 24px 80px}
+
+    header.site{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+    .mark{width:34px; height:34px; border-radius:9px; object-fit:cover; display:block;
+      background:var(--navy); box-shadow:0 3px 9px #12305233}
+    header.site strong{font:700 18px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:.2px}
+    .back{display:inline-flex; align-items:center; gap:6px; margin-left:auto; padding:8px 12px;
+      border:1px solid var(--line); border-radius:999px; background:var(--paper);
+      color:var(--muted); font-size:12px; text-decoration:none}
+    .back:hover{border-color:var(--blue); color:var(--blue)}
+
+    .hero{margin-bottom:26px}
+    .hero h1{margin:0 0 8px; font-size:24px; letter-spacing:-.4px}
+    .hero p{margin:0; max-width:620px; color:var(--muted); font-size:13px}
+
+    .panel{display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start}
+    @media (max-width:760px){ .panel{grid-template-columns:1fr} }
+
+    .card{padding:20px; border:1px solid var(--line); border-radius:14px; background:var(--paper);
+      box-shadow:0 4px 16px #1c355910}
+    label.fld{display:block; margin-bottom:14px}
+    label.fld > span{display:block; margin-bottom:6px; color:var(--faint);
+      font:700 10px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:1.2px}
+    textarea, input[type=text], select, input[type=number]{
+      width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px;
+      font:inherit; font-size:13px; background:var(--bg); color:var(--ink)}
+    textarea{min-height:96px; resize:vertical; line-height:1.5}
+    textarea:focus, input:focus, select:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+
+    .opts{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .opts .full{grid-column:1 / -1}
+    .color-row{display:flex; align-items:center; gap:8px}
+    .color-row input[type=color]{width:40px; height:34px; padding:2px; border:1px solid var(--line);
+      border-radius:7px; background:var(--bg); cursor:pointer; flex:0 0 auto}
+    .color-row output{font:600 12px/1 'DM Sans',monospace; color:var(--muted)}
+    .chk{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); cursor:pointer}
+
+    .preview-card{display:flex; flex-direction:column; align-items:center; gap:14px}
+    .stage{width:100%; display:grid; place-items:center; padding:16px; border-radius:12px;
+      background-color:var(--soft);
+      background-image:
+        conic-gradient(from 90deg at 50% 50%, #00000000 25%, #0000000d 0 50%, #00000000 0 75%, #0000000d 0);
+      background-size:22px 22px}
+    #preview{max-width:100%; height:auto; border-radius:6px; image-rendering:pixelated;
+      box-shadow:0 2px 10px #1c355922}
+    #preview.empty{display:none}
+    .ph{color:var(--faint); font-size:12px; text-align:center; padding:40px 10px}
+    .meta{width:100%; display:flex; justify-content:space-between; color:var(--faint); font-size:11px}
+
+    .actions{display:flex; flex-wrap:wrap; gap:8px; width:100%}
+    button.btn{flex:1; min-width:92px; padding:10px 12px; border:1px solid var(--line); border-radius:8px;
+      background:var(--paper); color:var(--ink); font:700 12px 'DM Sans','Yu Gothic',sans-serif;
+      cursor:pointer}
+    button.btn:hover:not(:disabled){border-color:var(--blue); color:var(--blue)}
+    button.btn.primary{background:var(--navy); color:#fff; border-color:var(--navy)}
+    button.btn.primary:hover:not(:disabled){background:var(--blue); border-color:var(--blue); color:#fff}
+    button.btn:disabled{opacity:.45; cursor:default}
+
+    .hist{margin-top:26px}
+    .hist-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+    .hist-head h2{margin:0; font-size:14px}
+    .hist-head button{padding:6px 10px; border:1px solid var(--line); border-radius:7px; background:var(--paper);
+      color:var(--muted); font-size:11px; cursor:pointer}
+    .hist-head button:hover{border-color:#e0602f; color:#e0602f}
+    ul.hist-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+    ul.hist-list li{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line);
+      border-radius:9px; background:var(--paper)}
+    ul.hist-list li .txt{flex:1; min-width:0}
+    ul.hist-list li .txt b{display:block; font-weight:500; font-size:12.5px; white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis}
+    ul.hist-list li .txt small{color:var(--faint); font-size:10px}
+    ul.hist-list li .use{padding:5px 9px; border:1px solid var(--line); border-radius:6px; background:var(--bg);
+      color:var(--blue); font:700 11px 'DM Sans',sans-serif; cursor:pointer; flex:0 0 auto}
+    ul.hist-list li .use:hover{border-color:var(--blue)}
+    ul.hist-list li .del{border:0; background:none; color:var(--faint); font-size:16px; cursor:pointer;
+      line-height:1; padding:2px 4px; flex:0 0 auto}
+    ul.hist-list li .del:hover{color:#e0602f}
+    .hist-empty{color:var(--faint); font-size:12px; padding:8px 2px}
+
+    .privacy{display:inline-flex; align-items:center; gap:8px; margin-top:22px;
+      padding:8px 13px; border:1px solid var(--line); border-radius:999px;
+      background:var(--paper); color:var(--muted); font-size:11px}
+    .privacy b{color:var(--ink)}
+
+    .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(10px);
+      padding:10px 16px; border-radius:8px; background:var(--navy); color:#fff; font-size:12px;
+      opacity:0; pointer-events:none; transition:.2s}
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <img class="mark" src="../assets/icon.png" alt="">
+      <strong>QR Generator</strong>
+      <a class="back" href="../index.html">← ツール一覧</a>
+    </header>
+
+    <section class="hero">
+      <h1>QRコードジェネレーター</h1>
+      <p>URLやテキストを入れるだけでQRコードを生成します。名刺・自作サイト・Wi-Fi情報の共有などに。生成も履歴もすべてこの端末の中だけで処理されます。</p>
+    </section>
+
+    <div class="panel">
+      <div class="card">
+        <label class="fld">
+          <span>URL / テキスト</span>
+          <textarea id="text" placeholder="https://example.com　または任意のテキスト" autofocus></textarea>
+        </label>
+
+        <div class="opts">
+          <label class="fld">
+            <span>誤り訂正レベル</span>
+            <select id="ecl">
+              <option value="L">L ／ 約7%復元</option>
+              <option value="M" selected>M ／ 約15%復元</option>
+              <option value="Q">Q ／ 約25%復元</option>
+              <option value="H">H ／ 約30%復元</option>
+            </select>
+          </label>
+          <label class="fld">
+            <span>書き出しサイズ (px)</span>
+            <input type="number" id="size" min="120" max="2000" step="20" value="360">
+          </label>
+          <label class="fld">
+            <span>余白（モジュール）</span>
+            <input type="number" id="margin" min="0" max="16" step="1" value="4">
+          </label>
+          <label class="fld">
+            <span>前景色</span>
+            <div class="color-row">
+              <input type="color" id="fg" value="#123052">
+              <output id="fgv">#123052</output>
+            </div>
+          </label>
+          <label class="fld full">
+            <span>背景色</span>
+            <div class="color-row">
+              <input type="color" id="bg" value="#ffffff">
+              <output id="bgv">#ffffff</output>
+              <label class="chk"><input type="checkbox" id="transparent"> 透明</label>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="card preview-card">
+        <div class="stage">
+          <img id="preview" class="empty" alt="生成されたQRコード">
+          <div class="ph" id="ph">ここにプレビューが表示されます</div>
+        </div>
+        <div class="meta">
+          <span id="metaVer">—</span>
+          <span id="metaLen">0 文字</span>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="dlPng" disabled>PNG保存</button>
+          <button class="btn" id="dlSvg" disabled>SVG保存</button>
+          <button class="btn" id="copyImg" disabled>画像コピー</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hist">
+      <div class="hist-head">
+        <h2>履歴</h2>
+        <button id="clearHist">すべて削除</button>
+      </div>
+      <ul class="hist-list" id="histList"></ul>
+      <div class="hist-empty" id="histEmpty">まだ履歴はありません。生成すると自動で保存されます（この端末のブラウザ内のみ）。</div>
+    </div>
+
+    <span class="privacy">◇ <span><b>端末内処理</b> ／ QRも履歴も外部に送信されません</span></span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="lib/qrcode.min.js"></script>
+  <script>
+  (function(){
+    'use strict';
+    // 非ASCII（日本語など）を正しく埋め込むため UTF-8 バイトエンコードを使う
+    if (qrcode.stringToBytesFuncs && qrcode.stringToBytesFuncs['UTF-8']){
+      qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+    }
+    var HIST_KEY = 'yos.qr.history.v1';
+    var OPTS_KEY = 'yos.qr.opts.v1';
+    var HIST_MAX = 50;
+
+    var $ = function(id){ return document.getElementById(id); };
+    var els = {
+      text:$('text'), ecl:$('ecl'), size:$('size'), margin:$('margin'),
+      fg:$('fg'), fgv:$('fgv'), bg:$('bg'), bgv:$('bgv'), transparent:$('transparent'),
+      preview:$('preview'), ph:$('ph'), metaVer:$('metaVer'), metaLen:$('metaLen'),
+      dlPng:$('dlPng'), dlSvg:$('dlSvg'), copyImg:$('copyImg'),
+      histList:$('histList'), histEmpty:$('histEmpty'), clearHist:$('clearHist'),
+      toast:$('toast')
+    };
+
+    var state = { qr:null, moduleCount:0 };
+    var toastTimer = null;
+    function toast(msg){
+      els.toast.textContent = msg;
+      els.toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 1800);
+    }
+
+    /* ---------- options persistence ---------- */
+    function readOpts(){
+      return {
+        ecl: els.ecl.value,
+        size: clampInt(els.size.value, 120, 2000, 360),
+        margin: clampInt(els.margin.value, 0, 16, 4),
+        fg: els.fg.value,
+        bg: els.bg.value,
+        transparent: els.transparent.checked
+      };
+    }
+    function clampInt(v, lo, hi, dflt){
+      v = parseInt(v, 10);
+      if (isNaN(v)) return dflt;
+      return Math.min(hi, Math.max(lo, v));
+    }
+    function saveOpts(){
+      try { localStorage.setItem(OPTS_KEY, JSON.stringify(readOpts())); } catch(e){}
+    }
+    function loadOpts(){
+      var o;
+      try { o = JSON.parse(localStorage.getItem(OPTS_KEY) || 'null'); } catch(e){ o = null; }
+      if (!o) return;
+      if (o.ecl) els.ecl.value = o.ecl;
+      if (o.size) els.size.value = o.size;
+      if (typeof o.margin === 'number') els.margin.value = o.margin;
+      if (o.fg) els.fg.value = o.fg;
+      if (o.bg) els.bg.value = o.bg;
+      els.transparent.checked = !!o.transparent;
+    }
+
+    /* ---------- QR build + render ---------- */
+    function buildQr(text, ecl){
+      var qr = qrcode(0, ecl);          // type 0 = auto-fit version
+      qr.addData(text);                 // Byte mode, UTF-8
+      qr.make();
+      return qr;
+    }
+
+    function renderCanvas(qr, opt){
+      var count = qr.getModuleCount();
+      var total = count + opt.margin * 2;
+      // integer scale so modules stay crisp, then the <img> is displayed responsively
+      var scale = Math.max(1, Math.round(opt.size / total));
+      var px = total * scale;
+      var cv = document.createElement('canvas');
+      cv.width = px; cv.height = px;
+      var ctx = cv.getContext('2d');
+      if (!opt.transparent){
+        ctx.fillStyle = opt.bg;
+        ctx.fillRect(0, 0, px, px);
+      }
+      ctx.fillStyle = opt.fg;
+      for (var r = 0; r < count; r++){
+        for (var c = 0; c < count; c++){
+          if (qr.isDark(r, c)){
+            ctx.fillRect((c + opt.margin) * scale, (r + opt.margin) * scale, scale, scale);
+          }
+        }
+      }
+      return cv;
+    }
+
+    function buildSvg(qr, opt){
+      var count = qr.getModuleCount();
+      var total = count + opt.margin * 2;
+      var parts = [];
+      parts.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + total + ' ' + total +
+        '" width="' + opt.size + '" height="' + opt.size + '" shape-rendering="crispEdges">');
+      if (!opt.transparent){
+        parts.push('<rect width="' + total + '" height="' + total + '" fill="' + opt.bg + '"/>');
+      }
+      var d = '';
+      for (var r = 0; r < count; r++){
+        for (var c = 0; c < count; c++){
+          if (qr.isDark(r, c)){
+            d += 'M' + (c + opt.margin) + ' ' + (r + opt.margin) + 'h1v1h-1z';
+          }
+        }
+      }
+      parts.push('<path d="' + d + '" fill="' + opt.fg + '"/>');
+      parts.push('</svg>');
+      return parts.join('');
+    }
+
+    var genTimer = null, histTimer = null;
+    function scheduleGenerate(){
+      clearTimeout(genTimer);
+      genTimer = setTimeout(generate, 200);
+    }
+
+    function generate(){
+      var text = els.text.value;
+      var opt = readOpts();
+      saveOpts();
+      els.metaLen.textContent = text.length + ' 文字';
+
+      if (!text){
+        state.qr = null;
+        els.preview.classList.add('empty');
+        els.preview.removeAttribute('src');
+        els.ph.style.display = '';
+        els.ph.textContent = 'ここにプレビューが表示されます';
+        els.metaVer.textContent = '—';
+        setActions(false);
+        return;
+      }
+
+      var qr;
+      try {
+        qr = buildQr(text, opt.ecl);
+      } catch (e){
+        state.qr = null;
+        els.preview.classList.add('empty');
+        els.preview.removeAttribute('src');
+        els.ph.style.display = '';
+        els.ph.textContent = '文字数が多すぎます。テキストを短くするか誤り訂正レベルを下げてください。';
+        els.metaVer.textContent = '—';
+        setActions(false);
+        return;
+      }
+
+      state.qr = qr;
+      state.opt = opt;
+      var cv = renderCanvas(qr, opt);
+      els.preview.src = cv.toDataURL('image/png');
+      els.preview.classList.remove('empty');
+      els.ph.style.display = 'none';
+      var count = qr.getModuleCount();
+      var version = (count - 17) / 4;
+      els.metaVer.textContent = 'バージョン ' + version + '（' + count + '×' + count + '）・レベル ' + opt.ecl;
+      setActions(true);
+
+      clearTimeout(histTimer);
+      histTimer = setTimeout(function(){ addHistory(text, opt.ecl); }, 1400);
+    }
+
+    function setActions(on){
+      els.dlPng.disabled = !on;
+      els.dlSvg.disabled = !on;
+      els.copyImg.disabled = !on || !(navigator.clipboard && window.ClipboardItem);
+    }
+
+    /* ---------- downloads ---------- */
+    function safeName(text){
+      var base = text.trim();
+      var m = base.match(/^https?:\/\/([^\/\s]+)/i);
+      if (m) base = m[1];
+      base = base.replace(/[\\/:*?"<>|\s]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+      if (!base) base = 'qrcode';
+      return base.slice(0, 40);
+    }
+    function triggerDownload(href, filename){
+      var a = document.createElement('a');
+      a.href = href; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+
+    els.dlPng.addEventListener('click', function(){
+      if (!state.qr) return;
+      var cv = renderCanvas(state.qr, readOpts());
+      triggerDownload(cv.toDataURL('image/png'), 'qr_' + safeName(els.text.value) + '.png');
+    });
+
+    els.dlSvg.addEventListener('click', function(){
+      if (!state.qr) return;
+      var svg = buildSvg(state.qr, readOpts());
+      var blob = new Blob([svg], { type: 'image/svg+xml' });
+      var url = URL.createObjectURL(blob);
+      triggerDownload(url, 'qr_' + safeName(els.text.value) + '.svg');
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    });
+
+    els.copyImg.addEventListener('click', function(){
+      if (!state.qr || !(navigator.clipboard && window.ClipboardItem)) return;
+      var cv = renderCanvas(state.qr, readOpts());
+      cv.toBlob(function(blob){
+        if (!blob) { toast('コピーに失敗しました'); return; }
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+          .then(function(){ toast('画像をコピーしました'); })
+          .catch(function(){ toast('コピーに失敗しました'); });
+      }, 'image/png');
+    });
+
+    /* ---------- history ---------- */
+    function loadHistory(){
+      try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]') || []; }
+      catch(e){ return []; }
+    }
+    function storeHistory(list){
+      try { localStorage.setItem(HIST_KEY, JSON.stringify(list)); } catch(e){}
+    }
+    function addHistory(text, ecl){
+      if (!text) return;
+      var list = loadHistory();
+      list = list.filter(function(it){ return it.text !== text; });
+      list.unshift({ text: text, ecl: ecl, ts: Date.now() });
+      if (list.length > HIST_MAX) list = list.slice(0, HIST_MAX);
+      storeHistory(list);
+      renderHistory();
+    }
+    function fmtDate(ts){
+      var d = new Date(ts);
+      var p = function(n){ return (n < 10 ? '0' : '') + n; };
+      return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' +
+        p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    function renderHistory(){
+      var list = loadHistory();
+      els.histList.innerHTML = '';
+      els.histEmpty.style.display = list.length ? 'none' : '';
+      list.forEach(function(it, idx){
+        var li = document.createElement('li');
+        var txt = document.createElement('div');
+        txt.className = 'txt';
+        var b = document.createElement('b'); b.textContent = it.text;
+        var s = document.createElement('small');
+        s.textContent = 'レベル ' + (it.ecl || 'M') + '・' + fmtDate(it.ts);
+        txt.appendChild(b); txt.appendChild(s);
+
+        var use = document.createElement('button');
+        use.className = 'use'; use.type = 'button'; use.textContent = '使う';
+        use.addEventListener('click', function(){
+          els.text.value = it.text;
+          if (it.ecl) els.ecl.value = it.ecl;
+          generate();
+          els.text.focus();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        var del = document.createElement('button');
+        del.className = 'del'; del.type = 'button'; del.title = '削除';
+        del.setAttribute('aria-label', '削除'); del.textContent = '×';
+        del.addEventListener('click', function(){
+          var cur = loadHistory();
+          cur.splice(idx, 1);
+          storeHistory(cur);
+          renderHistory();
+        });
+
+        li.appendChild(txt); li.appendChild(use); li.appendChild(del);
+        els.histList.appendChild(li);
+      });
+    }
+    els.clearHist.addEventListener('click', function(){
+      if (!loadHistory().length) return;
+      if (!confirm('履歴をすべて削除しますか？')) return;
+      storeHistory([]);
+      renderHistory();
+    });
+
+    /* ---------- wiring ---------- */
+    els.fg.addEventListener('input', function(){ els.fgv.textContent = els.fg.value; scheduleGenerate(); });
+    els.bg.addEventListener('input', function(){ els.bgv.textContent = els.bg.value; scheduleGenerate(); });
+    els.transparent.addEventListener('change', scheduleGenerate);
+    els.text.addEventListener('input', scheduleGenerate);
+    els.ecl.addEventListener('change', scheduleGenerate);
+    els.size.addEventListener('input', scheduleGenerate);
+    els.margin.addEventListener('input', scheduleGenerate);
+
+    loadOpts();
+    els.fgv.textContent = els.fg.value;
+    els.bgv.textContent = els.bg.value;
+    renderHistory();
+    setActions(false);
+    generate();
+  })();
+  </script>
+</body>
+</html>
