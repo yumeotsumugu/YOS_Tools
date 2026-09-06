@@ -22,7 +22,11 @@ YOS_Tools/
 
 ## 使い方
 
-`index.html` をブラウザで開く（または簡易サーバー経由）。カードから各ツールへ移動します。
+公開版は <https://yumeotsumugu.github.io/YOS_Tools/> で使えます。
+Web 上でファイルを扱うのが気になる場合は、
+[ZIP をダウンロード](https://github.com/yumeotsumugu/YOS_Tools/archive/refs/heads/main.zip)
+して展開し、`index.html` をブラウザで開けば完全ローカルで使えます（または簡易サーバー経由）。
+カードから各ツールへ移動します。
 
 ```sh
 # 簡易サーバーの例

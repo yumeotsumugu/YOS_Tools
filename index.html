@@ -30,6 +30,20 @@
 
     .section-label{margin:0 0 16px; color:var(--faint); font:700 10px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:1.6px}
 
+    .concept{margin:4px 0 46px}
+    .concept-title{margin:0 0 10px; font-size:19px; letter-spacing:-.3px}
+    .concept-lead{margin:0 0 16px; font-size:15px; font-weight:700; color:var(--ink)}
+    .concept p{margin:0 0 12px; max-width:660px; color:var(--muted); font-size:13px; line-height:1.9}
+    .concept p strong{color:var(--ink); font-weight:700}
+    .concept .concept-closing{margin-top:18px; color:var(--ink)}
+    .concept-links{display:flex; flex-wrap:wrap; gap:10px; margin-top:22px}
+    .cbtn{display:inline-flex; align-items:center; gap:7px; padding:9px 15px; border-radius:999px;
+      border:1px solid var(--line); background:var(--paper); color:var(--muted);
+      font:700 12px 'DM Sans','Yu Gothic',sans-serif; text-decoration:none}
+    .cbtn:hover{border-color:var(--blue); color:var(--blue)}
+    .cbtn--primary{background:var(--navy); border-color:var(--navy); color:#fff}
+    .cbtn--primary:hover{background:var(--blue); border-color:var(--blue); color:#fff}
+
     .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:18px}
     .card{display:flex; flex-direction:column; gap:14px; padding:22px; border:1px solid var(--line);
       border-radius:14px; background:var(--paper); box-shadow:0 4px 16px #1c355910; transition:.16s}
@@ -137,8 +151,22 @@
 
     <section class="hero">
       <h1>ブラウザだけで完結する道具箱</h1>
-      <p>インストール不要・ビルド不要。ファイルは外部サーバーへ送信されず、すべてあなたの端末の中だけで処理されます。使いたいツールを選んでください。</p>
       <span class="privacy">◇ <span><b>端末内処理</b> ／ データは外部に送信されません</span></span>
+    </section>
+
+    <section class="concept">
+      <h2 class="concept-title">YOS Toolsとは</h2>
+      <p class="concept-lead">「ちょっとだけ使いたい」に、ちょうどいいツールを。</p>
+      <p>本格的な作業をするなら、専用のソフトを使うのが一番です。でも、ちょっとした加工や変換のためだけにソフトを購入したり、インストールしたりするほどではないこともあります。</p>
+      <p>YOS Toolsは、そんな<strong>「簡単なことだけ、手軽に、安心してやりたい」</strong>という場面のための無料ブラウザツール集です。</p>
+      <p>多機能さや専門性を追求するのではなく、日常でちょっと必要になる機能に絞って、シンプルに使えることを大切にしています。</p>
+      <p>入力・読み込みしたデータは、原則として外部へ送信せず、利用者のブラウザ内で処理します。</p>
+      <p><strong>それでもWeb上でファイルを扱うのが気になる場合は、ソースコードを公開しているGitHubからYOS Tools一式をダウンロードし、完全ローカル環境で使用することもできます。</strong></p>
+      <p class="concept-closing"><strong>専用ソフトを使うほどではない。<br>でも、ちょっとだけやりたい。</strong><br>YOS Toolsは、その「ちょっと」のための道具箱です。</p>
+      <div class="concept-links">
+        <a class="cbtn cbtn--primary" href="https://github.com/yumeotsumugu/YOS_Tools/archive/refs/heads/main.zip">YOS Toolsをダウンロード（ZIP）</a>
+        <a class="cbtn" href="https://github.com/yumeotsumugu/YOS_Tools" target="_blank" rel="noopener noreferrer">ソースコード（GitHub）</a>
+      </div>
     </section>
 
     <p class="section-label">TOOLS</p>
