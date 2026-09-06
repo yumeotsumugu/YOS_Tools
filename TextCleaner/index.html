@@ -14,7 +14,8 @@
     body{min-height:100vh}
     .wrap{max-width:1060px; margin:0 auto; padding:40px 24px 80px}
 
-    header.site{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+    header.site{position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:12px;
+      padding:14px 0 16px; background:var(--bg)}
     .mark{width:34px; height:34px; border-radius:9px; object-fit:cover; display:block;
       background:var(--navy); box-shadow:0 3px 9px #12305233}
     header.site strong{font:700 18px/1 var(--font-head); letter-spacing:.2px}

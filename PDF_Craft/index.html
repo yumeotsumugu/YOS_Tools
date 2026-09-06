@@ -15,7 +15,7 @@
        ../assets/common.css で定義。ここは PDF Craft 固有のレイアウトのみ。 */
     body{min-width:1024px}
 
-    .topbar{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:var(--paper);border-bottom:1px solid var(--line)}
+    .topbar{position:sticky;top:0;z-index:50;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:var(--paper);border-bottom:1px solid var(--line)}
     .brand,.top-actions,.history-actions,.save-actions,.view-actions,.workspace-head,.selection-bar,.status-line{display:flex;align-items:center}
     .brand{gap:11px}
     .brand strong{display:block;font:700 18px/18px var(--font-head)}
