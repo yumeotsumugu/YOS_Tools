@@ -61,6 +61,24 @@ input, select, textarea {
   font-family: inherit;
 }
 
+/* 明るい背景に置かれる入力欄の背景色を明示（共通トークン移行に伴うダークモード対応）。
+   文字色は各トークン（--color-text）なので、背景を指定しないと
+   ダークモードで「白背景 × 明るい文字」になり読めなくなる。
+   ※ 暗いヘッダー上の .filename-input / .project-name-header-input は対象外。 */
+.project-name-input,
+.custom-size-field input,
+.property-row input[type="number"],
+.property-row select,
+.property-textarea,
+.table-cell-input,
+.zoom-input,
+.apng-controls input[type="number"],
+.apng-controls select,
+.apng-loop-controls input[type="number"] {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
 /* ============================================================
    スタート画面
    ============================================================ */

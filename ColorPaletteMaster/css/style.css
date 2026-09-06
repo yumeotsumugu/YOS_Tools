@@ -217,6 +217,7 @@
   background:var(--soft); border-left:4px solid var(--blue);
 }
 .readme-content .note strong{ color:var(--ink); }
+.readme-content a{ color:var(--blue); text-decoration:underline; }
 
 .collapsible{
   display:flex; align-items:center; justify-content:space-between;
@@ -230,32 +231,8 @@
 .collapsible-content{ max-height:0; overflow:hidden; transition:max-height .3s ease-out; }
 .collapsible-content.active{ max-height:4000px; transition:max-height .5s ease-in; }
 
-/* ---- テーマ切替メニュー ---- */
-.theme-toggle{
-  width:40px; height:40px; display:grid; place-items:center;
-  border-radius:10px; color:#fff; background:transparent; cursor:pointer;
-}
-.theme-toggle:hover{ background:#ffffff26; }
-.theme-toggle svg{ width:22px; height:22px; }
-.theme-menu{
-  display:none; position:absolute; top:52px; right:0; min-width:190px;
-  overflow:hidden; z-index:1000;
-  border:1px solid var(--line); border-radius:10px;
-  background:var(--paper); box-shadow:var(--shadow-pop);
-}
-.theme-menu.active{ display:block; }
-.theme-option{
-  display:flex; align-items:center; gap:12px; width:100%;
-  padding:12px 14px; border:0; background:none; cursor:pointer;
-  text-align:left; font:inherit; font-size:14px; color:var(--ink);
-}
-.theme-option:hover{ background:var(--soft); }
-.theme-option.selected{
-  background:color-mix(in srgb, var(--blue) 12%, var(--paper));
-  color:var(--blue); font-weight:700;
-}
-.theme-option svg{ width:18px; height:18px; flex:0 0 auto; }
-.theme-option .check-icon{ margin-left:auto; color:var(--blue); }
+/* テーマ切替ボタンは共通（.yt-theme-toggle / assets/theme.js） */
+.cpm-header .yt-theme-toggle{ color:#fff; }
 
 @media (max-width:640px){
   .cpm-display{ flex-direction:column; }

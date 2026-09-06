@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Text Cleaner | ローカルテキスト整形</title>
+  <link rel="icon" sizes="32x32" href="../assets/icon-32.png">
+  <link rel="icon" sizes="256x256" href="../assets/icon.png">
+  <link rel="apple-touch-icon" href="../assets/icon.png">
+  <link rel="stylesheet" href="../assets/common.css">
+  <script src="../assets/theme.js"></script>
+  <style>
+    body{min-height:100vh}
+    .wrap{max-width:1060px; margin:0 auto; padding:40px 24px 80px}
+
+    header.site{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+    .mark{width:34px; height:34px; border-radius:9px; object-fit:cover; display:block;
+      background:var(--navy); box-shadow:0 3px 9px #12305233}
+    header.site strong{font:700 18px/1 var(--font-head); letter-spacing:.2px}
+    .back{display:inline-flex; align-items:center; gap:6px; margin-left:auto; padding:8px 12px;
+      border:1px solid var(--line); border-radius:999px; background:var(--paper);
+      color:var(--muted); font-size:12px; text-decoration:none}
+    .back:hover{border-color:var(--blue); color:var(--blue)}
+
+    .hero{margin-bottom:24px}
+    .hero h1{margin:0 0 8px; font-size:24px; letter-spacing:-.4px}
+    .hero p{margin:0; max-width:680px; color:var(--muted); font-size:13px}
+
+    .card{padding:20px; border:1px solid var(--line); border-radius:14px; background:var(--paper);
+      box-shadow:0 4px 16px #1c355910}
+
+    /* ---- オプション ---- */
+    .opts{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px 22px}
+    .grp{margin:0; padding:0; border:0}
+    .grp legend{padding:0; margin-bottom:10px; color:var(--faint);
+      font:700 10px/1 var(--font-head); letter-spacing:1.4px}
+    .grp > * + *{margin-top:9px}
+    .chk{display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:var(--ink); cursor:pointer}
+    .chk input{margin:2px 0 0; flex:0 0 auto}
+    .fld{display:block}
+    .fld > span{display:block; margin-bottom:5px; color:var(--muted); font-size:11px}
+    select, input[type=text]{
+      width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px;
+      font:inherit; font-size:12.5px; background:var(--bg); color:var(--ink)}
+    select:focus, input[type=text]:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+
+    .toolbar{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:18px 0 10px}
+    .toolbar .sp{flex:1}
+    button.btn{padding:9px 14px; border:1px solid var(--line); border-radius:8px;
+      background:var(--paper); color:var(--ink); font:700 12px var(--font-head); cursor:pointer}
+    button.btn:hover:not(:disabled){border-color:var(--blue); color:var(--blue)}
+    button.btn.primary{background:var(--navy); color:#fff; border-color:var(--navy)}
+    button.btn.primary:hover:not(:disabled){background:var(--blue); border-color:var(--blue); color:#fff}
+    button.btn:disabled{opacity:.45; cursor:default}
+    button.btn.link{border-color:transparent; background:transparent; color:var(--muted); font-weight:500}
+    button.btn.link:hover:not(:disabled){color:var(--blue)}
+
+    /* ---- 入出力 ---- */
+    .io{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:6px}
+    @media (max-width:820px){ .io{grid-template-columns:1fr} }
+    .io .pane{display:flex; flex-direction:column; gap:6px}
+    .io .pane-head{display:flex; align-items:baseline; justify-content:space-between; gap:8px}
+    .io .pane-head b{font:700 11px/1 var(--font-head); letter-spacing:1.2px; color:var(--faint)}
+    .io .pane-head small{color:var(--faint); font-size:11px}
+    textarea{width:100%; min-height:340px; resize:vertical; padding:12px 13px;
+      border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink);
+      font:13px/1.6 ui-monospace,"SFMono-Regular",Menlo,Consolas,"Noto Sans Mono CJK JP",monospace;
+      white-space:pre; overflow-wrap:normal}
+    textarea:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+    #output{background:var(--soft)}
+
+    .privacy{display:inline-flex; align-items:center; gap:8px; margin-top:22px;
+      padding:8px 13px; border:1px solid var(--line); border-radius:999px;
+      background:var(--paper); color:var(--muted); font-size:11px}
+    .privacy b{color:var(--ink)}
+
+    .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(10px);
+      padding:10px 16px; border-radius:8px; background:var(--navy); color:#fff; font-size:12px;
+      opacity:0; pointer-events:none; transition:.2s}
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <img class="mark" src="../assets/icon.png" alt="">
+      <strong>Text Cleaner</strong>
+      <button data-yos-theme-toggle style="margin-left:auto"></button>
+      <a class="back" href="../index.html">← ツール一覧</a>
+    </header>
+
+    <section class="hero">
+      <h1>テキストクリーナー</h1>
+      <p>貼り付けたテキストの余分な改行・連続スペース・空行をまとめて整理します。全角⇔半角の変換、重複行の削除、行頭記号の一括付与にも対応。処理はすべてこの端末の中だけで行われます。</p>
+    </section>
+
+    <div class="card">
+      <div class="opts">
+        <fieldset class="grp">
+          <legend>文字幅の変換</legend>
+          <label class="fld">
+            <span>変換の種類</span>
+            <select id="width">
+              <option value="none">変換しない</option>
+              <option value="alnum">英数字を半角に</option>
+              <option value="ascii">英数字・記号を半角に</option>
+              <option value="ascii_space">英数字・記号・空白を半角に</option>
+              <option value="kana_full">半角カナを全角に</option>
+              <option value="ascii_full">英数字・記号を全角に</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset class="grp">
+          <legend>スペース・空白</legend>
+          <label class="chk"><input type="checkbox" id="tabToSpace"><span>タブを半角スペースに変換</span></label>
+          <label class="chk"><input type="checkbox" id="collapseSpaces"><span>連続する空白を1つにまとめる</span></label>
+          <label class="chk"><input type="checkbox" id="trimTrail"><span>各行の行末の空白を削除</span></label>
+          <label class="chk"><input type="checkbox" id="trimLead"><span>各行の行頭の空白を削除</span></label>
+          <label class="chk"><input type="checkbox" id="trimAll"><span>全体の前後の空白を削除</span></label>
+        </fieldset>
+
+        <fieldset class="grp">
+          <legend>改行・行</legend>
+          <label class="fld">
+            <span>空行の扱い</span>
+            <select id="blankLines">
+              <option value="keep">そのまま</option>
+              <option value="collapse">連続する空行を1つに</option>
+              <option value="remove">空行をすべて削除</option>
+            </select>
+          </label>
+          <label class="chk"><input type="checkbox" id="dedupe"><span>重複する行を削除（最初の1行を残す）</span></label>
+          <label class="chk"><input type="checkbox" id="joinLines"><span>すべての改行を削除して1行にする</span></label>
+        </fieldset>
+
+        <fieldset class="grp">
+          <legend>行頭記号</legend>
+          <label class="fld">
+            <span>行頭に追加する文字（例: <code>- </code> / <code>&gt; </code> / <code>・</code>）</span>
+            <input type="text" id="prefix" placeholder="空欄なら追加しません" autocomplete="off">
+          </label>
+          <label class="chk"><input type="checkbox" id="prefixSkipBlank" checked><span>空行には追加しない</span></label>
+        </fieldset>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn primary" id="copyBtn" disabled>出力をコピー</button>
+      <button class="btn" id="toInputBtn" disabled>出力を入力に反映</button>
+      <span class="sp"></span>
+      <button class="btn link" id="sampleBtn">サンプルを入れる</button>
+      <button class="btn link" id="clearBtn">クリア</button>
+      <button class="btn link" id="resetBtn">設定を初期化</button>
+    </div>
+
+    <div class="io">
+      <div class="pane">
+        <div class="pane-head"><b>INPUT</b><small id="inMeta">0 文字 / 0 行</small></div>
+        <textarea id="input" placeholder="ここにテキストを貼り付け" spellcheck="false" autofocus></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-head"><b>OUTPUT</b><small id="outMeta">0 文字 / 0 行</small></div>
+        <textarea id="output" placeholder="整形結果がここに表示されます" spellcheck="false" readonly></textarea>
+      </div>
+    </div>
+
+    <span class="privacy">◇ <span><b>端末内処理</b> ／ テキストは外部に送信されません</span></span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (function(){
+    'use strict';
+    var OPTS_KEY = 'yos.textcleaner.opts.v1';
+    var $ = function(id){ return document.getElementById(id); };
+
+    var els = {
+      input:$('input'), output:$('output'),
+      width:$('width'), tabToSpace:$('tabToSpace'), collapseSpaces:$('collapseSpaces'),
+      trimTrail:$('trimTrail'), trimLead:$('trimLead'), trimAll:$('trimAll'),
+      blankLines:$('blankLines'), dedupe:$('dedupe'), joinLines:$('joinLines'),
+      prefix:$('prefix'), prefixSkipBlank:$('prefixSkipBlank'),
+      inMeta:$('inMeta'), outMeta:$('outMeta'),
+      copyBtn:$('copyBtn'), toInputBtn:$('toInputBtn'),
+      sampleBtn:$('sampleBtn'), clearBtn:$('clearBtn'), resetBtn:$('resetBtn'),
+      toast:$('toast')
+    };
+
+    var CHECKS = ['tabToSpace','collapseSpaces','trimTrail','trimLead','trimAll','dedupe','joinLines','prefixSkipBlank'];
+    var SELECTS = ['width','blankLines'];
+
+    var toastTimer = null;
+    function toast(msg){
+      els.toast.textContent = msg;
+      els.toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 1600);
+    }
+
+    /* ---------- 全角・半角変換 ---------- */
+    function zenAlnumToHan(s){
+      return s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(c){
+        return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
+      });
+    }
+    function zenAsciiToHan(s){
+      return s.replace(/[！-～]/g, function(c){
+        return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
+      });
+    }
+    function zenSpaceToHan(s){ return s.replace(/　/g, ' '); }
+    function hanAsciiToZen(s){
+      return s.replace(/ /g, '　').replace(/[!-~]/g, function(c){
+        return String.fromCharCode(c.charCodeAt(0) + 0xFEE0);
+      });
+    }
+
+    var KANA_MAP = {
+      'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ',
+      'ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ',
+      'ﾊﾟ':'パ','ﾋﾟ':'ピ','ﾌﾟ':'プ','ﾍﾟ':'ペ','ﾎﾟ':'ポ','ｳﾞ':'ヴ',
+      'ｱ':'ア','ｲ':'イ','ｳ':'ウ','ｴ':'エ','ｵ':'オ','ｶ':'カ','ｷ':'キ','ｸ':'ク','ｹ':'ケ','ｺ':'コ',
+      'ｻ':'サ','ｼ':'シ','ｽ':'ス','ｾ':'セ','ｿ':'ソ','ﾀ':'タ','ﾁ':'チ','ﾂ':'ツ','ﾃ':'テ','ﾄ':'ト',
+      'ﾅ':'ナ','ﾆ':'ニ','ﾇ':'ヌ','ﾈ':'ネ','ﾉ':'ノ','ﾊ':'ハ','ﾋ':'ヒ','ﾌ':'フ','ﾍ':'ヘ','ﾎ':'ホ',
+      'ﾏ':'マ','ﾐ':'ミ','ﾑ':'ム','ﾒ':'メ','ﾓ':'モ','ﾔ':'ヤ','ﾕ':'ユ','ﾖ':'ヨ',
+      'ﾗ':'ラ','ﾘ':'リ','ﾙ':'ル','ﾚ':'レ','ﾛ':'ロ','ﾜ':'ワ','ｦ':'ヲ','ﾝ':'ン',
+      'ｧ':'ァ','ｨ':'ィ','ｩ':'ゥ','ｪ':'ェ','ｫ':'ォ','ｬ':'ャ','ｭ':'ュ','ｮ':'ョ','ｯ':'ッ',
+      'ｰ':'ー','｡':'。','｢':'「','｣':'」','､':'、','･':'・','ﾞ':'゛','ﾟ':'゜'
+    };
+    function hanKanaToZen(s){
+      return s.replace(/([ｦ-ﾝｳ])ﾞ/g, function(m, c){ return KANA_MAP[c + 'ﾞ'] || (KANA_MAP[c] || c) + '゛'; })
+              .replace(/([ﾊ-ﾎ])ﾟ/g, function(m, c){ return KANA_MAP[c + 'ﾟ'] || (KANA_MAP[c] || c) + '゜'; })
+              .replace(/[｡-ﾟ]/g, function(c){ return KANA_MAP[c] || c; });
+    }
+
+    function convertWidth(text, mode){
+      switch (mode){
+        case 'alnum':       return zenAlnumToHan(text);
+        case 'ascii':       return zenAsciiToHan(text);
+        case 'ascii_space': return zenSpaceToHan(zenAsciiToHan(text));
+        case 'kana_full':   return hanKanaToZen(text);
+        case 'ascii_full':  return hanAsciiToZen(text);
+        default:            return text;
+      }
+    }
+
+    var isBlank = function(line){ return /^\s*$/.test(line); };
+
+    /* ---------- メイン処理 ---------- */
+    function clean(text, o){
+      if (!text) return '';
+
+      // 改行コードを LF に統一
+      text = text.replace(/\r\n?/g, '\n');
+
+      // 1. 文字幅の変換
+      text = convertWidth(text, o.width);
+
+      // 2. タブ → 半角スペース
+      if (o.tabToSpace) text = text.replace(/\t/g, ' ');
+
+      // 3. 行頭・行末の空白を削除
+      if (o.trimLead || o.trimTrail){
+        text = text.split('\n').map(function(line){
+          if (o.trimLead)  line = line.replace(/^[^\S\n]+/, '');
+          if (o.trimTrail) line = line.replace(/[^\S\n]+$/, '');
+          return line;
+        }).join('\n');
+      }
+
+      // 4. 連続する空白を1つに（改行は対象外）
+      if (o.collapseSpaces) text = text.replace(/[^\S\n]{2,}/g, ' ');
+
+      // 5. 空行の扱い
+      if (o.blankLines === 'remove'){
+        text = text.split('\n').filter(function(line){ return !isBlank(line); }).join('\n');
+      } else if (o.blankLines === 'collapse'){
+        var out = [], prevBlank = false;
+        text.split('\n').forEach(function(line){
+          var blank = isBlank(line);
+          if (blank && prevBlank) return;
+          out.push(blank ? '' : line);
+          prevBlank = blank;
+        });
+        text = out.join('\n');
+      }
+
+      // 6. 重複する行を削除（空行は常に残す）
+      if (o.dedupe){
+        var seen = Object.create(null), kept = [];
+        text.split('\n').forEach(function(line){
+          if (isBlank(line)){ kept.push(line); return; }
+          if (seen[line]) return;
+          seen[line] = true;
+          kept.push(line);
+        });
+        text = kept.join('\n');
+      }
+
+      // 7. 行頭に記号を追加
+      if (o.prefix){
+        text = text.split('\n').map(function(line){
+          if (o.prefixSkipBlank && isBlank(line)) return line;
+          return o.prefix + line;
+        }).join('\n');
+      }
+
+      // 8. すべての改行を削除して1行に
+      if (o.joinLines) text = text.replace(/\n+/g, '');
+
+      // 9. 全体の前後の空白を削除
+      if (o.trimAll) text = text.replace(/^\s+|\s+$/g, '');
+
+      return text;
+    }
+
+    /* ---------- オプションの読み書き ---------- */
+    function readOpts(){
+      var o = { width: els.width.value, blankLines: els.blankLines.value, prefix: els.prefix.value };
+      CHECKS.forEach(function(k){ o[k] = els[k].checked; });
+      return o;
+    }
+    function saveOpts(){
+      try { localStorage.setItem(OPTS_KEY, JSON.stringify(readOpts())); } catch (e){}
+    }
+    function loadOpts(){
+      var o;
+      try { o = JSON.parse(localStorage.getItem(OPTS_KEY) || 'null'); } catch (e){ o = null; }
+      if (!o) return;
+      SELECTS.forEach(function(k){ if (typeof o[k] === 'string') els[k].value = o[k]; });
+      CHECKS.forEach(function(k){ if (typeof o[k] === 'boolean') els[k].checked = o[k]; });
+      if (typeof o.prefix === 'string') els.prefix.value = o.prefix;
+    }
+
+    /* ---------- 表示更新 ---------- */
+    function countLabel(s){
+      var chars = Array.from(s).length;
+      var lines = s === '' ? 0 : s.split('\n').length;
+      return chars.toLocaleString() + ' 文字 / ' + lines.toLocaleString() + ' 行';
+    }
+
+    var runTimer = null;
+    function schedule(){ clearTimeout(runTimer); runTimer = setTimeout(run, 120); }
+
+    function run(){
+      var input = els.input.value;
+      var out = clean(input, readOpts());
+      els.output.value = out;
+      els.inMeta.textContent = countLabel(input);
+      els.outMeta.textContent = countLabel(out);
+      var has = out.length > 0;
+      els.copyBtn.disabled = !has;
+      els.toInputBtn.disabled = !has;
+      saveOpts();
+    }
+
+    /* ---------- 操作 ---------- */
+    els.copyBtn.addEventListener('click', function(){
+      var text = els.output.value;
+      if (!text) return;
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text)
+          .then(function(){ toast('出力をコピーしました'); })
+          .catch(function(){ fallbackCopy(text); });
+      } else {
+        fallbackCopy(text);
+      }
+    });
+    function fallbackCopy(text){
+      els.output.removeAttribute('readonly');
+      els.output.select();
+      try { document.execCommand('copy'); toast('出力をコピーしました'); }
+      catch (e){ toast('コピーに失敗しました'); }
+      els.output.setAttribute('readonly', '');
+      window.getSelection().removeAllRanges();
+    }
+
+    els.toInputBtn.addEventListener('click', function(){
+      if (!els.output.value) return;
+      els.input.value = els.output.value;
+      run();
+      els.input.focus();
+      toast('出力を入力に反映しました');
+    });
+
+    els.clearBtn.addEventListener('click', function(){
+      els.input.value = '';
+      run();
+      els.input.focus();
+    });
+
+    els.sampleBtn.addEventListener('click', function(){
+      els.input.value = [
+        '  Ｔｅｘｔ  Ｃｌｅａｎｅｒ　のサンプル入力   ',
+        '',
+        '',
+        'この　ツールは、余計な　スペースや空行を   整えます。',
+        'この　ツールは、余計な　スペースや空行を   整えます。',
+        '\tタブ始まりの行\tと\t全角１２３ＡＢＣ',
+        'ﾊﾝｶｸ ｶﾅ ﾓ ｾﾞﾝｶｸ ﾆ ﾃﾞｷﾏｽ',
+        '   ',
+        '末尾に空行あり   '
+      ].join('\n');
+      run();
+    });
+
+    els.resetBtn.addEventListener('click', function(){
+      try { localStorage.removeItem(OPTS_KEY); } catch (e){}
+      els.width.value = 'none';
+      els.blankLines.value = 'keep';
+      CHECKS.forEach(function(k){ els[k].checked = (k === 'prefixSkipBlank'); });
+      els.prefix.value = '';
+      run();
+      toast('設定を初期化しました');
+    });
+
+    /* ---------- 配線 ---------- */
+    els.input.addEventListener('input', schedule);
+    SELECTS.forEach(function(k){ els[k].addEventListener('change', run); });
+    CHECKS.forEach(function(k){ els[k].addEventListener('change', run); });
+    els.prefix.addEventListener('input', schedule);
+
+    loadOpts();
+    run();
+  })();
+  </script>
+</body>
+</html>

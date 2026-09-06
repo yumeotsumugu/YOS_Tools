@@ -196,6 +196,16 @@ textarea:focus-visible{outline:3px solid color-mix(in srgb, var(--blue) 55%, tra
 .yt-field input:focus,
 .yt-field select:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
 
+/* ---- 共通テーマ切替ボタン（assets/theme.js が中身を生成） ---- */
+.yt-theme-toggle{
+  width:34px; height:34px; flex:0 0 auto; padding:0;
+  display:inline-grid; place-items:center;
+  border:1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius:9px; background:transparent; color:inherit; cursor:pointer;
+}
+.yt-theme-toggle:hover{ background:color-mix(in srgb, currentColor 12%, transparent); }
+.yt-theme-toggle svg{ width:18px; height:18px; display:block; }
+
 /* ---- プライバシーピル ---- */
 .yt-privacy{
   display:inline-flex; align-items:center; gap:8px;

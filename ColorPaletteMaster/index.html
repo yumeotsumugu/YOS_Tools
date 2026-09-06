@@ -9,6 +9,7 @@
     <link rel="apple-touch-icon" href="../assets/icon.png">
     <link rel="stylesheet" href="../assets/common.css">
     <link rel="stylesheet" href="css/style.css">
+    <script src="../assets/theme.js"></script>
 </head>
 <body>
     <div class="cpm-page">
@@ -25,49 +26,7 @@
                     </div>
                     <div class="cpm-header-actions">
                         <a href="../index.html" class="yt-back" title="ツール一覧に戻る">← ツール一覧</a>
-                        <button id="themeToggle" class="theme-toggle" title="テーマ設定">
-                                <svg id="systemIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                </svg>
-                                <svg id="sunIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                </svg>
-                                <svg id="moonIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                                </svg>
-                            </button>
-                            
-                            <!-- Theme Menu Dropdown -->
-                            <div id="themeMenu" class="theme-menu">
-                                <button class="theme-option" data-theme="system">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                    </svg>
-                                    <span>システム</span>
-                                    <svg class="check-icon" fill="currentColor" viewBox="0 0 20 20" style="display: none;">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </button>
-                                <button class="theme-option" data-theme="light">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                    </svg>
-                                    <span>ライト</span>
-                                    <svg class="check-icon" fill="currentColor" viewBox="0 0 20 20" style="display: none;">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </button>
-                                <button class="theme-option" data-theme="dark">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                                    </svg>
-                                    <span>ダーク</span>
-                                    <svg class="check-icon" fill="currentColor" viewBox="0 0 20 20" style="display: none;">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            
+                        <button data-yos-theme-toggle></button>
                         <button id="exportBtn" class="cpm-iconbtn" title="エクスポート">
                             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -485,23 +444,16 @@ location.reload(); // ページを再読み込み</code></pre>
 
                 <h2>📦 技術情報</h2>
                 <ul>
-                    <li><strong>HTML5</strong>: 単一ファイルで動作</li>
-                    <li><strong>Tailwind CSS</strong>: CDN経由でスタイリング</li>
-                    <li><strong>Vanilla JavaScript</strong>: 追加のライブラリ不要</li>
+                    <li><strong>HTML5 / Vanilla JavaScript</strong>: 追加のライブラリ不要で動作</li>
+                    <li><strong>共通スタイル</strong>: <code>../assets/common.css</code>（YOS Tools 共通デザイン）</li>
                     <li><strong>LocalStorage</strong>: データ永続化</li>
                     <li><strong>JSON</strong>: インポート・エクスポート形式</li>
                 </ul>
 
                 <h2>📄 ライセンス・権利表記</h2>
                 <div class="note">
-                    <p><strong>カラーパレットマスター (Color Palette Master)</strong></p>
-                    <p><strong>作者:</strong> 夢生ツムグ</p>
-                    <p><strong>開発:</strong> Claude.AI (Anthropic) を使用して作成</p>
-                    <p><strong>バージョン:</strong> 1.1.0</p>
-                    <p><strong>リリース日:</strong> 2026年5月17日</p>
-                    <br>
-                    <p>このツールは自由に使用・配布できます。</p>
-                    <p>改変や商用利用も可能ですが、作者表記は保持してください。</p>
+                    <p><strong>カラーパレットマスター (Color Palette Master)</strong> — バージョン 1.1.0（2026年5月17日）</p>
+                    <p>ライセンス・権利表記は <a href="../index.html#terms">YOS Tools 利用規約・ライセンス</a> にまとめています。</p>
                 </div>
 
                 <div class="collapsible" onclick="toggleChangelog(event)">
@@ -557,7 +509,7 @@ location.reload(); // ページを再読み込み</code></pre>
                     
                     <div class="note">
                         <p><strong>💡 注記</strong></p>
-                        <p>このツールは開発用途を想定しており、Tailwind CDNを使用しています。ブラウザコンソールに警告が表示されますが、機能には影響ありません。本番環境で大規模に配布する場合は、Tailwind CSSをビルドして使用することを推奨します。</p>
+                        <p>このツールは外部CDNに依存せず、HTML・CSS・JavaScript だけで動作します。スタイルは YOS Tools 共通の <code>../assets/common.css</code> を利用しています。</p>
                     </div>
                 </div>
 
@@ -611,12 +563,10 @@ location.reload(); // ページを再読み込み</code></pre>
         let history = [];
         let palettes = [];
         let activeTab = 'picker';
-        let currentTheme = 'light';
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
-            loadTheme();
             updateColor(currentColor);
             setupEventListeners();
         });
@@ -632,91 +582,9 @@ location.reload(); // ページを再読み込み</code></pre>
             renderBookmarks();
             renderPalettes();
         }
-        
-        // Theme management
-        let themePreference = 'system'; // 'system', 'light', or 'dark'
-        
-        function loadTheme() {
-            const savedPreference = localStorage.getItem('colorThemePreference');
-            themePreference = savedPreference || 'system';
-            
-            applyTheme();
-            updateThemeMenu();
-            
-            // Listen for system theme changes
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-                if (themePreference === 'system') {
-                    applyTheme();
-                }
-            });
-        }
-        
-        function applyTheme() {
-            let effectiveTheme;
-            
-            if (themePreference === 'system') {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                effectiveTheme = prefersDark ? 'dark' : 'light';
-            } else {
-                effectiveTheme = themePreference;
-            }
-            
-            currentTheme = effectiveTheme;
-            document.documentElement.setAttribute('data-theme', effectiveTheme);
-            updateThemeIcon();
-        }
-        
-        function setTheme(preference) {
-            themePreference = preference;
-            localStorage.setItem('colorThemePreference', preference);
-            applyTheme();
-            updateThemeMenu();
-            closeThemeMenu();
-        }
-        
-        function toggleThemeMenu() {
-            const menu = document.getElementById('themeMenu');
-            menu.classList.toggle('active');
-        }
-        
-        function closeThemeMenu() {
-            const menu = document.getElementById('themeMenu');
-            menu.classList.remove('active');
-        }
-        
-        function updateThemeMenu() {
-            const options = document.querySelectorAll('.theme-option');
-            options.forEach(option => {
-                const theme = option.dataset.theme;
-                const checkIcon = option.querySelector('.check-icon');
-                
-                if (theme === themePreference) {
-                    option.classList.add('selected');
-                    checkIcon.style.display = 'block';
-                } else {
-                    option.classList.remove('selected');
-                    checkIcon.style.display = 'none';
-                }
-            });
-        }
-        
-        function updateThemeIcon() {
-            const systemIcon = document.getElementById('systemIcon');
-            const sunIcon = document.getElementById('sunIcon');
-            const moonIcon = document.getElementById('moonIcon');
-            
-            systemIcon.style.display = 'none';
-            sunIcon.style.display = 'none';
-            moonIcon.style.display = 'none';
-            
-            if (themePreference === 'system') {
-                systemIcon.style.display = 'block';
-            } else if (themePreference === 'light') {
-                sunIcon.style.display = 'block';
-            } else {
-                moonIcon.style.display = 'block';
-            }
-        }
+
+        // テーマ設定（システム/ライト/ダーク）は YOS Tools 共通の
+        // ../assets/theme.js が全ツール共有で管理する。
 
         // Save data to localStorage
         function saveData() {
@@ -1317,29 +1185,7 @@ location.reload(); // ページを再読み込み</code></pre>
             // Modal
             document.getElementById('helpBtn').addEventListener('click', openModal);
             document.getElementById('closeModal').addEventListener('click', closeModal);
-            
-            // Theme menu
-            document.getElementById('themeToggle').addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleThemeMenu();
-            });
-            
-            // Theme options
-            document.querySelectorAll('.theme-option').forEach(option => {
-                option.addEventListener('click', () => {
-                    setTheme(option.dataset.theme);
-                });
-            });
-            
-            // Close theme menu when clicking outside
-            document.addEventListener('click', (e) => {
-                const menu = document.getElementById('themeMenu');
-                const button = document.getElementById('themeToggle');
-                if (!menu.contains(e.target) && !button.contains(e.target)) {
-                    closeThemeMenu();
-                }
-            });
-            
+
             // Export/Import
             document.getElementById('exportBtn').addEventListener('click', openExportModal);
             document.getElementById('importBtn').addEventListener('click', importData);

@@ -9,6 +9,7 @@
   <link rel="icon" sizes="256x256" href="assets/icon.png">
   <link rel="apple-touch-icon" href="assets/icon.png">
   <link rel="stylesheet" href="assets/common.css">
+  <script src="assets/theme.js"></script>
   <style>
     body{min-height:100vh}
     .wrap{max-width:940px; margin:0 auto; padding:56px 24px 80px}
@@ -47,7 +48,21 @@
     .tags span{padding:3px 8px; border:1px solid var(--line); border-radius:6px; color:var(--muted); font-size:10px}
     .go{display:inline-flex; align-items:center; gap:6px; color:var(--blue); font:700 12px 'DM Sans','Yu Gothic',sans-serif}
 
-    footer.site{margin-top:56px; padding-top:22px; border-top:1px solid var(--line);
+    .terms{margin-top:44px}
+    .terms details{border:1px solid var(--line); border-radius:12px; background:var(--paper);
+      box-shadow:0 4px 16px #1c355910}
+    .terms summary{cursor:pointer; padding:14px 18px; list-style:none;
+      font:700 10px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:1.6px; color:var(--faint)}
+    .terms summary::-webkit-details-marker{display:none}
+    .terms summary::after{content:"＋"; float:right; color:var(--faint); font-weight:400}
+    .terms details[open] summary{border-bottom:1px solid var(--line)}
+    .terms details[open] summary::after{content:"－"}
+    .terms-body{padding:16px 18px 18px; color:var(--muted); font-size:12.5px}
+    .terms-body p{margin:0 0 10px; color:var(--ink)}
+    .terms-body ul{margin:0; padding-left:18px}
+    .terms-body li{margin-bottom:6px}
+
+    footer.site{margin-top:40px; padding-top:22px; border-top:1px solid var(--line);
       color:var(--faint); font-size:11px}
 
     /* ---- ambient: 羽根 と 流れ星 ---- */
@@ -94,6 +109,7 @@
     <header class="site">
       <img class="mark" src="assets/icon.png" alt="">
       <div><strong>YOS Tools</strong><small>LOCAL WEB TOOLS</small></div>
+      <button data-yos-theme-toggle style="margin-left:auto"></button>
     </header>
 
     <section class="hero">
@@ -104,6 +120,21 @@
 
     <p class="section-label">TOOLS</p>
     <div class="grid" id="grid"></div>
+
+    <section class="terms" id="terms">
+      <details>
+        <summary>利用規約・ライセンス</summary>
+        <div class="terms-body">
+          <p><b>YOS Tools</b> ／ 作者: 夢生ツムグ ／ 開発補助: Claude (Anthropic)</p>
+          <ul>
+            <li>YOS Tools および収録された各ツールは自由に使用・配布できます。</li>
+            <li>改変・再配布・商用利用も可能ですが、作者表記は保持してください。</li>
+            <li>各ツールはあなたのブラウザ内だけで動作し、入力したデータを外部へ送信しません。</li>
+            <li>本ソフトウェアは現状のまま（AS IS）提供されます。利用によって生じたいかなる損害についても作者は責任を負いません。</li>
+          </ul>
+        </div>
+      </details>
+    </section>
 
     <footer class="site">YOS Tools — 静的Webツール集。各ツールは単体でも動作します。</footer>
   </div>
@@ -148,6 +179,14 @@
         tags: ['QRコード', 'URL', 'PNG', 'SVG', '履歴保存'],
       },
       {
+        name: 'Text Cleaner',
+        icon: '¶',
+        status: 'live',
+        path: 'TextCleaner/index.html',
+        desc: '貼り付けたテキストの余計な改行・連続スペース・空行をまとめて整理。全角⇔半角変換、英数字だけ半角化、重複行の削除、行頭記号の一括付与にも対応。',
+        tags: ['整形', '全角半角', '空行整理', '重複行', '行頭記号'],
+      },
+      {
         name: '（ツール準備中）',
         icon: '＋',
         status: 'soon',
@@ -172,6 +211,15 @@
         ? `<a class="card" href="${esc(t.path)}">${inner}</a>`
         : `<div class="card disabled">${inner}</div>`;
     }).join('');
+
+    /* 各ツールから #terms でリンクされたときは利用規約を開いて表示 */
+    function openTermsFromHash() {
+      if (location.hash !== '#terms') return;
+      const d = document.querySelector('#terms details');
+      if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    }
+    openTermsFromHash();
+    window.addEventListener('hashchange', openTermsFromHash);
   </script>
 
   <script>

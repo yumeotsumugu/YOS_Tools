@@ -14,6 +14,7 @@
   rel="stylesheet"
 />
 <link rel="stylesheet" href="../assets/common.css" />
+<script src="../assets/theme.js"></script>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -23,7 +24,10 @@
 <!-- ============================================================ -->
 <div id="startScreen" class="start-screen">
   <div class="start-card">
-    <a href="../index.html" class="yt-back" style="margin-bottom:12px;">← ツール一覧</a>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+      <a href="../index.html" class="yt-back">← ツール一覧</a>
+      <button data-yos-theme-toggle></button>
+    </div>
     <div class="start-header-row">
       <h1 class="start-logo">
         <img src="../assets/icon.png" alt="" class="start-logo-icon" />
@@ -104,6 +108,7 @@
     <button id="apngOpenBtn" class="header-btn">🎞 APNG</button>
     <button id="saveProjectBtn" class="header-btn">💾 保存</button>
     <button class="header-icon-btn guide-open-btn" title="使い方ガイド">❓</button>
+    <button data-yos-theme-toggle></button>
     <div class="editor-header-spacer"></div>
     <input type="text" id="exportFilenameInput" class="filename-input" value="imagemaker_output" placeholder="ファイル名" title="書き出しファイル名" />
     <button id="exportBtn" class="header-btn header-btn--primary">PNGで書き出す</button>
