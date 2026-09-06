@@ -84,10 +84,12 @@
     .terms summary::after{content:"＋"; float:right; color:var(--faint); font-weight:400}
     .terms details[open] summary{border-bottom:1px solid var(--line)}
     .terms details[open] summary::after{content:"－"}
-    .terms-body{padding:16px 18px 18px; color:var(--muted); font-size:12.5px}
-    .terms-body p{margin:0 0 10px; color:var(--ink)}
-    .terms-body ul{margin:0; padding-left:18px}
-    .terms-body li{margin-bottom:6px}
+    .terms-body{padding:16px 18px 20px; color:var(--muted); font-size:12.5px; line-height:1.75}
+    .terms-body p{margin:0 0 10px}
+    .terms-body > p:first-child{color:var(--ink)}
+    .terms-body strong{color:var(--ink); font-weight:700}
+    .terms-body h3{margin:18px 0 6px; font:700 11px/1 'DM Sans','Yu Gothic',sans-serif;
+      letter-spacing:1px; color:var(--faint)}
 
     footer.site{margin-top:40px; padding-top:22px; border-top:1px solid var(--line);
       color:var(--faint); font-size:11px}
@@ -171,13 +173,27 @@
       <details>
         <summary>利用規約・ライセンス</summary>
         <div class="terms-body">
-          <p><b>YOS Tools</b> ／ 作者: 夢生ツムグ ／ 開発補助: Claude (Anthropic)</p>
-          <ul>
-            <li>YOS Tools および収録された各ツールは自由に使用・配布できます。</li>
-            <li>改変・再配布・商用利用も可能ですが、作者表記は保持してください。</li>
-            <li>各ツールはあなたのブラウザ内だけで動作し、入力したデータを外部へ送信しません。</li>
-            <li>本ソフトウェアは現状のまま（AS IS）提供されます。利用によって生じたいかなる損害についても作者は責任を負いません。</li>
-          </ul>
+          <p><strong>YOS Tools ／ 作者：夢生ツムグ ／ 開発補助：Claude Code（Anthropic）</strong></p>
+          <p>YOS Toolsは、夢生ツムグが個人で制作・公開しているブラウザツール群です。作者が制作したソースコード・デザイン・文章等の権利は、特に記載のない限り夢生ツムグに帰属します。</p>
+
+          <h3>利用について</h3>
+          <p>YOS Toolsは、<strong>個人・法人、営利・非営利を問わず自由に利用できます。</strong></p>
+          <p>ただし、YOS Toolsおよびそのソースコードの<strong>再配布・転載・自作発言、およびそれらを目的とした複製・改変は禁止</strong>します。</p>
+          <p>公開されたソースコードは、学習・技術的な参考として自由に閲覧できます。得られた一般的な知識や技術を自身の制作に活用することも問題ありません。</p>
+          <p>GitHub上での閲覧・Fork等については、GitHubの利用規約・ポリシーに従います。</p>
+
+          <h3>素材について</h3>
+          <p>アイコン・画像・フォント・ライブラリ等には第三者が権利を有するものが含まれます。これらには各権利者の利用条件が適用され、<strong>素材の抽出・転載・再配布等を本規約によって許可するものではありません。</strong></p>
+
+          <h3>データについて</h3>
+          <p>入力・読み込みしたデータは、特に記載のない限り<strong>外部へ送信されず、ブラウザ内で処理されます。</strong></p>
+          <p>一部ツールでは設定やデータの保存に <strong>localStorage</strong> を使用します。ブラウザデータの削除等により保存内容が失われる場合があるため、必要なデータは各自でバックアップしてください。</p>
+          <p>なお、GitHub Pages等の外部サービスによってアクセス情報等が取得される場合があります。</p>
+
+          <h3>免責事項</h3>
+          <p>YOS Toolsは<strong>個人制作のツール</strong>であり、現状のまま（AS IS）提供されます。動作やデータの保持等を保証するものではありません。</p>
+          <p>利用は自己責任とし、本ツールの利用または利用不能によって生じた損害について、作者は責任を負いません。</p>
+          <p>本規約は必要に応じて変更される場合があります。</p>
         </div>
       </details>
     </section>
