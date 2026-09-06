@@ -2,14 +2,19 @@
 
 ブラウザだけで完結するローカルWebツール集。インストール・ビルド不要、データは外部送信なし。
 
+開発・制作にあたってのルール（デザインの共通化、テーマ、ツール追加手順、Git 運用など）は
+[`CLAUDE.md`](CLAUDE.md) にまとめてある。
+
 ## 構成
 
 ```text
 YOS_Tools/
-├── index.html             トップページ（各ツールへのリンク）
+├── index.html             トップページ（ツール一覧・作者プロフィール・利用規約）
+├── CLAUDE.md              開発ガイド（制作ルール）
+├── assets/                共通CSS・共通テーマスクリプト・共通アイコン
 ├── PDF_Craft/             PDF加工ツール（単体でも動作）
 ├── ColorPaletteMaster/    カラーパレット作成ツール（単体でも動作）
-├── ImageMaker/            TRPG・ココフォリア素材メーカー（単体でも動作）
+├── ImageMaker/            画像メーカー（単体でも動作）
 ├── QR_Generator/          QRコード生成ツール（単体でも動作）
 └── TextCleaner/           テキスト整形ツール（単体でも動作）
 ```
@@ -23,6 +28,10 @@ YOS_Tools/
 python -m http.server 8000
 # → http://localhost:8000/
 ```
+
+GitHub Pages などで公開する場合、各ツールの「← ツール一覧」リンクは
+`href="../"`（`../index.html` ではなく）にしておくと URL に `index.html` が出ない。
+トップページには、`/index.html` 付きで開かれた場合に URL を整える小さなスクリプトを入れてある。
 
 ## デザインの統一
 
@@ -40,7 +49,7 @@ python -m http.server 8000
 
 1. `YOS_Tools/` 直下にツール用フォルダを作り、`index.html` を置く
 2. `index.html` の `<head>` で `../assets/common.css` と `../assets/theme.js` を読み込み、
-   ヘッダーに共通の `img.yt-mark`（`../assets/icon.png`）・`.yt-back` リンク・
+   ヘッダーに共通の `img.yt-mark`（`../assets/icon.png`）・`.yt-back` リンク（`href="../"`）・
    `<button data-yos-theme-toggle></button>` を置く
 3. `YOS_Tools/index.html` の `tools` 配列に1件追加する
 

@@ -10,6 +10,12 @@
   <link rel="apple-touch-icon" href="assets/icon.png">
   <link rel="stylesheet" href="assets/common.css">
   <script src="assets/theme.js"></script>
+  <script>
+    /* github.io などで「/index.html」付きで開かれたら、URL をディレクトリ表記に整える（表示のみ・再読込なし） */
+    if (location.protocol.indexOf('http') === 0 && /\/index\.html$/.test(location.pathname)) {
+      history.replaceState(null, '', location.pathname.replace(/index\.html$/, '') + location.search + location.hash);
+    }
+  </script>
   <style>
     body{min-height:100vh}
     .wrap{max-width:940px; margin:0 auto; padding:56px 24px 80px}
@@ -47,6 +53,27 @@
     .tags{display:flex; flex-wrap:wrap; gap:6px}
     .tags span{padding:3px 8px; border:1px solid var(--line); border-radius:6px; color:var(--muted); font-size:10px}
     .go{display:inline-flex; align-items:center; gap:6px; color:var(--blue); font:700 12px 'DM Sans','Yu Gothic',sans-serif}
+
+    .profile{display:flex; gap:18px; align-items:flex-start; padding:22px;
+      border:1px solid var(--line); border-radius:14px; background:var(--paper);
+      box-shadow:0 4px 16px #1c355910}
+    @media (max-width:520px){ .profile{flex-direction:column; gap:14px} }
+    .profile-ico{width:60px; height:60px; flex:0 0 auto; border-radius:14px; object-fit:cover;
+      background:var(--navy); box-shadow:0 3px 9px #12305233}
+    .profile-body{min-width:0}
+    .profile-body h2{margin:0 0 3px; font-size:16px; display:flex; align-items:baseline;
+      gap:8px; flex-wrap:wrap}
+    .profile-body h2 span{font:600 11px/1 'DM Sans','Yu Gothic',sans-serif;
+      letter-spacing:.5px; color:var(--faint)}
+    .profile-tag{margin:0 0 8px; font-size:11px; color:var(--faint)}
+    .profile-body p.bio{margin:0 0 12px; color:var(--muted); font-size:12.5px; max-width:560px}
+    .profile-links{display:flex; flex-wrap:wrap; gap:8px}
+    .profile-links a{padding:5px 11px; border:1px solid var(--line); border-radius:999px;
+      color:var(--muted); font:700 11px 'DM Sans','Yu Gothic',sans-serif}
+    .profile-links a:hover{border-color:var(--blue); color:var(--blue)}
+    .profile-credit{margin:12px 0 0; font-size:10px; color:var(--faint)}
+    .profile-credit a{color:var(--faint); text-decoration:underline}
+    .profile-credit a:hover{color:var(--blue)}
 
     .terms{margin-top:44px}
     .terms details{border:1px solid var(--line); border-radius:12px; background:var(--paper);
@@ -121,6 +148,25 @@
     <p class="section-label">TOOLS</p>
     <div class="grid" id="grid"></div>
 
+    <p class="section-label" style="margin-top:44px">ABOUT</p>
+    <div class="profile">
+      <img class="profile-ico" src="assets/icon.png" alt="夢生ツムグのアイコン">
+      <div class="profile-body">
+        <h2>夢生 ツムグ <span>TSUMUGU YUMEO</span></h2>
+        <p class="profile-tag">夢と幸せを──</p>
+        <p class="bio">普段は TRPG を中心に活動しています。YOS Tools は、その活動の中で「あると便利だな」と思ったものをブラウザだけで動く道具として置いている場所です。</p>
+        <div class="profile-links">
+          <a href="https://app.notion.com/p/yumeotsumugu/a9e36b9bd9c482ccb0908160ff098a52" target="_blank" rel="noopener noreferrer">プロフィール</a>
+          <a href="https://yumeotsumugu.booth.pm/" target="_blank" rel="noopener noreferrer">BOOTH</a>
+          <a href="https://talto.cc/users/HbLzEM74TYMtlQpNiQPaJgJ4oFF2" target="_blank" rel="noopener noreferrer">TALTO</a>
+          <a href="https://x.com/seetagame" target="_blank" rel="noopener noreferrer">X</a>
+          <a href="https://bsky.app/profile/seetagame.bsky.social" target="_blank" rel="noopener noreferrer">Bluesky</a>
+          <a href="https://www.youtube.com/@シータ_tsumugu" target="_blank" rel="noopener noreferrer">YouTube</a>
+        </div>
+        <p class="profile-credit">アイコン: おとり様（<a href="https://x.com/ai_romoti" target="_blank" rel="noopener noreferrer">@ai_romoti</a>）</p>
+      </div>
+    </div>
+
     <section class="terms" id="terms">
       <details>
         <summary>利用規約・ライセンス</summary>
@@ -167,7 +213,7 @@
         icon: '◫',
         status: 'live',
         path: 'ImageMaker/index.html',
-        desc: 'ブラウザだけで作るTRPG・ココフォリア素材メーカー。画像／テキスト／図形の配置、レイヤー、フィルター、グラデーション、PNG・APNG書き出し、プロジェクト保存に対応。',
+        desc: '「Canvaやフォトショを使うほどではない。けれど簡単な画像加工ができたらいいな」——そんな時の画像メーカー。画像／テキスト／図形の配置、レイヤー、フィルター、PNG・APNG書き出し、プロジェクト保存に対応。',
         tags: ['画像編集', 'レイヤー', '図形', 'APNG', 'テキスト'],
       },
       {
