@@ -10,12 +10,6 @@
   <link rel="apple-touch-icon" href="assets/icon.png">
   <link rel="stylesheet" href="assets/common.css">
   <script src="assets/theme.js"></script>
-  <script>
-    /* github.io などで「/index.html」付きで開かれたら、URL をディレクトリ表記に整える（表示のみ・再読込なし） */
-    if (location.protocol.indexOf('http') === 0 && /\/index\.html$/.test(location.pathname)) {
-      history.replaceState(null, '', location.pathname.replace(/index\.html$/, '') + location.search + location.hash);
-    }
-  </script>
   <style>
     body{min-height:100vh}
     .wrap{max-width:940px; margin:0 auto; padding:56px 24px 80px}

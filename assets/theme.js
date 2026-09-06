@@ -9,6 +9,15 @@
 (function () {
   'use strict';
 
+  /* GitHub Pages などで「/index.html」付きで開かれたら、URL をディレクトリ表記に整える。
+     表示のみ（再読み込みなし）。file:// では何もしない。全ページ共通。 */
+  try {
+    if (location.protocol.indexOf('http') === 0 && /\/index\.html$/.test(location.pathname)) {
+      history.replaceState(null, '',
+        location.pathname.replace(/index\.html$/, '') + location.search + location.hash);
+    }
+  } catch (e) {}
+
   var KEY = 'yos.theme';
   var LEGACY_KEY = 'colorThemePreference'; // ColorPaletteMaster の旧キー
   var ORDER = ['system', 'light', 'dark'];

@@ -68,15 +68,16 @@ YOS_Tools/
 - 各ツールは `<head>` で `<script src="../assets/theme.js"></script>` を読み込み、
   ヘッダーに `<button data-yos-theme-toggle></button>` を1つ置くだけ。
   アイコン・クリック動作・タブ間同期はスクリプトが付与する。
+- `theme.js` は**URL整形**も兼ねる（全ページ共通）。`http(s)` で `/index.html` 付きに
+  来たら `history.replaceState` でアドレスバーをディレクトリ表記に整える。`file://` では何もしない。
 
 ### ブランド・ナビゲーション
 
 - ブランドマークは `assets/icon.png`（favicon も同じ）。`.yt-mark` クラスを付ける。
-- 「← ツール一覧」リンクは **`href="../index.html"`** にする
-  （`href="../"` だと完全ローカル `file://` でフォルダ一覧が開いてしまう）。
-  GitHub Pages で URL に `index.html` を出さないための整形は、トップページ側の
-  スクリプトが担当する（`http(s)` で `/index.html` 付きに来たら
-  `history.replaceState` でアドレスバーを `/` に整える。`file://` では何もしない）。
+- ページ内リンク（トップ→各ツールの `path`、各ツールの「← ツール一覧」）は
+  **`index.html` 付き**にする（`href="../"` や `"フォルダ/"` だと完全ローカル `file://` で
+  フォルダ一覧が開いてしまう）。GitHub Pages で URL から `index.html` を隠す整形は
+  `assets/theme.js` が全ページで行う（上記「テーマ設定」参照）。
 - 各ツールに「端末内処理／データは外部に送信されません」を明記する（`.yt-privacy` など）。
 
 ### ライセンス・クレジット

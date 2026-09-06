@@ -29,9 +29,9 @@ python -m http.server 8000
 # → http://localhost:8000/
 ```
 
-各ツールの「← ツール一覧」リンクは `href="../index.html"`（完全ローカルでも動くように）。
-GitHub Pages で URL に `index.html` を出さないための整形は、トップページの小さな
-スクリプトが担当する（`/index.html` 付きで開かれたらアドレスバーを `/` に整える）。
+ページ内リンクはすべて `index.html` 付き（完全ローカルの `file://` でも動くように）。
+GitHub Pages で URL から `index.html` を隠す整形は `assets/theme.js` が全ページで行う
+（`http(s)` で `/index.html` 付きに来たら、アドレスバーをディレクトリ表記に整える）。
 
 ## デザインの統一
 
