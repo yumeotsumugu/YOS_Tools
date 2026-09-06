@@ -1,0 +1,219 @@
+/* =============================================================
+   YOS Tools — 共通デザインシステム
+   各ツールの index.html から
+     <link rel="stylesheet" href="../assets/common.css">
+   （トップページは href="assets/common.css"）で読み込む。
+   ツール固有のスタイルは各ファイル側に置く。
+   ============================================================= */
+
+:root{
+  /* ---- カラートークン（ライト） ---- */
+  --navy:#123052;
+  --blue:#2f6fed;
+  --bg:#f4f7fb;
+  --paper:#fff;
+  --line:#dde5ef;
+  --ink:#1a2635;
+  --muted:#748196;
+  --faint:#9aa7b7;
+  --soft:#eef3f9;
+
+  /* 合否・状態色 */
+  --ok:#1f7a4d;      --ok-bg:#e3f5ec;
+  --ng:#9b372d;      --ng-bg:#fff4f2;
+  --warn:#b26a1b;    --warn-bg:#fdf1e3;
+  --star:#eab308;
+
+  /* ---- 形・影 ---- */
+  --radius:14px;
+  --radius-sm:8px;
+  --shadow-card:0 4px 16px #1c355910;
+  --shadow-pop:0 10px 26px #2f6fed24;
+
+  /* ---- タイポグラフィ ---- */
+  --font-body:'Zen Kaku Gothic New','Yu Gothic','Hiragino Kaku Gothic ProN','Noto Sans CJK JP','Noto Sans JP',Meiryo,sans-serif;
+  --font-head:'DM Sans','Yu Gothic',sans-serif;
+
+  color:var(--ink);
+  background:var(--bg);
+  font-family:var(--font-body);
+  font-synthesis:none;
+}
+
+/* ---- ダークモード ----
+   3段構え：
+   1) 素の :root はライト
+   2) OS がダーク かつ 明示的な data-theme="light" でない場合
+   3) data-theme="dark" を明示された場合（手動トグル用）
+*/
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --navy:#3b6fd4;
+    --blue:#6b9bff;
+    --bg:#0f141b;
+    --paper:#161d27;
+    --line:#26303d;
+    --ink:#e7ecf3;
+    --muted:#9aa7b7;
+    --faint:#6a7789;
+    --soft:#1c2430;
+
+    --ok:#7ee3ab;    --ok-bg:#12352268;
+    --ng:#f2b8b0;    --ng-bg:#3a211e;
+    --warn:#e6b980;  --warn-bg:#332616;
+    --star:#f5c542;
+
+    --shadow-card:0 4px 16px #0006;
+    --shadow-pop:0 10px 26px #0008;
+  }
+}
+:root[data-theme="dark"]{
+  --navy:#3b6fd4;
+  --blue:#6b9bff;
+  --bg:#0f141b;
+  --paper:#161d27;
+  --line:#26303d;
+  --ink:#e7ecf3;
+  --muted:#9aa7b7;
+  --faint:#6a7789;
+  --soft:#1c2430;
+
+  --ok:#7ee3ab;    --ok-bg:#12352268;
+  --ng:#f2b8b0;    --ng-bg:#3a211e;
+  --warn:#e6b980;  --warn-bg:#332616;
+  --star:#f5c542;
+
+  --shadow-card:0 4px 16px #0006;
+  --shadow-pop:0 10px 26px #0008;
+}
+
+/* =============================================================
+   ベース
+   ============================================================= */
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+a{color:inherit; text-decoration:none}
+
+button{font:inherit; cursor:pointer; border:0; background:none; color:inherit}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{outline:3px solid color-mix(in srgb, var(--blue) 55%, transparent); outline-offset:2px}
+
+/* =============================================================
+   共通コンポーネント
+   ============================================================= */
+
+/* ---- ブランドマーク（おとりさんアイコン） ---- */
+.yt-mark{
+  width:34px; height:34px; flex:0 0 auto;
+  border-radius:9px; object-fit:cover; display:block;
+  background:var(--navy);
+  box-shadow:0 3px 9px #12305233;
+}
+
+/* ---- アプリバー（ページ上部のブランド行） ---- */
+.yt-appbar{
+  display:flex; align-items:center; gap:12px;
+}
+.yt-appbar strong{
+  font:700 18px/1 var(--font-head); letter-spacing:.2px;
+}
+.yt-appbar small{
+  display:block; margin-top:3px;
+  color:var(--faint); font-size:10px; letter-spacing:1.4px;
+}
+
+/* ---- 「← ツール一覧」戻りボタン ---- */
+.yt-back{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 13px;
+  border:1px solid var(--line); border-radius:999px;
+  background:var(--paper); color:var(--muted);
+  font-size:12px; white-space:nowrap;
+}
+.yt-back:hover{border-color:var(--blue); color:var(--blue)}
+
+/* ---- ボタン ---- */
+.yt-btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:10px 15px;
+  border:1px solid var(--line); border-radius:var(--radius-sm);
+  background:var(--paper); color:var(--ink);
+  font:700 12px var(--font-head); white-space:nowrap;
+}
+.yt-btn:hover:not(:disabled){border-color:var(--blue); color:var(--blue)}
+.yt-btn:disabled{opacity:.45; cursor:default}
+.yt-btn--primary{
+  background:var(--navy); border-color:var(--navy); color:#fff;
+  box-shadow:0 4px 10px #12305224;
+}
+.yt-btn--primary:hover:not(:disabled){background:var(--blue); border-color:var(--blue); color:#fff}
+.yt-btn--ghost{border-color:transparent; background:transparent; color:var(--muted)}
+.yt-btn--ghost:hover:not(:disabled){background:var(--soft); color:var(--navy)}
+
+/* ---- カード ---- */
+.yt-card{
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--paper);
+  box-shadow:var(--shadow-card);
+}
+
+/* ---- eyebrow（小見出しラベル） ---- */
+.yt-eyebrow{
+  color:var(--faint);
+  font:700 10px/1 var(--font-head); letter-spacing:1.6px;
+}
+
+/* ---- フォーム ---- */
+.yt-field{display:block; margin-bottom:14px}
+.yt-field > span{
+  display:block; margin-bottom:6px;
+  color:var(--faint); font:700 10px/1 var(--font-head); letter-spacing:1.2px;
+}
+.yt-input,
+.yt-field textarea,
+.yt-field input[type=text],
+.yt-field input[type=number],
+.yt-field select{
+  width:100%; padding:10px 12px;
+  border:1px solid var(--line); border-radius:var(--radius-sm);
+  font:inherit; font-size:13px;
+  background:var(--bg); color:var(--ink);
+}
+.yt-input:focus,
+.yt-field textarea:focus,
+.yt-field input:focus,
+.yt-field select:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+
+/* ---- プライバシーピル ---- */
+.yt-privacy{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 13px;
+  border:1px solid var(--line); border-radius:999px;
+  background:var(--paper); color:var(--muted); font-size:11px;
+}
+.yt-privacy b{color:var(--ink)}
+
+/* ---- トースト ---- */
+.yt-toast{
+  position:fixed; left:50%; bottom:28px;
+  transform:translateX(-50%) translateY(10px);
+  padding:10px 16px; border-radius:var(--radius-sm);
+  background:var(--navy); color:#fff; font-size:12px;
+  opacity:0; pointer-events:none; transition:.2s; z-index:999;
+}
+.yt-toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+/* ---- ユーティリティ ---- */
+.yt-hidden,[hidden]{display:none !important}

@@ -7,541 +7,25 @@
     <link rel="icon" sizes="32x32" href="../assets/icon-32.png">
     <link rel="icon" sizes="256x256" href="../assets/icon.png">
     <link rel="apple-touch-icon" href="../assets/icon.png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root {
-            /* Light Mode Colors */
-            --bg-primary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f8fafc;
-            --bg-hover: #f1f5f9;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --text-tertiary: #94a3b8;
-            --border-primary: #e2e8f0;
-            --border-secondary: #cbd5e1;
-            --shadow: rgba(0, 0, 0, 0.1);
-            --note-bg: #dbeafe;
-            --note-border: #3b82f6;
-        }
-        
-        [data-theme="dark"] {
-            /* Dark Mode Colors - Improved Readability */
-            --bg-primary: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            --bg-secondary: #1e293b;
-            --bg-tertiary: #2d3748;
-            --bg-hover: #374151;
-            --text-primary: #f8fafc;
-            --text-secondary: #e2e8f0;
-            --text-tertiary: #cbd5e1;
-            --border-primary: #475569;
-            --border-secondary: #64748b;
-            --shadow: rgba(0, 0, 0, 0.5);
-            --note-bg: #1e3a5f;
-            --note-border: #60a5fa;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            transition: background 0.3s ease, color 0.3s ease;
-        }
-        
-        .color-box {
-            transition: transform 0.2s;
-        }
-        
-        .color-box:hover {
-            transform: scale(1.1);
-        }
-        
-        .copy-button {
-            transition: all 0.2s;
-        }
-        
-        .copy-button:hover {
-            background-color: var(--bg-hover);
-        }
-        
-        .tab-button {
-            transition: all 0.2s;
-        }
-        
-        .tab-button.active {
-            border-bottom-color: #2563eb;
-            color: #2563eb;
-        }
-        
-        input[type="color"] {
-            cursor: pointer;
-        }
-        
-        .gradient-preview {
-            height: 64px;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px var(--shadow);
-        }
-        
-        /* Theme Toggle Button */
-        .theme-toggle {
-            position: relative;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .theme-toggle:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
-            transform: rotate(20deg);
-        }
-
-        .theme-toggle svg {
-            width: 24px;
-            height: 24px;
-            color: white;
-        }
-        
-        /* Theme dropdown menu */
-        .theme-menu {
-            display: none;
-            position: absolute;
-            top: 60px;
-            right: 10px;
-            background-color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            z-index: 1000;
-            min-width: 180px;
-        }
-        
-        .theme-menu.active {
-            display: block;
-        }
-        
-        .theme-option {
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            transition: background-color 0.2s;
-            color: #1e293b;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            font-size: 0.95rem;
-        }
-        
-        .theme-option:hover {
-            background-color: #f1f5f9;
-        }
-        
-        .theme-option.selected {
-            background-color: #dbeafe;
-            color: #2563eb;
-            font-weight: 600;
-        }
-        
-        .theme-option svg {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-        }
-        
-        .theme-option .check-icon {
-            margin-left: auto;
-            color: #2563eb;
-        }
-        
-        [data-theme="dark"] .theme-menu {
-            background-color: #1e293b;
-            border: 1px solid #475569;
-        }
-        
-        [data-theme="dark"] .theme-option {
-            color: #e2e8f0;
-        }
-        
-        [data-theme="dark"] .theme-option:hover {
-            background-color: #334155;
-        }
-        
-        [data-theme="dark"] .theme-option.selected {
-            background-color: #1e3a5f;
-            color: #60a5fa;
-        }
-        
-        /* Dark mode adjustments */
-        [data-theme="dark"] .bg-white {
-            background-color: var(--bg-secondary) !important;
-        }
-        
-        [data-theme="dark"] .border-slate-200 {
-            border-color: var(--border-primary) !important;
-        }
-        
-        [data-theme="dark"] .text-slate-400,
-        [data-theme="dark"] .text-slate-500,
-        [data-theme="dark"] .text-slate-600,
-        [data-theme="dark"] .text-slate-700,
-        [data-theme="dark"] .text-slate-800 {
-            color: var(--text-secondary) !important;
-        }
-        
-        [data-theme="dark"] .modal-content {
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-primary);
-        }
-        
-        [data-theme="dark"] .readme-content {
-            color: var(--text-primary);
-        }
-        
-        [data-theme="dark"] .readme-content h2,
-        [data-theme="dark"] .readme-content h3,
-        [data-theme="dark"] .readme-content h4 {
-            color: var(--text-primary);
-            border-color: var(--border-primary);
-        }
-        
-        [data-theme="dark"] .readme-content p,
-        [data-theme="dark"] .readme-content li {
-            color: var(--text-secondary);
-        }
-        
-        [data-theme="dark"] .readme-content th {
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-        
-        [data-theme="dark"] .readme-content td {
-            color: var(--text-secondary);
-            border-color: var(--border-primary);
-        }
-        
-        [data-theme="dark"] .readme-content code {
-            background-color: var(--bg-tertiary);
-            color: #a5f3fc;
-        }
-        
-        [data-theme="dark"] .readme-content pre {
-            background-color: #0f172a;
-            border: 1px solid var(--border-primary);
-        }
-        
-        [data-theme="dark"] .readme-content .note {
-            background-color: rgba(30, 58, 95, 0.5);
-            border-left-color: #60a5fa;
-            color: var(--text-secondary);
-        }
-        
-        [data-theme="dark"] .readme-content .note strong {
-            color: var(--text-primary);
-        }
-        
-        [data-theme="dark"] .readme-content .note p {
-            color: var(--text-secondary);
-        }
-        
-        [data-theme="dark"] .collapsible {
-            background-color: var(--bg-tertiary);
-            border-color: var(--border-primary);
-            color: var(--text-primary);
-        }
-        
-        [data-theme="dark"] .collapsible:hover {
-            background-color: var(--bg-hover);
-        }
-        
-        /* Tab adjustments for dark mode */
-        [data-theme="dark"] .tab-button {
-            color: var(--text-secondary);
-            border-bottom-color: transparent;
-        }
-        
-        [data-theme="dark"] .tab-button.active {
-            color: #60a5fa;
-            border-bottom-color: #60a5fa;
-        }
-        
-        [data-theme="dark"] .tab-button:hover {
-            color: var(--text-primary);
-        }
-        
-        /* Input fields in dark mode */
-        [data-theme="dark"] input[type="text"],
-        [data-theme="dark"] input[type="color"] {
-            background-color: var(--bg-tertiary);
-            border-color: var(--border-primary);
-            color: var(--text-primary);
-        }
-        
-        [data-theme="dark"] input[type="text"]:focus {
-            border-color: #60a5fa;
-        }
-        
-        /* Export modal text in dark mode */
-        [data-theme="dark"] #exportModal .text-slate-600 {
-            color: var(--text-secondary) !important;
-        }
-        
-        /* License section in dark mode - override inline styles */
-        [data-theme="dark"] .readme-content h2 + .note {
-            background-color: var(--bg-tertiary) !important;
-            border-left-color: #60a5fa !important;
-            color: var(--text-secondary) !important;
-        }
-        
-        [data-theme="dark"] .readme-content h2 + .note p,
-        [data-theme="dark"] .readme-content h2 + .note strong {
-            color: var(--text-primary) !important;
-        }
-        
-        /* Main card background */
-        [data-theme="dark"] .rounded-2xl.shadow-xl {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-primary);
-        }
-        
-        /* Ensure main content area is dark */
-        [data-theme="dark"] .bg-gradient-to-br {
-            background: var(--bg-primary) !important;
-        }
-        
-        /* Main color display section */
-        [data-theme="dark"] .p-6.bg-gradient-to-br {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
-        }
-        
-        /* Body background */
-        [data-theme="dark"] body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-        }
-        
-        /* Tab container */
-        [data-theme="dark"] .border-b {
-            border-color: var(--border-primary) !important;
-            background-color: var(--bg-secondary);
-        }
-        
-        /* Changelog content - all note boxes inside collapsible */
-        [data-theme="dark"] #changelogContent .note {
-            background-color: var(--bg-tertiary) !important;
-            border-left-color: #60a5fa !important;
-            color: var(--text-primary) !important;
-        }
-        
-        [data-theme="dark"] #changelogContent .note h4,
-        [data-theme="dark"] #changelogContent .note p,
-        [data-theme="dark"] #changelogContent .note li,
-        [data-theme="dark"] #changelogContent .note strong {
-            color: var(--text-primary) !important;
-        }
-        
-        /* Final success message note */
-        [data-theme="dark"] .readme-content > .note:last-child {
-            background-color: rgba(34, 197, 94, 0.2) !important;
-            border-left-color: #22c55e !important;
-        }
-        
-        [data-theme="dark"] .readme-content > .note:last-child strong {
-            color: #22c55e !important;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.5);
-        }
-        
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal-content {
-            background-color: #fefefe;
-            padding: 0;
-            border-radius: 1rem;
-            max-width: 800px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .readme-content {
-            line-height: 1.8;
-        }
-        
-        .readme-content h2 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            color: #1e293b;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 0.5rem;
-        }
-        
-        .readme-content h3 {
-            font-size: 1.25rem;
-            font-weight: bold;
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
-            color: #334155;
-        }
-        
-        .readme-content h4 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
-            color: #475569;
-        }
-        
-        .readme-content ul, .readme-content ol {
-            margin-left: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .readme-content li {
-            margin-bottom: 0.5rem;
-        }
-        
-        .readme-content code {
-            background-color: #1e293b;
-            color: #e2e8f0;
-            padding: 0.2rem 0.4rem;
-            border-radius: 0.25rem;
-            font-family: monospace;
-            font-size: 0.9em;
-        }
-        
-        .readme-content pre {
-            background-color: #1e293b;
-            color: #e2e8f0;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            margin: 1rem 0;
-        }
-        
-        .readme-content table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-        }
-        
-        .readme-content th, .readme-content td {
-            border: 1px solid #e2e8f0;
-            padding: 0.75rem;
-            text-align: left;
-        }
-        
-        .readme-content th {
-            background-color: #f8fafc;
-            font-weight: 600;
-        }
-        
-        .readme-content .note {
-            background-color: #dbeafe;
-            border-left: 4px solid #3b82f6;
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 0.25rem;
-        }
-        
-        /* Collapsible Changelog */
-        .collapsible {
-            cursor: pointer;
-            padding: 1rem;
-            background-color: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background-color 0.2s;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-        }
-        
-        .collapsible:hover {
-            background-color: #f1f5f9;
-        }
-        
-        .collapsible-icon {
-            transition: transform 0.3s;
-            width: 20px;
-            height: 20px;
-        }
-        
-        .collapsible.active .collapsible-icon {
-            transform: rotate(180deg);
-        }
-        
-        .collapsible-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-        }
-        
-        .collapsible-content.active {
-            max-height: 2000px;
-            transition: max-height 0.5s ease-in;
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/common.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-gradient-to-br from-slate-50 to-slate-100">
-    <div class="min-h-screen p-4">
-        <div class="max-w-6xl mx-auto">
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+<body>
+    <div class="cpm-page">
+        <div class="cpm-shell">
+            <div class="cpm-card">
                 <!-- Header -->
-                <div class="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
-                            </svg>
-                            <div>
-                                <h1 class="text-3xl font-bold">カラーパレットマスター</h1>
-                                <p class="text-purple-100">プロフェッショナルなカラー管理ツール</p>
-                            </div>
+                <header class="cpm-header">
+                    <div class="cpm-brand">
+                        <img class="yt-mark" src="../assets/icon.png" alt="">
+                        <div>
+                            <h1>カラーパレットマスター</h1>
+                            <p>プロフェッショナルなカラー管理ツール</p>
                         </div>
-                        <div class="flex gap-2 items-center" style="position: relative;">
-                            <a href="../index.html" class="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/20 transition-colors text-sm font-medium whitespace-nowrap" title="ツール一覧に戻る">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                                </svg>
-                                <span>ツール一覧</span>
-                            </a>
-                            <button id="themeToggle" class="theme-toggle" title="テーマ設定">
+                    </div>
+                    <div class="cpm-header-actions">
+                        <a href="../index.html" class="yt-back" title="ツール一覧に戻る">← ツール一覧</a>
+                        <button id="themeToggle" class="theme-toggle" title="テーマ設定">
                                 <svg id="systemIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                 </svg>
@@ -584,137 +68,115 @@
                                 </button>
                             </div>
                             
-                            <button id="exportBtn" class="p-3 rounded-lg hover:bg-white/20 transition-colors" title="エクスポート">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                </svg>
-                            </button>
-                            <button id="importBtn" class="p-3 rounded-lg hover:bg-white/20 transition-colors" title="インポート">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                                </svg>
-                            </button>
-                            <button id="helpBtn" class="p-3 rounded-lg hover:bg-white/20 transition-colors" title="使い方を見る">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </button>
-                        </div>
+                        <button id="exportBtn" class="cpm-iconbtn" title="エクスポート">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                        </button>
+                        <button id="importBtn" class="cpm-iconbtn" title="インポート">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                            </svg>
+                        </button>
+                        <button id="helpBtn" class="cpm-iconbtn" title="使い方を見る">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
                     </div>
-                </div>
+                </header>
 
                 <!-- Main Color Display -->
-                <div class="p-6 bg-gradient-to-br from-slate-50 to-white">
-                    <div class="flex flex-col md:flex-row gap-6">
-                        <div class="flex-1">
-                            <div id="mainColorDisplay" class="w-full h-48 rounded-xl shadow-lg border-4 border-white transition-all duration-300"></div>
-                            <div class="mt-4 flex items-center gap-2">
-                                <input type="color" id="colorPicker" class="w-16 h-16 rounded-lg cursor-pointer border-2 border-slate-200">
-                                <input type="text" id="colorInput" class="flex-1 px-4 py-3 border-2 border-slate-200 rounded-lg font-mono text-lg focus:outline-none focus:border-blue-500" placeholder="#3B82F6">
-                                <button id="bookmarkBtn" class="p-3 rounded-lg hover:bg-slate-100 transition-colors">
-                                    <svg id="bookmarkIcon" class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                                    </svg>
-                                </button>
-                            </div>
+                <div class="cpm-display">
+                    <div>
+                        <div id="mainColorDisplay" class="cpm-swatch-lg"></div>
+                        <div class="cpm-picker-row">
+                            <input type="color" id="colorPicker" class="cpm-color-input">
+                            <input type="text" id="colorInput" class="cpm-hex-input" placeholder="#3B82F6">
+                            <button id="bookmarkBtn" class="cpm-star-btn" title="ブックマーク">
+                                <svg id="bookmarkIcon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                </svg>
+                            </button>
                         </div>
-
-                        <!-- Format Display -->
-                        <div class="flex-1 space-y-2" id="formatList"></div>
                     </div>
+                    <div id="formatList" class="cpm-formats"></div>
                 </div>
 
                 <!-- Tabs -->
-                <div class="border-b border-slate-200">
-                    <div class="flex gap-2 px-6 overflow-x-auto">
-                        <button class="tab-button active px-6 py-3 font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="picker">ピッカー</button>
-                        <button class="tab-button px-6 py-3 font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="harmony">ハーモニー</button>
-                        <button class="tab-button px-6 py-3 font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="gradient">グラデーション</button>
-                        <button class="tab-button px-6 py-3 font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="contrast">コントラスト</button>
-                        <button class="tab-button px-6 py-3 font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="palettes">パレット</button>
-                    </div>
+                <div class="cpm-tabs">
+                    <button class="tab-button active" data-tab="picker">ピッカー</button>
+                    <button class="tab-button" data-tab="harmony">ハーモニー</button>
+                    <button class="tab-button" data-tab="gradient">グラデーション</button>
+                    <button class="tab-button" data-tab="contrast">コントラスト</button>
+                    <button class="tab-button" data-tab="palettes">パレット</button>
                 </div>
 
                 <!-- Tab Content -->
-                <div class="p-6">
+                <div class="cpm-body">
                     <!-- Picker Tab -->
                     <div id="tab-picker" class="tab-content">
-                        <div class="space-y-6">
-                            <div id="bookmarksSection" style="display: none;">
-                                <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
-                                    <svg class="w-5 h-5 fill-yellow-400 text-yellow-400" viewBox="0 0 24 24">
-                                        <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                                    </svg>
-                                    ブックマーク
-                                </h3>
-                                <div id="bookmarksList" class="grid grid-cols-6 md:grid-cols-10 gap-2"></div>
-                            </div>
+                        <div id="bookmarksSection" class="cpm-section" style="display: none;">
+                            <h3 class="cpm-section-title-row">
+                                <svg class="cpm-star-ico" viewBox="0 0 24 24" style="color:var(--star);fill:var(--star)">
+                                    <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                </svg>
+                                ブックマーク
+                            </h3>
+                            <div id="bookmarksList" class="cpm-grid"></div>
+                        </div>
 
-                            <div id="historySection" style="display: none;">
-                                <h3 class="text-lg font-semibold mb-3">履歴</h3>
-                                <div id="historyList" class="grid grid-cols-6 md:grid-cols-12 gap-2"></div>
-                            </div>
+                        <div id="historySection" class="cpm-section" style="display: none;">
+                            <h3>履歴</h3>
+                            <div id="historyList" class="cpm-grid"></div>
                         </div>
                     </div>
 
                     <!-- Harmony Tab -->
                     <div id="tab-harmony" class="tab-content" style="display: none;">
-                        <div class="space-y-6">
-                            <div>
-                                <h3 class="text-lg font-semibold mb-3">補色</h3>
-                                <div id="complementary" class="flex gap-2"></div>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold mb-3">類似色</h3>
-                                <div id="analogous" class="flex gap-2"></div>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold mb-3">トライアド</h3>
-                                <div id="triadic" class="flex gap-2"></div>
-                            </div>
+                        <div class="cpm-section">
+                            <h3>補色</h3>
+                            <div id="complementary" class="cpm-swatch-row"></div>
+                        </div>
+                        <div class="cpm-section">
+                            <h3>類似色</h3>
+                            <div id="analogous" class="cpm-swatch-row"></div>
+                        </div>
+                        <div class="cpm-section">
+                            <h3>トライアド</h3>
+                            <div id="triadic" class="cpm-swatch-row"></div>
                         </div>
                     </div>
 
                     <!-- Gradient Tab -->
                     <div id="tab-gradient" class="tab-content" style="display: none;">
-                        <div class="space-y-4">
-                            <h3 class="text-lg font-semibold">カラーグラデーション</h3>
-                            <div id="gradientSteps" class="flex gap-2"></div>
-                            <div id="gradientBar" class="gradient-preview"></div>
+                        <div class="cpm-section">
+                            <h3>カラーグラデーション</h3>
+                            <div id="gradientSteps" class="cpm-swatch-row"></div>
+                            <div id="gradientBar" class="gradient-preview" style="margin-top:14px"></div>
                         </div>
                     </div>
 
                     <!-- Contrast Tab -->
                     <div id="tab-contrast" class="tab-content" style="display: none;">
-                        <div class="space-y-6">
-                            <div>
-                                <h3 class="text-lg font-semibold mb-3">背景色を選択</h3>
-                                <div class="flex gap-4 items-center">
-                                    <input type="color" id="contrastBgPicker" value="#FFFFFF" class="w-16 h-16 rounded-lg cursor-pointer">
-                                    <input type="text" id="contrastBgInput" value="#FFFFFF" class="flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg font-mono">
-                                </div>
+                        <div class="cpm-section">
+                            <h3>背景色を選択</h3>
+                            <div class="cpm-field-row">
+                                <input type="color" id="contrastBgPicker" value="#FFFFFF" class="cpm-color-input">
+                                <input type="text" id="contrastBgInput" value="#FFFFFF" class="cpm-hex-input">
                             </div>
+                        </div>
 
-                            <div class="bg-white p-6 rounded-xl border-2 border-slate-200">
-                                <div class="mb-4">
-                                    <h4 class="text-2xl font-bold mb-2">コントラスト比: <span id="contrastRatio">1.00</span>:1</h4>
-                                    <div class="space-y-2">
-                                        <div id="contrastAA" class="inline-block px-3 py-1 rounded bg-red-100 text-red-800">
-                                            通常テキスト (AA): ✗ 不合格
-                                        </div>
-                                        <div id="contrastAAA" class="inline-block px-3 py-1 rounded ml-2 bg-red-100 text-red-800">
-                                            通常テキスト (AAA): ✗ 不合格
-                                        </div>
-                                    </div>
+                        <div class="cpm-section">
+                            <div class="cpm-panel">
+                                <h4 class="cpm-ratio">コントラスト比: <span id="contrastRatio">1.00</span>:1</h4>
+                                <div>
+                                    <span id="contrastAA" class="cpm-badge cpm-badge--ng">通常テキスト (AA): ✗ 不合格</span>
+                                    <span id="contrastAAA" class="cpm-badge cpm-badge--ng">通常テキスト (AAA): ✗ 不合格</span>
                                 </div>
-
-                                <div id="contrastPreview" class="p-8 rounded-lg" style="background-color: #FFFFFF;">
-                                    <p id="contrastLargeText" class="text-4xl font-bold mb-2" style="color: #3B82F6;">
-                                        大きなテキスト
-                                    </p>
-                                    <p id="contrastNormalText" class="text-base" style="color: #3B82F6;">
-                                        これは通常サイズのテキストです。適切なコントラスト比を確保することで、すべてのユーザーにとって読みやすいコンテンツを作成できます。
-                                    </p>
+                                <div id="contrastPreview" class="cpm-preview-box" style="background-color: #FFFFFF; margin-top:16px;">
+                                    <p id="contrastLargeText" class="cpm-preview-lg" style="color: #3B82F6;">大きなテキスト</p>
+                                    <p id="contrastNormalText" class="cpm-preview-sm" style="color: #3B82F6;">これは通常サイズのテキストです。適切なコントラスト比を確保することで、すべてのユーザーにとって読みやすいコンテンツを作成できます。</p>
                                 </div>
                             </div>
                         </div>
@@ -722,19 +184,18 @@
 
                     <!-- Palettes Tab -->
                     <div id="tab-palettes" class="tab-content" style="display: none;">
-                        <div class="space-y-6">
-                            <div class="flex gap-2">
-                                <input type="text" id="newPaletteName" placeholder="新しいパレット名..." class="flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
-                                <button id="createPaletteBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        <div class="cpm-section">
+                            <div class="cpm-inline-form">
+                                <input type="text" id="newPaletteName" placeholder="新しいパレット名..." class="cpm-text-input">
+                                <button id="createPaletteBtn" class="cpm-btn">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
                                     </svg>
                                     作成
                                 </button>
                             </div>
-
-                            <div id="palettesList" class="space-y-4"></div>
                         </div>
+                        <div id="palettesList" class="cpm-section"></div>
                     </div>
                 </div>
             </div>
@@ -744,15 +205,15 @@
     <!-- Help Modal -->
     <div id="helpModal" class="modal">
         <div class="modal-content">
-            <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-xl flex justify-between items-center">
-                <h2 class="text-2xl font-bold">📖 使い方ガイド</h2>
-                <button id="closeModal" class="p-2 rounded-lg hover:bg-white/20 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <div class="modal-head">
+                <h2>📖 使い方ガイド</h2>
+                <button id="closeModal" class="cpm-iconbtn">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
-            <div class="p-8 readme-content">
+            <div class="modal-body readme-content">
                 <h2>🚀 基本操作</h2>
                 
                 <h3>1️⃣ 色を選ぶ</h3>
@@ -1032,7 +493,7 @@ location.reload(); // ページを再読み込み</code></pre>
                 </ul>
 
                 <h2>📄 ライセンス・権利表記</h2>
-                <div class="note" style="background-color: #f8fafc; border-left-color: #64748b;">
+                <div class="note">
                     <p><strong>カラーパレットマスター (Color Palette Master)</strong></p>
                     <p><strong>作者:</strong> 夢生ツムグ</p>
                     <p><strong>開発:</strong> Claude.AI (Anthropic) を使用して作成</p>
@@ -1051,7 +512,7 @@ location.reload(); // ページを再読み込み</code></pre>
                 </div>
                 
                 <div id="changelogContent" class="collapsible-content">
-                    <div class="note" style="background-color: #fef3c7; border-left-color: #f59e0b; margin-top: 1rem;">
+                    <div class="note">
                         <h4 style="margin-top: 0;">Version 1.1.0 (2026年5月17日)</h4>
                         <p><strong>✨ 新機能</strong></p>
                         <ul style="margin-top: 0.5rem;">
@@ -1062,7 +523,7 @@ location.reload(); // ページを再読み込み</code></pre>
                         </ul>
                     </div>
                     
-                    <div class="note" style="background-color: #e0e7ff; border-left-color: #6366f1;">
+                    <div class="note">
                         <h4 style="margin-top: 0;">Version 1.0.1 (2026年2月17日)</h4>
                         <p><strong>🔧 改善</strong></p>
                         <ul style="margin-top: 0.5rem;">
@@ -1075,7 +536,7 @@ location.reload(); // ページを再読み込み</code></pre>
                         </ul>
                     </div>
                     
-                    <div class="note" style="background-color: #e7e5e4; border-left-color: #78716c;">
+                    <div class="note">
                         <h4 style="margin-top: 0;">Version 1.0.0 (2026年2月17日)</h4>
                         <p><strong>🎉 初回リリース</strong></p>
                         <ul style="margin-top: 0.5rem;">
@@ -1094,13 +555,13 @@ location.reload(); // ページを再読み込み</code></pre>
                         </ul>
                     </div>
                     
-                    <div class="note" style="background-color: #eff6ff; border-left-color: #3b82f6;">
+                    <div class="note">
                         <p><strong>💡 注記</strong></p>
                         <p>このツールは開発用途を想定しており、Tailwind CDNを使用しています。ブラウザコンソールに警告が表示されますが、機能には影響ありません。本番環境で大規模に配布する場合は、Tailwind CSSをビルドして使用することを推奨します。</p>
                     </div>
                 </div>
 
-                <div class="note" style="background-color: #dcfce7; border-left-color: #22c55e; margin-top: 2rem;">
+                <div class="note" style="margin-top: 2rem;">
                     <strong>楽しいカラー選びを！</strong> 🎨✨
                 </div>
             </div>
@@ -1110,30 +571,30 @@ location.reload(); // ページを再読み込み</code></pre>
     <!-- Export Modal -->
     <div id="exportModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
-            <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-xl">
-                <h2 class="text-2xl font-bold">📤 エクスポート</h2>
+            <div class="modal-head">
+                <h2>📤 エクスポート</h2>
             </div>
-            <div class="p-6 space-y-4">
-                <p class="text-slate-600">エクスポートするデータを選択してください：</p>
-                <button onclick="exportData('bookmarks')" class="w-full px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <div class="modal-body modal-body--sm">
+                <p>エクスポートするデータを選択してください：</p>
+                <button onclick="exportData('bookmarks')" class="cpm-btn cpm-btn--full">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
                         <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                     </svg>
                     ブックマークのみ
                 </button>
-                <button onclick="exportData('palettes')" class="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                <button onclick="exportData('palettes')" class="cpm-btn cpm-btn--full">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
                     </svg>
                     パレットのみ
                 </button>
-                <button onclick="exportData('all')" class="w-full px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                <button onclick="exportData('all')" class="cpm-btn cpm-btn--full">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                     </svg>
                     すべてエクスポート
                 </button>
-                <button onclick="closeExportModal()" class="w-full px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors">
+                <button onclick="closeExportModal()" class="cpm-btn cpm-btn--ghost cpm-btn--full">
                     キャンセル
                 </button>
             </div>
@@ -1503,14 +964,8 @@ location.reload(); // ページを再読み込み</code></pre>
         }
 
         function updateBookmarkIcon() {
-            const icon = document.getElementById('bookmarkIcon');
-            if (bookmarks.includes(currentColor)) {
-                icon.classList.add('fill-yellow-400', 'text-yellow-400');
-                icon.classList.remove('text-slate-400');
-            } else {
-                icon.classList.remove('fill-yellow-400', 'text-yellow-400');
-                icon.classList.add('text-slate-400');
-            }
+            const btn = document.getElementById('bookmarkBtn');
+            btn.classList.toggle('is-on', bookmarks.includes(currentColor));
         }
 
         function toggleBookmark() {
@@ -1532,13 +987,13 @@ location.reload(); // ページを再読み込み</code></pre>
             
             Object.entries(formats).forEach(([format, value]) => {
                 const div = document.createElement('div');
-                div.className = 'flex items-center gap-2 bg-white p-3 rounded-lg border border-slate-200';
+                div.className = 'cpm-format-row';
                 div.innerHTML = `
-                    <span class="text-xs font-semibold text-slate-500 uppercase w-16">${format}</span>
-                    <code class="flex-1 font-mono text-sm">${value}</code>
-                    <button class="copy-button p-2 rounded-lg" onclick="copyToClipboard('${value}', this)">
-                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                    <span class="k">${format}</span>
+                    <code>${value}</code>
+                    <button class="cpm-copy" onclick="copyToClipboard('${value}', this)" title="コピー">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
                         </svg>
                     </button>
                 `;
@@ -1560,7 +1015,7 @@ location.reload(); // ページを再読み込み</code></pre>
             
             bookmarks.forEach(color => {
                 const div = document.createElement('button');
-                div.className = 'color-box aspect-square rounded-lg shadow-md border-2 border-white cursor-pointer';
+                div.className = 'color-box cpm-chip';
                 div.style.backgroundColor = color;
                 div.title = color;
                 div.onclick = () => updateColor(color);
@@ -1582,7 +1037,7 @@ location.reload(); // ページを再読み込み</code></pre>
             
             history.forEach(color => {
                 const div = document.createElement('button');
-                div.className = 'color-box aspect-square rounded-lg shadow-md border-2 border-white cursor-pointer';
+                div.className = 'color-box cpm-chip';
                 div.style.backgroundColor = color;
                 div.title = color;
                 div.onclick = () => updateColor(color);
@@ -1598,12 +1053,9 @@ location.reload(); // ページを再読み込み</code></pre>
             compContainer.innerHTML = '';
             [currentColor, harmony.complementary].forEach(color => {
                 const div = document.createElement('div');
-                div.className = 'flex-1';
                 div.innerHTML = `
-                    <div class="h-24 rounded-lg shadow-md cursor-pointer hover:scale-105 transition-transform" 
-                         style="background-color: ${color}" 
-                         onclick="updateColor('${color}')"></div>
-                    <p class="text-center mt-2 font-mono text-sm">${color}</p>
+                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="updateColor('${color}')"></div>
+                    <p class="cpm-swatch-cap">${color}</p>
                 `;
                 compContainer.appendChild(div);
             });
@@ -1613,12 +1065,9 @@ location.reload(); // ページを再読み込み</code></pre>
             anaContainer.innerHTML = '';
             [harmony.analogous2, currentColor, harmony.analogous1].forEach(color => {
                 const div = document.createElement('div');
-                div.className = 'flex-1';
                 div.innerHTML = `
-                    <div class="h-24 rounded-lg shadow-md cursor-pointer hover:scale-105 transition-transform" 
-                         style="background-color: ${color}" 
-                         onclick="updateColor('${color}')"></div>
-                    <p class="text-center mt-2 font-mono text-sm">${color}</p>
+                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="updateColor('${color}')"></div>
+                    <p class="cpm-swatch-cap">${color}</p>
                 `;
                 anaContainer.appendChild(div);
             });
@@ -1628,12 +1077,9 @@ location.reload(); // ページを再読み込み</code></pre>
             triContainer.innerHTML = '';
             [currentColor, harmony.triadic1, harmony.triadic2].forEach(color => {
                 const div = document.createElement('div');
-                div.className = 'flex-1';
                 div.innerHTML = `
-                    <div class="h-24 rounded-lg shadow-md cursor-pointer hover:scale-105 transition-transform" 
-                         style="background-color: ${color}" 
-                         onclick="updateColor('${color}')"></div>
-                    <p class="text-center mt-2 font-mono text-sm">${color}</p>
+                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="updateColor('${color}')"></div>
+                    <p class="cpm-swatch-cap">${color}</p>
                 `;
                 triContainer.appendChild(div);
             });
@@ -1648,12 +1094,9 @@ location.reload(); // ページを再読み込み</code></pre>
             stepsContainer.innerHTML = '';
             gradient.forEach(color => {
                 const div = document.createElement('div');
-                div.className = 'flex-1';
                 div.innerHTML = `
-                    <div class="h-32 rounded-lg shadow-md cursor-pointer hover:scale-105 transition-transform" 
-                         style="background-color: ${color}" 
-                         onclick="updateColor('${color}')"></div>
-                    <p class="text-center mt-2 font-mono text-xs">${color}</p>
+                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="updateColor('${color}')"></div>
+                    <p class="cpm-swatch-cap">${color}</p>
                 `;
                 stepsContainer.appendChild(div);
             });
@@ -1675,20 +1118,20 @@ location.reload(); // ページを再読み込み</code></pre>
             // AA rating
             const aaElement = document.getElementById('contrastAA');
             if (parseFloat(ratio) >= 4.5) {
-                aaElement.className = 'inline-block px-3 py-1 rounded bg-green-100 text-green-800';
+                aaElement.className = 'cpm-badge cpm-badge--ok';
                 aaElement.textContent = '通常テキスト (AA): ✓ 合格';
             } else {
-                aaElement.className = 'inline-block px-3 py-1 rounded bg-red-100 text-red-800';
+                aaElement.className = 'cpm-badge cpm-badge--ng';
                 aaElement.textContent = '通常テキスト (AA): ✗ 不合格';
             }
-            
+
             // AAA rating
             const aaaElement = document.getElementById('contrastAAA');
             if (parseFloat(ratio) >= 7) {
-                aaaElement.className = 'inline-block px-3 py-1 rounded bg-green-100 text-green-800';
+                aaaElement.className = 'cpm-badge cpm-badge--ok';
                 aaaElement.textContent = '通常テキスト (AAA): ✓ 合格';
             } else {
-                aaaElement.className = 'inline-block px-3 py-1 rounded bg-red-100 text-red-800';
+                aaaElement.className = 'cpm-badge cpm-badge--ng';
                 aaaElement.textContent = '通常テキスト (AAA): ✗ 不合格';
             }
         }
@@ -1698,35 +1141,32 @@ location.reload(); // ページを再読み込み</code></pre>
             container.innerHTML = '';
             
             if (palettes.length === 0) {
-                container.innerHTML = '<p class="text-slate-400 text-center py-8">パレットがまだありません。上記から作成してください。</p>';
+                container.innerHTML = '<p class="cpm-empty">パレットがまだありません。上記から作成してください。</p>';
                 return;
             }
-            
+
             palettes.forEach(palette => {
                 const div = document.createElement('div');
-                div.className = 'bg-white p-4 rounded-xl border-2 border-slate-200';
+                div.className = 'cpm-palette';
                 div.innerHTML = `
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="font-semibold text-lg">${palette.name}</h4>
-                        <div class="flex gap-2">
-                            <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors" onclick="addColorToPalette(${palette.id})" title="現在の色を追加">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    <div class="cpm-palette-head">
+                        <h4>${palette.name}</h4>
+                        <div class="cpm-palette-actions">
+                            <button class="cpm-icon-action cpm-icon-action--add" onclick="addColorToPalette(${palette.id})" title="現在の色を追加">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
                                 </svg>
                             </button>
-                            <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors" onclick="deletePalette(${palette.id})">
-                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            <button class="cpm-icon-action cpm-icon-action--del" onclick="deletePalette(${palette.id})" title="パレットを削除">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
                             </button>
                         </div>
                     </div>
-                    <div class="flex gap-2 flex-wrap" id="palette-${palette.id}">
+                    <div class="cpm-palette-swatches" id="palette-${palette.id}">
                         ${palette.colors.map(color => `
-                            <button class="w-16 h-16 rounded-lg shadow-md hover:scale-110 transition-transform" 
-                                    style="background-color: ${color}" 
-                                    onclick="updateColor('${color}')"
-                                    title="${color}"></button>
+                            <button style="background-color:${color}" onclick="updateColor('${color}')" title="${color}"></button>
                         `).join('')}
                     </div>
                 `;
@@ -1772,8 +1212,8 @@ location.reload(); // ページを再読み込み</code></pre>
             navigator.clipboard.writeText(text).then(() => {
                 const originalHTML = button.innerHTML;
                 button.innerHTML = `
-                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--ok)">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
                     </svg>
                 `;
                 setTimeout(() => {

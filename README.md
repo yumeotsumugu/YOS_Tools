@@ -23,10 +23,19 @@ python -m http.server 8000
 # → http://localhost:8000/
 ```
 
+## デザインの統一
+
+全ツール共通のカラートークン・タイポグラフィ・共通パーツ（ブランドマーク、`← ツール一覧`
+ボタン、カード、プライバシーピル、ダークモード対応）は `assets/common.css` に集約している。
+各ツールの `index.html` は `<link rel="stylesheet" href="../assets/common.css">`
+（トップページは `assets/common.css`）を先頭で読み込み、固有スタイルだけを各自に持つ。
+
 ## ツールを追加する
 
 1. `YOS_Tools/` 直下にツール用フォルダを作り、`index.html` を置く
-2. `YOS_Tools/index.html` の `tools` 配列に1件追加する
+2. `index.html` の `<head>` で `../assets/common.css` を読み込み、ヘッダーに共通の
+   `img.yt-mark`（`../assets/icon.png`）と `.yt-back` リンクを置く
+3. `YOS_Tools/index.html` の `tools` 配列に1件追加する
 
 ```js
 {
