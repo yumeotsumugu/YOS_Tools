@@ -19,6 +19,7 @@ YOS_Tools/
 ├── QR_Generator/          QRコード生成ツール（単体でも動作）
 ├── QR_Scan/               QRコード読み取りツール（単体でも動作）
 ├── Calc/                  関数電卓（単体でも動作）
+├── Wareki/                和暦西暦 早見表・変換（単体でも動作）
 ├── TextCleaner/           テキスト整形ツール（単体でも動作）
 └── ImageConverter/        画像形式変換ツール（単体でも動作）
 ```

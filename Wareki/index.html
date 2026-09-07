@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Wareki | 和暦西暦 早見表・変換</title>
+  <link rel="icon" sizes="32x32" href="../assets/icon-32.png">
+  <link rel="icon" sizes="256x256" href="../assets/icon.png">
+  <link rel="apple-touch-icon" href="../assets/icon.png">
+  <link rel="stylesheet" href="../assets/common.css">
+  <script src="../assets/theme.js"></script>
+  <style>
+    body{min-height:100vh}
+    .wrap{max-width:900px; margin:0 auto; padding:40px 24px 80px}
+
+    header.site{position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:12px;
+      padding:14px 0 16px; background:var(--bg)}
+    .mark{width:34px; height:34px; border-radius:9px; object-fit:cover; display:block;
+      background:var(--navy); box-shadow:0 3px 9px #12305233}
+    header.site strong{font:700 18px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:.2px}
+    .back{display:inline-flex; align-items:center; gap:6px; margin-left:auto; padding:8px 12px;
+      border:1px solid var(--line); border-radius:999px; background:var(--paper);
+      color:var(--muted); font-size:12px; text-decoration:none}
+    .back:hover{border-color:var(--blue); color:var(--blue)}
+
+    .hero{margin-bottom:22px}
+    .hero h1{margin:0 0 8px; font-size:24px; letter-spacing:-.4px}
+    .hero p{margin:0; max-width:620px; color:var(--muted); font-size:13px}
+
+    .card{padding:20px; border:1px solid var(--line); border-radius:14px; background:var(--paper);
+      box-shadow:0 4px 16px #1c355910}
+    .card + .card{margin-top:16px}
+    .card h2{margin:0 0 14px; font-size:15px}
+
+    .row{display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px}
+    .fld{display:block}
+    .fld > span{display:block; margin-bottom:5px; color:var(--faint);
+      font:700 10px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:1.2px}
+    input[type=number], input[type=date], select{
+      padding:9px 11px; border:1px solid var(--line); border-radius:8px;
+      font:inherit; font-size:13px; background:var(--bg); color:var(--ink)}
+    input[type=number]{width:110px}
+    input:focus, select:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+    .eq{align-self:center; padding-bottom:2px; color:var(--faint); font-size:20px}
+
+    .out{margin-top:14px; padding:12px 14px; border:1px solid var(--line); border-radius:10px;
+      background:var(--bg); font-size:14px; color:var(--ink); line-height:1.7}
+    .out b{color:var(--navy); font-weight:700; font-size:15px}
+    .out .sub{color:var(--muted); font-size:12px}
+    .out .warn{color:var(--warn); font-size:12px; display:block; margin-top:4px}
+    .out.empty{color:var(--faint)}
+
+    /* 早見表 */
+    .tbl-ctl{display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; margin-bottom:12px}
+    .tbl-ctl .spacer{flex:1}
+    button.btn{padding:9px 14px; border:1px solid var(--line); border-radius:8px;
+      background:var(--paper); color:var(--ink); font:700 12px 'DM Sans','Yu Gothic',sans-serif; cursor:pointer}
+    button.btn:hover:not(:disabled){border-color:var(--blue); color:var(--blue)}
+    button.btn.primary{background:var(--navy); color:#fff; border-color:var(--navy)}
+    button.btn.primary:hover{background:var(--blue); border-color:var(--blue); color:#fff}
+    #customRange{display:none; gap:8px; align-items:flex-end}
+    #customRange.on{display:flex}
+
+    .tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px}
+    table{border-collapse:collapse; width:100%; font-size:13px}
+    thead th{background:var(--soft); color:var(--muted); font:700 11px 'DM Sans','Yu Gothic',sans-serif;
+      letter-spacing:.6px; padding:9px 12px; text-align:left; white-space:nowrap;
+      position:sticky; top:0}
+    tbody td{padding:8px 12px; border-top:1px solid var(--line); white-space:nowrap}
+    tbody tr:hover{background:color-mix(in srgb, var(--blue) 5%, transparent)}
+    td.year{font-weight:700; color:var(--navy)}
+    td.now{color:var(--muted)}
+    tr.is-now{background:color-mix(in srgb, var(--blue) 10%, transparent)}
+    tr.is-now td.year{color:var(--blue)}
+    .tbl-note{margin:10px 2px 0; color:var(--faint); font-size:11px; line-height:1.6}
+    .print-title{display:none; margin:0 0 10px; font-size:16px}
+
+    .privacy{display:inline-flex; align-items:center; gap:8px; margin-top:22px;
+      padding:8px 13px; border:1px solid var(--line); border-radius:999px;
+      background:var(--paper); color:var(--muted); font-size:11px}
+    .privacy b{color:var(--ink)}
+
+    .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(10px);
+      padding:10px 16px; border-radius:8px; background:var(--navy); color:#fff; font-size:12px;
+      opacity:0; pointer-events:none; transition:.2s; z-index:999}
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+    @media print{
+      header.site, .hero, .card.conv, .card.age, .tbl-ctl, .tbl-note, .privacy, .toast{ display:none !important; }
+      .wrap{padding:0; max-width:none}
+      .card{border:0; box-shadow:none; padding:0}
+      .tbl-wrap{border:0; overflow:visible}
+      thead th{position:static}
+      .print-title{display:block}
+      tr.is-now{background:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <img class="mark" src="../assets/icon.png" alt="">
+      <strong>Wareki</strong>
+      <button data-yos-theme-toggle style="margin-left:auto"></button>
+      <a class="back" href="../index.html">← ツール一覧</a>
+    </header>
+
+    <section class="hero">
+      <h1>和暦西暦 早見表</h1>
+      <p>西暦と和暦（明治・大正・昭和・平成・令和）を相互に変換します。生年月日からの満年齢、干支、印刷できる早見表つき。計算はすべてこの端末の中だけで行われます。</p>
+    </section>
+
+    <!-- 変換 -->
+    <div class="card conv">
+      <h2>西暦 ⇄ 和暦</h2>
+      <div class="row">
+        <label class="fld">
+          <span>西暦</span>
+          <span><input type="number" id="seireki" min="1868" max="2999" step="1"> 年</span>
+        </label>
+        <span class="eq">＝</span>
+        <label class="fld">
+          <span>和暦</span>
+          <span><select id="era"></select> <input type="number" id="waYear" min="1" max="99" step="1"> 年</span>
+        </label>
+      </div>
+      <div class="out empty" id="convOut">西暦か和暦を入力してください。</div>
+    </div>
+
+    <!-- 年齢 -->
+    <div class="card age">
+      <h2>生年月日から年齢・和暦</h2>
+      <div class="row">
+        <label class="fld">
+          <span>生年月日</span>
+          <input type="date" id="birth">
+        </label>
+        <label class="fld">
+          <span>基準日</span>
+          <input type="date" id="asof">
+        </label>
+        <button class="btn" id="asofToday" type="button">今日</button>
+      </div>
+      <div class="out empty" id="ageOut">生年月日を入力してください。</div>
+    </div>
+
+    <!-- 早見表 -->
+    <div class="card">
+      <h2>早見表</h2>
+      <div class="tbl-ctl">
+        <label class="fld">
+          <span>範囲</span>
+          <select id="preset">
+            <option value="reiwa">令和</option>
+            <option value="heisei">平成</option>
+            <option value="showa">昭和</option>
+            <option value="taisho">大正</option>
+            <option value="meiji">明治</option>
+            <option value="c20">1926〜2025</option>
+            <option value="custom">カスタム</option>
+          </select>
+        </label>
+        <span id="customRange">
+          <label class="fld"><span>開始（西暦）</span><input type="number" id="rFrom" min="1868" max="2999"></label>
+          <span class="eq" style="font-size:14px">〜</span>
+          <label class="fld"><span>終了（西暦）</span><input type="number" id="rTo" min="1868" max="2999"></label>
+        </span>
+        <span class="spacer"></span>
+        <button class="btn" id="copyCsv" type="button">CSVをコピー</button>
+        <button class="btn primary" id="printBtn" type="button">印刷</button>
+      </div>
+      <h3 class="print-title" id="printTitle"></h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>西暦</th><th>和暦</th><th>干支</th><th id="ageColHead">年齢</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <p class="tbl-note" id="tblNote"></p>
+    </div>
+
+    <span class="privacy">◇ <span><b>端末内処理</b> ／ 入力内容は外部に送信されません</span></span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (function(){
+    'use strict';
+    var OPTS_KEY = 'yos.wareki.table.v1';
+    var $ = function(id){ return document.getElementById(id); };
+
+    /* ---------- 元号データ（明治以降） ---------- */
+    // start = その元号に改元されたグレゴリオ暦の日付
+    var ERAS = [
+      { name: '明治', y: 1868, m: 10, d: 23 },
+      { name: '大正', y: 1912, m: 7,  d: 30 },
+      { name: '昭和', y: 1926, m: 12, d: 25 },
+      { name: '平成', y: 1989, m: 1,  d: 8  },
+      { name: '令和', y: 2019, m: 5,  d: 1  }
+    ];
+    var MIN_YEAR = ERAS[0].y;
+    function endYear(i){ return (i + 1 < ERAS.length) ? ERAS[i + 1].y : 9999; }
+    function eraByName(name){
+      for (var i = 0; i < ERAS.length; i++) if (ERAS[i].name === name) return { era: ERAS[i], i: i };
+      return null;
+    }
+
+    /* ---------- 干支 ---------- */
+    var JIKKAN   = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+    var JIKKAN_Y = ['きのえ','きのと','ひのえ','ひのと','つちのえ','つちのと','かのえ','かのと','みずのえ','みずのと'];
+    var JUNISHI  = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+    var JUNISHI_Y= ['ね','うし','とら','う','たつ','み','うま','ひつじ','さる','とり','いぬ','い'];
+    function eto(y){
+      var a = ((y - 4) % 10 + 10) % 10;
+      var b = ((y - 4) % 12 + 12) % 12;
+      return { kanji: JIKKAN[a] + JUNISHI[b], yomi: JIKKAN_Y[a] + JUNISHI_Y[b] };
+    }
+
+    /* ---------- 変換ロジック ---------- */
+    // 西暦の暦年 y に含まれる和暦（境界年は 2 つ返す）
+    function yearToWareki(y){
+      var out = [];
+      for (var i = 0; i < ERAS.length; i++){
+        var s = ERAS[i].y, e = endYear(i);
+        if (s <= y && y <= e) out.push({ name: ERAS[i].name, n: y - s + 1 });
+      }
+      return out;
+    }
+    function waLabel(name, n){ return name + (n === 1 ? '元' : n) + '年'; }
+    function waListLabel(list){
+      return list.map(function(w){ return waLabel(w.name, w.n); }).join('／');
+    }
+    // 和暦 → 西暦。範囲外でも西暦は返し、outOfRange フラグを立てる
+    function waregiToYear(name, n){
+      var found = eraByName(name);
+      if (!found || !(n >= 1)) return null;
+      var y = found.era.y + n - 1;
+      var maxN = endYear(found.i) - found.era.y + 1;
+      return { y: y, outOfRange: (n > maxN) };
+    }
+    // グレゴリオ暦の日付 → 和暦（正確な元号判定）
+    function dateToWareki(dt){
+      var key = dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate();
+      for (var i = ERAS.length - 1; i >= 0; i--){
+        var E = ERAS[i];
+        if (key >= E.y * 10000 + E.m * 100 + E.d){
+          return { name: E.name, n: dt.getFullYear() - E.y + 1 };
+        }
+      }
+      return null;
+    }
+
+    // テスト用に公開（DOM に依存しない）
+    window.WarekiCore = {
+      yearToWareki: yearToWareki, waregiToYear: waregiToYear, dateToWareki: dateToWareki,
+      eto: eto, waLabel: waLabel, waListLabel: waListLabel
+    };
+
+    /* ---------- トースト ---------- */
+    var toastTimer = null;
+    function toast(msg){
+      var t = $('toast');
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 1600);
+    }
+
+    /* ============================================================
+       セクションA：西暦 ⇄ 和暦
+       ============================================================ */
+    var elSei = $('seireki'), elEra = $('era'), elWaY = $('waYear'), elConvOut = $('convOut');
+    var syncing = false;
+
+    ERAS.forEach(function(E){
+      var op = document.createElement('option');
+      op.value = E.name; op.textContent = E.name;
+      elEra.appendChild(op);
+    });
+
+    function renderConvOut(y){
+      if (!(y >= MIN_YEAR)){
+        elConvOut.className = 'out empty';
+        elConvOut.textContent = MIN_YEAR + '年（明治元年）以降で入力してください。';
+        return;
+      }
+      var list = yearToWareki(y);
+      var et = eto(y);
+      elConvOut.className = 'out';
+      elConvOut.innerHTML =
+        '西暦 ' + y + ' 年　＝　<b>' + escapeHtml(waListLabel(list)) + '</b>' +
+        '<span class="sub">　･　干支: ' + et.kanji + '（' + et.yomi + '）</span>' +
+        (list.length > 1 ? '<span class="warn">※ この年は改元があり、2 つの和暦にまたがります。</span>' : '');
+    }
+
+    function fromSeireki(){
+      if (syncing) return;
+      var y = parseInt(elSei.value, 10);
+      if (isNaN(y)){ elConvOut.className = 'out empty'; elConvOut.textContent = '西暦か和暦を入力してください。'; return; }
+      syncing = true;
+      var list = yearToWareki(y);
+      if (list.length){
+        var primary = list[list.length - 1]; // 境界年は新しい方の元号を採用
+        elEra.value = primary.name;
+        elWaY.value = primary.n;
+      }
+      syncing = false;
+      renderConvOut(y);
+      saveOpts();
+    }
+
+    function fromWareki(){
+      if (syncing) return;
+      var n = parseInt(elWaY.value, 10);
+      var r = waregiToYear(elEra.value, n);
+      if (!r){ return; }
+      syncing = true;
+      elSei.value = r.y;
+      syncing = false;
+      renderConvOut(r.y);
+      if (r.outOfRange){
+        elConvOut.innerHTML += '<span class="warn">※ ' + elEra.value + n + '年 はその元号には存在しません（西暦は参考値）。</span>';
+      }
+      saveOpts();
+    }
+
+    elSei.addEventListener('input', fromSeireki);
+    elEra.addEventListener('change', fromWareki);
+    elWaY.addEventListener('input', fromWareki);
+
+    /* ============================================================
+       セクションB：年齢・和暦
+       ============================================================ */
+    var elBirth = $('birth'), elAsof = $('asof'), elAgeOut = $('ageOut');
+
+    function parseDateInput(v){
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
+      if (!m) return null;
+      var y = +m[1], mo = +m[2], d = +m[3];
+      var dt = new Date(y, mo - 1, d);
+      if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+      return dt;
+    }
+    function fmtDate(y, m, d){ return y + '年' + m + '月' + d + '日'; }
+
+    function calcAge(){
+      var b = parseDateInput(elBirth.value);
+      var ref = parseDateInput(elAsof.value) || new Date();
+      if (!b){ elAgeOut.className = 'out empty'; elAgeOut.textContent = '生年月日を入力してください。'; return; }
+      // 未来日など
+      if (ref < b){ elAgeOut.className = 'out'; elAgeOut.innerHTML = '<span class="warn">基準日が生年月日より前です。</span>'; return; }
+
+      var years = ref.getFullYear() - b.getFullYear();
+      var months = ref.getMonth() - b.getMonth();
+      var days = ref.getDate() - b.getDate();
+      if (days < 0) months--;
+      if (months < 0){ years--; months += 12; }
+
+      var kazoe = ref.getFullYear() - b.getFullYear() + 1;
+      var wa = dateToWareki(b);
+      var waStr = wa ? waLabel(wa.name, wa.n).replace('年', '') + '年' + (b.getMonth() + 1) + '月' + b.getDate() + '日' : '（明治より前）';
+      var et = eto(b.getFullYear());
+      var refWa = dateToWareki(ref);
+
+      elAgeOut.className = 'out';
+      elAgeOut.innerHTML =
+        '<b>満 ' + years + ' 歳</b>（' + years + '年' + months + 'か月）' +
+        '<span class="sub">　･　数え年 ' + kazoe + ' 歳</span><br>' +
+        '<span class="sub">生年月日の和暦: ' + escapeHtml(waStr) + '　･　干支: ' + et.kanji + '（' + et.yomi + '）</span><br>' +
+        '<span class="sub">基準日: ' + fmtDate(ref.getFullYear(), ref.getMonth() + 1, ref.getDate()) +
+          (refWa ? '（' + escapeHtml(waLabel(refWa.name, refWa.n)) + '）' : '') + '</span>';
+    }
+
+    $('asofToday').addEventListener('click', function(){
+      var t = new Date();
+      elAsof.value = t.getFullYear() + '-' + pad2(t.getMonth() + 1) + '-' + pad2(t.getDate());
+      calcAge();
+    });
+    elBirth.addEventListener('input', calcAge);
+    elAsof.addEventListener('input', calcAge);
+
+    /* ============================================================
+       セクションC：早見表
+       ============================================================ */
+    var elPreset = $('preset'), elCustom = $('customRange'), elFrom = $('rFrom'), elTo = $('rTo');
+    var elTbody = $('tbody'), elTblNote = $('tblNote'), elAgeHead = $('ageColHead'), elPrintTitle = $('printTitle');
+    var MAX_ROWS = 300;
+
+    function presetRange(p){
+      var cur = new Date().getFullYear();
+      switch (p){
+        case 'meiji':  return [1868, 1912];
+        case 'taisho': return [1912, 1926];
+        case 'showa':  return [1926, 1989];
+        case 'heisei': return [1989, 2019];
+        case 'reiwa':  return [2019, Math.max(cur, 2019)];
+        case 'c20':    return [1926, 2025];
+        default:       return null;
+      }
+    }
+
+    function currentRange(){
+      var p = elPreset.value;
+      if (p !== 'custom'){
+        var r = presetRange(p) || presetRange('reiwa');
+        return { from: r[0], to: r[1] };
+      }
+      var f = parseInt(elFrom.value, 10), t = parseInt(elTo.value, 10);
+      if (isNaN(f)) f = 2000;
+      if (isNaN(t)) t = f + 20;
+      return { from: f, to: t };
+    }
+
+    function buildRows(){
+      var cur = new Date().getFullYear();
+      elAgeHead.textContent = cur + '年に迎える年齢';
+      var r = currentRange();
+      var from = Math.max(MIN_YEAR, Math.min(r.from, r.to));
+      var to = Math.max(r.from, r.to);
+      var capped = false;
+      if (to - from + 1 > MAX_ROWS){ to = from + MAX_ROWS - 1; capped = true; }
+
+      var rows = [];
+      for (var y = from; y <= to; y++){
+        var list = yearToWareki(y);
+        var et = eto(y);
+        var age = cur - y;
+        rows.push({ y: y, wa: waListLabel(list), eto: et.kanji + '（' + et.yomi + '）', age: age, isNow: y === cur });
+      }
+
+      elTbody.innerHTML = '';
+      var frag = document.createDocumentFragment();
+      rows.forEach(function(row){
+        var tr = document.createElement('tr');
+        if (row.isNow) tr.className = 'is-now';
+        tr.appendChild(td(row.y, 'year'));
+        tr.appendChild(td(row.wa));
+        tr.appendChild(td(row.eto));
+        tr.appendChild(td(row.age >= 0 ? row.age + ' 歳' : '—', 'now'));
+        frag.appendChild(tr);
+      });
+      elTbody.appendChild(frag);
+
+      elPrintTitle.textContent = '和暦西暦 早見表　' + from + '〜' + to + '年';
+      elTblNote.textContent =
+        '「' + cur + '年に迎える年齢」は誕生日を迎えたあとの満年齢です（誕生日前は 1 歳引いてください）。' +
+        (capped ? '　※ 行数が多いため ' + MAX_ROWS + ' 年分に制限しました。' : '') +
+        '　1868 年より前・改元前の期間は対象外です。';
+
+      saveOpts();
+      return { from: from, to: to, rows: rows };
+    }
+
+    function td(text, cls){
+      var el = document.createElement('td');
+      el.textContent = text;
+      if (cls) el.className = cls;
+      return el;
+    }
+
+    elPreset.addEventListener('change', function(){
+      elCustom.classList.toggle('on', elPreset.value === 'custom');
+      if (elPreset.value === 'custom' && !elFrom.value){
+        elFrom.value = 2000; elTo.value = new Date().getFullYear();
+      }
+      buildRows();
+    });
+    elFrom.addEventListener('input', buildRows);
+    elTo.addEventListener('input', buildRows);
+
+    $('printBtn').addEventListener('click', function(){ window.print(); });
+
+    $('copyCsv').addEventListener('click', function(){
+      var cur = new Date().getFullYear();
+      var data = buildRows();
+      var lines = ['西暦,和暦,干支,' + cur + '年に迎える年齢'];
+      data.rows.forEach(function(row){
+        lines.push([row.y, '"' + row.wa + '"', '"' + row.eto + '"', (row.age >= 0 ? row.age : '')].join(','));
+      });
+      var csv = lines.join('\r\n');
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(csv).then(function(){ toast('CSV をコピーしました'); })
+          .catch(function(){ toast('コピーできませんでした'); });
+      } else {
+        toast('コピーできませんでした');
+      }
+    });
+
+    /* ---------- 汎用 ---------- */
+    function pad2(n){ return (n < 10 ? '0' : '') + n; }
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"]/g, function(c){
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+      });
+    }
+
+    /* ---------- 設定の保存 ---------- */
+    function saveOpts(){
+      try {
+        localStorage.setItem(OPTS_KEY, JSON.stringify({
+          preset: elPreset.value, from: elFrom.value, to: elTo.value
+        }));
+      } catch (e){}
+    }
+    function loadOpts(){
+      var o;
+      try { o = JSON.parse(localStorage.getItem(OPTS_KEY) || 'null'); } catch (e){ o = null; }
+      if (!o) return;
+      if (o.preset) elPreset.value = o.preset;
+      if (o.from) elFrom.value = o.from;
+      if (o.to) elTo.value = o.to;
+      elCustom.classList.toggle('on', elPreset.value === 'custom');
+    }
+
+    /* ---------- 初期化 ---------- */
+    loadOpts();
+    var now = new Date();
+    elSei.value = now.getFullYear();
+    elAsof.value = now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
+    fromSeireki();
+    buildRows();
+  })();
+  </script>
+</body>
+</html>
