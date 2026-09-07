@@ -219,18 +219,6 @@
 .readme-content .note strong{ color:var(--ink); }
 .readme-content a{ color:var(--blue); text-decoration:underline; }
 
-.collapsible{
-  display:flex; align-items:center; justify-content:space-between;
-  margin:28px 0 14px; padding:16px; cursor:pointer;
-  border:1px solid var(--line); border-radius:10px;
-  background:var(--soft); font:700 15px var(--font-head); color:var(--ink);
-}
-.collapsible:hover{ background:var(--line); }
-.collapsible-icon{ width:20px; height:20px; transition:transform .3s; }
-.collapsible.active .collapsible-icon{ transform:rotate(180deg); }
-.collapsible-content{ max-height:0; overflow:hidden; transition:max-height .3s ease-out; }
-.collapsible-content.active{ max-height:4000px; transition:max-height .5s ease-in; }
-
 /* テーマ切替ボタンは共通（.yt-theme-toggle / assets/theme.js） */
 .cpm-header .yt-theme-toggle{ color:#fff; }
 

@@ -452,65 +452,13 @@ location.reload(); // ページを再読み込み</code></pre>
 
                 <h2>📄 ライセンス・権利表記</h2>
                 <div class="note">
-                    <p><strong>カラーパレットマスター (Color Palette Master)</strong> — バージョン 1.1.0（2026年5月17日）</p>
+                    <p><strong>カラーパレットマスター (Color Palette Master)</strong></p>
                     <p>ライセンス・権利表記は <a href="../index.html#terms">YOS Tools 利用規約・ライセンス</a> にまとめています。</p>
                 </div>
 
-                <div class="collapsible" onclick="toggleChangelog(event)">
-                    <span style="font-size: 1.25rem;">📝 変更履歴 (Changelog)</span>
-                    <svg class="collapsible-icon" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                
-                <div id="changelogContent" class="collapsible-content">
-                    <div class="note">
-                        <h4 style="margin-top: 0;">Version 1.1.0 (2026年5月17日)</h4>
-                        <p><strong>✨ 新機能</strong></p>
-                        <ul style="margin-top: 0.5rem;">
-                            <li>🌓 ライトモード/ダークモード機能を追加</li>
-                            <li>🎛️ テーマ選択メニュー（システム/ライト/ダーク）</li>
-                            <li>🖥️ システムテーマ（OS設定）の自動検出と追従</li>
-                            <li>🎨 ブラウザアイコン（Favicon）を追加</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="note">
-                        <h4 style="margin-top: 0;">Version 1.0.1 (2026年2月17日)</h4>
-                        <p><strong>🔧 改善</strong></p>
-                        <ul style="margin-top: 0.5rem;">
-                            <li>変更履歴を折りたたみ式に変更（デフォルトは閉じた状態）</li>
-                            <li>ヘルプモーダル内のスクロール動作を改善</li>
-                        </ul>
-                        <p><strong>📝 ドキュメント</strong></p>
-                        <ul style="margin-top: 0.5rem;">
-                            <li>Tailwind CDN使用についての注記を追加</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="note">
-                        <h4 style="margin-top: 0;">Version 1.0.0 (2026年2月17日)</h4>
-                        <p><strong>🎉 初回リリース</strong></p>
-                        <ul style="margin-top: 0.5rem;">
-                            <li>✨ カラーピッカー機能</li>
-                            <li>📋 HEX/RGB/RGBA/HSL/HSLA形式でのコピー</li>
-                            <li>⭐ ブックマーク機能</li>
-                            <li>🕐 履歴機能（最近使った12色）</li>
-                            <li>🌈 カラーハーモニー生成（補色・類似色・トライアド）</li>
-                            <li>📊 グラデーション作成機能</li>
-                            <li>♿ WCAGコントラストチェッカー</li>
-                            <li>🎯 パレット管理機能</li>
-                            <li>📤 JSONエクスポート機能（ブックマーク/パレット/すべて）</li>
-                            <li>📥 JSONインポート機能</li>
-                            <li>💾 ローカルストレージによる自動保存</li>
-                            <li>📖 詳細な使い方ガイド</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="note">
-                        <p><strong>💡 注記</strong></p>
-                        <p>このツールは外部CDNに依存せず、HTML・CSS・JavaScript だけで動作します。スタイルは YOS Tools 共通の <code>../assets/common.css</code> を利用しています。</p>
-                    </div>
+                <div class="note">
+                    <p><strong>📝 変更履歴</strong></p>
+                    <p>更新履歴は YOS Tools 全体で管理しています。<a href="../index.html#changelog">YOS Tools 更新履歴</a> を参照してください。</p>
                 </div>
 
                 <div class="note" style="margin-top: 2rem;">
@@ -561,6 +509,7 @@ location.reload(); // ページを再読み込み</code></pre>
         let currentColor = '#3B82F6';
         let bookmarks = [];
         let history = [];
+        let historyTimer = null;
         let palettes = [];
         let activeTab = 'picker';
 
@@ -814,10 +763,10 @@ location.reload(); // ページを再読み込み</code></pre>
             
             // Update formats
             renderFormats();
-            
-            // Add to history
-            addToHistory(currentColor);
-            
+
+            // 履歴はここでは記録しない（ピッカーのドラッグ中に中間色で埋まるのを防ぐため）。
+            // scheduleHistoryCommit() / commitHistory() が操作の落ち着いたタイミングで記録する。
+
             // Update active tab content
             if (activeTab === 'harmony') renderHarmony();
             if (activeTab === 'gradient') renderGradient();
@@ -829,6 +778,23 @@ location.reload(); // ページを再読み込み</code></pre>
                 history = [color, ...history.slice(0, 11)];
                 renderHistory();
             }
+        }
+
+        // ピッカーのドラッグ中は入力が連続で飛んでくるので、
+        // 最後の変更から一定時間が経ってから現在の色を履歴へ入れる。
+        function scheduleHistoryCommit() {
+            clearTimeout(historyTimer);
+            historyTimer = setTimeout(commitHistory, 700);
+        }
+        // 色が確定したとき（ピッカーを閉じた／履歴・パレット等から選んだ）にすぐ記録する。
+        function commitHistory() {
+            clearTimeout(historyTimer);
+            addToHistory(currentColor);
+        }
+        // 一覧クリックなど「確定した選択」用。updateColor + 即時履歴記録。
+        function pickColor(color) {
+            updateColor(color);
+            commitHistory();
         }
 
         function updateBookmarkIcon() {
@@ -886,7 +852,7 @@ location.reload(); // ページを再読み込み</code></pre>
                 div.className = 'color-box cpm-chip';
                 div.style.backgroundColor = color;
                 div.title = color;
-                div.onclick = () => updateColor(color);
+                div.onclick = () => pickColor(color);
                 container.appendChild(div);
             });
         }
@@ -908,7 +874,7 @@ location.reload(); // ページを再読み込み</code></pre>
                 div.className = 'color-box cpm-chip';
                 div.style.backgroundColor = color;
                 div.title = color;
-                div.onclick = () => updateColor(color);
+                div.onclick = () => updateColor(color);   // 履歴内クリックは再記録しない
                 container.appendChild(div);
             });
         }
@@ -922,7 +888,7 @@ location.reload(); // ページを再読み込み</code></pre>
             [currentColor, harmony.complementary].forEach(color => {
                 const div = document.createElement('div');
                 div.innerHTML = `
-                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="updateColor('${color}')"></div>
+                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="pickColor('${color}')"></div>
                     <p class="cpm-swatch-cap">${color}</p>
                 `;
                 compContainer.appendChild(div);
@@ -934,7 +900,7 @@ location.reload(); // ページを再読み込み</code></pre>
             [harmony.analogous2, currentColor, harmony.analogous1].forEach(color => {
                 const div = document.createElement('div');
                 div.innerHTML = `
-                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="updateColor('${color}')"></div>
+                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="pickColor('${color}')"></div>
                     <p class="cpm-swatch-cap">${color}</p>
                 `;
                 anaContainer.appendChild(div);
@@ -946,7 +912,7 @@ location.reload(); // ページを再読み込み</code></pre>
             [currentColor, harmony.triadic1, harmony.triadic2].forEach(color => {
                 const div = document.createElement('div');
                 div.innerHTML = `
-                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="updateColor('${color}')"></div>
+                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="pickColor('${color}')"></div>
                     <p class="cpm-swatch-cap">${color}</p>
                 `;
                 triContainer.appendChild(div);
@@ -963,7 +929,7 @@ location.reload(); // ページを再読み込み</code></pre>
             gradient.forEach(color => {
                 const div = document.createElement('div');
                 div.innerHTML = `
-                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="updateColor('${color}')"></div>
+                    <div class="cpm-swatch-tall" style="background-color:${color}" onclick="pickColor('${color}')"></div>
                     <p class="cpm-swatch-cap">${color}</p>
                 `;
                 stepsContainer.appendChild(div);
@@ -1034,7 +1000,7 @@ location.reload(); // ページを再読み込み</code></pre>
                     </div>
                     <div class="cpm-palette-swatches" id="palette-${palette.id}">
                         ${palette.colors.map(color => `
-                            <button style="background-color:${color}" onclick="updateColor('${color}')" title="${color}"></button>
+                            <button style="background-color:${color}" onclick="pickColor('${color}')" title="${color}"></button>
                         `).join('')}
                     </div>
                 `;
@@ -1129,25 +1095,26 @@ location.reload(); // ページを再読み込み</code></pre>
             document.getElementById('exportModal').classList.remove('active');
         }
         
-        // Changelog toggle function
-        function toggleChangelog(event) {
-            const content = document.getElementById('changelogContent');
-            const button = event.currentTarget;
-            
-            button.classList.toggle('active');
-            content.classList.toggle('active');
-        }
-
         // Event listeners
         function setupEventListeners() {
-            // Color picker
+            // Color picker（ドラッグ中は input が連続発火 → 履歴は遅延コミット）
             document.getElementById('colorPicker').addEventListener('input', (e) => {
                 updateColor(e.target.value);
+                scheduleHistoryCommit();
             });
-            
-            // Color input
+            // ピッカーを閉じた／値が確定したタイミングで履歴へ確定記録
+            document.getElementById('colorPicker').addEventListener('change', (e) => {
+                updateColor(e.target.value);
+                commitHistory();
+            });
+
+            // Color input（手入力中も打鍵ごとには記録せず、止まってから記録）
             document.getElementById('colorInput').addEventListener('input', (e) => {
                 updateColor(e.target.value);
+                scheduleHistoryCommit();
+            });
+            document.getElementById('colorInput').addEventListener('change', () => {
+                commitHistory();
             });
             
             // Bookmark button
