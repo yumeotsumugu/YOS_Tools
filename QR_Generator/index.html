@@ -33,8 +33,8 @@
 
     .card{padding:20px; border:1px solid var(--line); border-radius:14px; background:var(--paper);
       box-shadow:0 4px 16px #1c355910}
-    label.fld{display:block; margin-bottom:14px}
-    label.fld > span{display:block; margin-bottom:6px; color:var(--faint);
+    .fld{display:block; margin-bottom:14px}
+    .fld > span{display:block; margin-bottom:6px; color:var(--faint);
       font:700 10px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:1.2px}
     textarea, input[type=text], select, input[type=number]{
       width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px;
@@ -47,8 +47,26 @@
     .color-row{display:flex; align-items:center; gap:8px}
     .color-row input[type=color]{width:40px; height:34px; padding:2px; border:1px solid var(--line);
       border-radius:7px; background:var(--bg); cursor:pointer; flex:0 0 auto}
-    .color-row output{font:600 12px/1 'DM Sans',monospace; color:var(--muted)}
+    .color-row .hex{width:92px; flex:0 0 auto; padding:8px 10px; border:1px solid var(--line);
+      border-radius:7px; font:600 12px/1 'DM Sans',monospace; letter-spacing:.5px;
+      text-transform:uppercase; background:var(--bg); color:var(--ink)}
+    .color-row .hex:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+    .color-row .hex.bad{border-color:var(--ng); color:var(--ng)}
     .chk{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); cursor:pointer}
+
+    .icon-fld{margin-top:2px}
+    .icon-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .icon-pick{padding:8px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg);
+      color:var(--ink); font:700 12px 'DM Sans','Yu Gothic',sans-serif; cursor:pointer}
+    .icon-pick:hover{border-color:var(--blue); color:var(--blue)}
+    .icon-thumb{width:38px; height:38px; border:1px solid var(--line); border-radius:8px;
+      object-fit:contain; background:#fff; flex:0 0 auto}
+    .icon-clear{border:0; background:none; color:var(--faint); font-size:12px; cursor:pointer; text-decoration:underline}
+    .icon-clear:hover{color:#e0602f}
+    .icon-opts{display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:end; margin-top:12px}
+    .icon-opts .chk{padding-bottom:10px}
+    .icon-hint{margin:10px 0 0; color:var(--faint); font-size:11px; line-height:1.5}
+    .icon-hint b{color:var(--muted)}
 
     .preview-card{display:flex; flex-direction:column; align-items:center; gap:14px}
     .stage{width:100%; display:grid; place-items:center; padding:16px; border-radius:12px;
@@ -114,7 +132,7 @@
 
     <section class="hero">
       <h1>QRコードジェネレーター</h1>
-      <p>URLやテキストを入れるだけでQRコードを生成します。名刺・自作サイト・Wi-Fi情報の共有などに。生成も履歴もすべてこの端末の中だけで処理されます。</p>
+      <p>URLやテキストを入れるだけでQRコードを生成します。中心にアイコン（ロゴ）を重ねることもできます。名刺・自作サイト・Wi-Fi情報の共有などに。生成も履歴も、選んだアイコン画像もすべてこの端末の中だけで処理されます。</p>
     </section>
 
     <div class="panel">
@@ -142,21 +160,41 @@
             <span>余白（モジュール）</span>
             <input type="number" id="margin" min="0" max="16" step="1" value="4">
           </label>
-          <label class="fld">
+          <div class="fld">
             <span>前景色</span>
             <div class="color-row">
-              <input type="color" id="fg" value="#123052">
-              <output id="fgv">#123052</output>
+              <input type="color" id="fg" value="#123052" aria-label="前景色">
+              <input type="text" id="fgv" class="hex" value="#123052" maxlength="7"
+                spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="前景色（16進）">
             </div>
-          </label>
-          <label class="fld full">
+          </div>
+          <div class="fld full">
             <span>背景色</span>
             <div class="color-row">
-              <input type="color" id="bg" value="#ffffff">
-              <output id="bgv">#ffffff</output>
+              <input type="color" id="bg" value="#ffffff" aria-label="背景色">
+              <input type="text" id="bgv" class="hex" value="#ffffff" maxlength="7"
+                spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="背景色（16進）">
               <label class="chk"><input type="checkbox" id="transparent"> 透明</label>
             </div>
-          </label>
+          </div>
+
+          <div class="fld full icon-fld">
+            <span>中心アイコン（任意）</span>
+            <div class="icon-row">
+              <button type="button" class="icon-pick" id="iconPick">画像を選択</button>
+              <input type="file" id="iconFile" accept="image/*" hidden>
+              <img id="iconThumb" class="icon-thumb" alt="" hidden>
+              <button type="button" class="icon-clear" id="iconClear" hidden>削除</button>
+            </div>
+            <div class="icon-opts" id="iconOpts" hidden>
+              <label class="fld" style="margin:0">
+                <span>大きさ（%）</span>
+                <input type="number" id="iconScale" min="8" max="30" step="1" value="22">
+              </label>
+              <label class="chk"><input type="checkbox" id="iconBacking" checked> 白い下地を敷く</label>
+            </div>
+            <p class="icon-hint">アイコンを重ねると読み取りにくくなります。誤り訂正レベルは <b>H</b>、大きさは <b>25%以下</b>が目安です。</p>
+          </div>
         </div>
       </div>
 
@@ -207,13 +245,15 @@
     var els = {
       text:$('text'), ecl:$('ecl'), size:$('size'), margin:$('margin'),
       fg:$('fg'), fgv:$('fgv'), bg:$('bg'), bgv:$('bgv'), transparent:$('transparent'),
+      iconPick:$('iconPick'), iconFile:$('iconFile'), iconThumb:$('iconThumb'), iconClear:$('iconClear'),
+      iconOpts:$('iconOpts'), iconScale:$('iconScale'), iconBacking:$('iconBacking'),
       preview:$('preview'), ph:$('ph'), metaVer:$('metaVer'), metaLen:$('metaLen'),
       dlPng:$('dlPng'), dlSvg:$('dlSvg'), copyImg:$('copyImg'),
       histList:$('histList'), histEmpty:$('histEmpty'), clearHist:$('clearHist'),
       toast:$('toast')
     };
 
-    var state = { qr:null, moduleCount:0 };
+    var state = { qr:null, moduleCount:0, iconImg:null, iconDataUrl:null };
     var toastTimer = null;
     function toast(msg){
       els.toast.textContent = msg;
@@ -230,7 +270,9 @@
         margin: clampInt(els.margin.value, 0, 16, 4),
         fg: els.fg.value,
         bg: els.bg.value,
-        transparent: els.transparent.checked
+        transparent: els.transparent.checked,
+        iconScale: clampInt(els.iconScale.value, 8, 30, 22),
+        iconBacking: els.iconBacking.checked
       };
     }
     function clampInt(v, lo, hi, dflt){
@@ -251,6 +293,8 @@
       if (o.fg) els.fg.value = o.fg;
       if (o.bg) els.bg.value = o.bg;
       els.transparent.checked = !!o.transparent;
+      if (typeof o.iconScale === 'number') els.iconScale.value = o.iconScale;
+      if (typeof o.iconBacking === 'boolean') els.iconBacking.checked = o.iconBacking;
     }
 
     /* ---------- QR build + render ---------- */
@@ -282,14 +326,48 @@
           }
         }
       }
+      drawIcon(ctx, px, opt);
       return cv;
+    }
+
+    // 中心アイコンを canvas に重ねる（画像は読み込み済みの state.iconImg を使う）
+    function drawIcon(ctx, px, opt){
+      var img = state.iconImg;
+      if (!img) return;
+      var box = Math.round(px * (opt.iconScale / 100));
+      var x = Math.round((px - box) / 2);
+      var y = Math.round((px - box) / 2);
+      if (opt.iconBacking){
+        var pad = Math.round(box * 0.14);
+        var bs = box + pad * 2;
+        roundRect(ctx, x - pad, y - pad, bs, bs, Math.round(bs * 0.22));
+        ctx.fillStyle = opt.transparent ? '#ffffff' : opt.bg;
+        ctx.fill();
+      }
+      var iw = img.naturalWidth || img.width;
+      var ih = img.naturalHeight || img.height;
+      if (!iw || !ih) return;
+      var s = Math.min(box / iw, box / ih);   // contain フィット
+      var dw = iw * s, dh = ih * s;
+      ctx.drawImage(img, x + (box - dw) / 2, y + (box - dh) / 2, dw, dh);
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      r = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
     }
 
     function buildSvg(qr, opt){
       var count = qr.getModuleCount();
       var total = count + opt.margin * 2;
       var parts = [];
-      parts.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + total + ' ' + total +
+      parts.push('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ' + total + ' ' + total +
         '" width="' + opt.size + '" height="' + opt.size + '" shape-rendering="crispEdges">');
       if (!opt.transparent){
         parts.push('<rect width="' + total + '" height="' + total + '" fill="' + opt.bg + '"/>');
@@ -303,8 +381,25 @@
         }
       }
       parts.push('<path d="' + d + '" fill="' + opt.fg + '"/>');
+      if (state.iconDataUrl){
+        var box = total * (opt.iconScale / 100);
+        var x = (total - box) / 2;
+        if (opt.iconBacking){
+          var pad = box * 0.14;
+          var bs = box + pad * 2;
+          parts.push('<rect x="' + (x - pad) + '" y="' + (x - pad) + '" width="' + bs + '" height="' + bs +
+            '" rx="' + (bs * 0.22) + '" ry="' + (bs * 0.22) + '" fill="' + (opt.transparent ? '#ffffff' : opt.bg) + '"/>');
+        }
+        var href = escapeAttr(state.iconDataUrl);
+        parts.push('<image x="' + x + '" y="' + x + '" width="' + box + '" height="' + box +
+          '" preserveAspectRatio="xMidYMid meet" href="' + href + '" xlink:href="' + href + '"/>');
+      }
       parts.push('</svg>');
       return parts.join('');
+    }
+
+    function escapeAttr(s){
+      return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     var genTimer = null, histTimer = null;
@@ -474,17 +569,92 @@
     });
 
     /* ---------- wiring ---------- */
-    els.fg.addEventListener('input', function(){ els.fgv.textContent = els.fg.value; scheduleGenerate(); });
-    els.bg.addEventListener('input', function(){ els.bgv.textContent = els.bg.value; scheduleGenerate(); });
+    // "#rrggbb" に正規化（#省略・3桁短縮も許容）。不正なら null
+    function normHex(v){
+      v = String(v).trim().replace(/^#/, '');
+      if (/^[0-9a-fA-F]{3}$/.test(v)) v = v[0]+v[0] + v[1]+v[1] + v[2]+v[2];
+      return /^[0-9a-fA-F]{6}$/.test(v) ? '#' + v.toLowerCase() : null;
+    }
+    // カラースウォッチと16進テキスト入力を相互に同期させる
+    function bindColor(swatch, hex){
+      swatch.addEventListener('input', function(){
+        hex.value = swatch.value.toUpperCase();
+        hex.classList.remove('bad');
+        scheduleGenerate();
+      });
+      hex.addEventListener('input', function(){
+        var n = normHex(hex.value);
+        if (n){
+          hex.classList.remove('bad');
+          swatch.value = n;
+          scheduleGenerate();
+        } else {
+          hex.classList.add('bad');   // 入力途中は赤枠にするだけで再生成はしない
+        }
+      });
+      hex.addEventListener('blur', function(){
+        // 不正なままフォーカスを外したらスウォッチの現在値へ戻す
+        hex.value = (normHex(hex.value) || swatch.value).toUpperCase();
+        hex.classList.remove('bad');
+      });
+    }
+    bindColor(els.fg, els.fgv);
+    bindColor(els.bg, els.bgv);
     els.transparent.addEventListener('change', scheduleGenerate);
     els.text.addEventListener('input', scheduleGenerate);
     els.ecl.addEventListener('change', scheduleGenerate);
     els.size.addEventListener('input', scheduleGenerate);
     els.margin.addEventListener('input', scheduleGenerate);
+    els.iconScale.addEventListener('input', scheduleGenerate);
+    els.iconBacking.addEventListener('change', scheduleGenerate);
+
+    /* ---------- center icon ---------- */
+    els.iconPick.addEventListener('click', function(){ els.iconFile.click(); });
+
+    els.iconFile.addEventListener('change', function(){
+      var f = els.iconFile.files && els.iconFile.files[0];
+      els.iconFile.value = '';           // 同じファイルを選び直せるように
+      if (!f) return;
+      if (!/^image\//.test(f.type)){ toast('画像ファイルを選んでください'); return; }
+      if (f.size > 4 * 1024 * 1024){ toast('画像が大きすぎます（4MBまで）'); return; }
+      var rd = new FileReader();
+      rd.onerror = function(){ toast('画像を読み込めませんでした'); };
+      rd.onload = function(){
+        var img = new Image();
+        img.onload = function(){
+          state.iconImg = img;
+          state.iconDataUrl = rd.result;
+          els.iconThumb.src = rd.result;
+          els.iconThumb.hidden = false;
+          els.iconClear.hidden = false;
+          els.iconOpts.hidden = false;
+          els.iconPick.textContent = '画像を変更';
+          if (els.ecl.value === 'L' || els.ecl.value === 'M'){
+            els.ecl.value = 'H';
+            toast('誤り訂正レベルを H に上げました');
+          }
+          generate();
+        };
+        img.onerror = function(){ toast('画像を読み込めませんでした'); };
+        img.src = rd.result;
+      };
+      rd.readAsDataURL(f);
+    });
+
+    els.iconClear.addEventListener('click', function(){
+      state.iconImg = null;
+      state.iconDataUrl = null;
+      els.iconThumb.hidden = true;
+      els.iconThumb.removeAttribute('src');
+      els.iconClear.hidden = true;
+      els.iconOpts.hidden = true;
+      els.iconPick.textContent = '画像を選択';
+      generate();
+    });
 
     loadOpts();
-    els.fgv.textContent = els.fg.value;
-    els.bgv.textContent = els.bg.value;
+    els.fgv.value = els.fg.value.toUpperCase();
+    els.bgv.value = els.bg.value.toUpperCase();
     renderHistory();
     setActions(false);
     generate();
