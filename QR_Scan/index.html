@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>QR Scan | ローカルQRコード読み取り</title>
+  <link rel="icon" sizes="32x32" href="../assets/icon-32.png">
+  <link rel="icon" sizes="256x256" href="../assets/icon.png">
+  <link rel="apple-touch-icon" href="../assets/icon.png">
+  <link rel="stylesheet" href="../assets/common.css">
+  <script src="../assets/theme.js"></script>
+  <style>
+    body{min-height:100vh}
+    .wrap{max-width:940px; margin:0 auto; padding:40px 24px 80px}
+
+    header.site{position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:12px;
+      padding:14px 0 16px; background:var(--bg)}
+    .mark{width:34px; height:34px; border-radius:9px; object-fit:cover; display:block;
+      background:var(--navy); box-shadow:0 3px 9px #12305233}
+    header.site strong{font:700 18px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:.2px}
+    .back{display:inline-flex; align-items:center; gap:6px; margin-left:auto; padding:8px 12px;
+      border:1px solid var(--line); border-radius:999px; background:var(--paper);
+      color:var(--muted); font-size:12px; text-decoration:none}
+    .back:hover{border-color:var(--blue); color:var(--blue)}
+
+    .hero{margin-bottom:26px}
+    .hero h1{margin:0 0 8px; font-size:24px; letter-spacing:-.4px}
+    .hero p{margin:0; max-width:620px; color:var(--muted); font-size:13px}
+
+    .card{padding:20px; border:1px solid var(--line); border-radius:14px; background:var(--paper);
+      box-shadow:0 4px 16px #1c355910}
+    .card + .card{margin-top:18px}
+
+    /* ---- モード切替 ---- */
+    .tabs{display:inline-flex; gap:4px; padding:4px; border:1px solid var(--line);
+      border-radius:999px; background:var(--bg); margin-bottom:16px}
+    .tabs button{padding:8px 16px; border-radius:999px; font:700 12px 'DM Sans','Yu Gothic',sans-serif;
+      color:var(--muted); background:none; cursor:pointer}
+    .tabs button[aria-selected="true"]{background:var(--paper); color:var(--navy);
+      box-shadow:0 2px 8px #1c355914}
+
+    /* ---- カメラ ---- */
+    .stage{position:relative; width:100%; aspect-ratio:4 / 3; border-radius:12px; overflow:hidden;
+      background:#0c1118; display:grid; place-items:center}
+    #video{width:100%; height:100%; object-fit:cover; display:block}
+    #video.off{display:none}
+    .stage .reticle{position:absolute; inset:0; margin:auto; width:62%; aspect-ratio:1;
+      border:2px solid #ffffffcc; border-radius:16px; box-shadow:0 0 0 100vmax #00000055;
+      pointer-events:none}
+    .stage .stage-ph{position:absolute; color:#9fb0c4; font-size:12px; text-align:center; padding:24px;
+      line-height:1.7}
+    .cam-row{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:14px}
+    .cam-row select{flex:1; min-width:160px; padding:9px 11px; border:1px solid var(--line);
+      border-radius:8px; font:inherit; font-size:12.5px; background:var(--bg); color:var(--ink)}
+    .cam-row select:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+
+    /* ---- 画像ファイル ---- */
+    .drop{display:grid; place-items:center; gap:8px; padding:34px 18px; text-align:center;
+      border:2px dashed var(--line); border-radius:12px; background:var(--bg); color:var(--muted);
+      font-size:12.5px; cursor:pointer; transition:.14s}
+    .drop:hover, .drop.drag{border-color:var(--blue); color:var(--blue);
+      background:color-mix(in srgb, var(--blue) 6%, transparent)}
+    .drop b{color:var(--ink); font-size:13px}
+    #imgPreview{margin-top:14px; max-width:100%; max-height:300px; border-radius:10px;
+      border:1px solid var(--line); display:block}
+    #imgPreview.empty{display:none}
+
+    button.btn{padding:10px 15px; border:1px solid var(--line); border-radius:8px;
+      background:var(--paper); color:var(--ink); font:700 12px 'DM Sans','Yu Gothic',sans-serif; cursor:pointer}
+    button.btn:hover:not(:disabled){border-color:var(--blue); color:var(--blue)}
+    button.btn.primary{background:var(--navy); color:#fff; border-color:var(--navy)}
+    button.btn.primary:hover:not(:disabled){background:var(--blue); border-color:var(--blue); color:#fff}
+    button.btn:disabled{opacity:.45; cursor:default}
+
+    .status{margin-top:12px; color:var(--faint); font-size:11.5px; min-height:1.2em}
+    .status.err{color:var(--ng)}
+
+    /* ---- 結果 ---- */
+    .result h2{margin:0 0 12px; font-size:14px}
+    .res-empty{color:var(--faint); font-size:12px; padding:6px 0}
+    .res-box{border:1px solid var(--line); border-radius:10px; background:var(--bg); padding:14px}
+    .res-box + .res-box{margin-top:10px}
+    .res-kind{display:inline-block; margin-bottom:8px; padding:3px 9px; border-radius:999px;
+      background:var(--soft); color:var(--muted); font:700 10px/1 'DM Sans','Yu Gothic',sans-serif;
+      letter-spacing:.6px}
+    .res-text{margin:0; font:13px/1.6 ui-monospace,"SFMono-Regular",Menlo,Consolas,"Noto Sans Mono CJK JP",monospace;
+      color:var(--ink); white-space:pre-wrap; word-break:break-all}
+    .res-text a{color:var(--blue); text-decoration:underline}
+    .res-actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+    .res-actions .btn{padding:7px 12px; font-size:11px}
+    .res-actions a.btn{text-decoration:none; display:inline-flex; align-items:center}
+
+    /* ---- 履歴 ---- */
+    .hist{margin-top:26px}
+    .hist-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+    .hist-head h2{margin:0; font-size:14px}
+    .hist-head button{padding:6px 10px; border:1px solid var(--line); border-radius:7px; background:var(--paper);
+      color:var(--muted); font-size:11px; cursor:pointer}
+    .hist-head button:hover{border-color:var(--ng); color:var(--ng)}
+    ul.hist-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+    ul.hist-list li{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line);
+      border-radius:9px; background:var(--paper)}
+    ul.hist-list li .txt{flex:1; min-width:0}
+    ul.hist-list li .txt b{display:block; font-weight:500; font-size:12.5px; white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis}
+    ul.hist-list li .txt small{color:var(--faint); font-size:10px}
+    ul.hist-list li .act{padding:5px 9px; border:1px solid var(--line); border-radius:6px; background:var(--bg);
+      color:var(--blue); font:700 11px 'DM Sans',sans-serif; cursor:pointer; flex:0 0 auto; text-decoration:none}
+    ul.hist-list li .act:hover{border-color:var(--blue)}
+    ul.hist-list li .del{border:0; background:none; color:var(--faint); font-size:16px; cursor:pointer;
+      line-height:1; padding:2px 4px; flex:0 0 auto}
+    ul.hist-list li .del:hover{color:var(--ng)}
+    .hist-empty{color:var(--faint); font-size:12px; padding:8px 2px}
+
+    .privacy{display:inline-flex; align-items:center; gap:8px; margin-top:22px;
+      padding:8px 13px; border:1px solid var(--line); border-radius:999px;
+      background:var(--paper); color:var(--muted); font-size:11px}
+    .privacy b{color:var(--ink)}
+
+    .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(10px);
+      padding:10px 16px; border-radius:8px; background:var(--navy); color:#fff; font-size:12px;
+      opacity:0; pointer-events:none; transition:.2s; z-index:999}
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <img class="mark" src="../assets/icon.png" alt="">
+      <strong>QR Scan</strong>
+      <button data-yos-theme-toggle style="margin-left:auto"></button>
+      <a class="back" href="../index.html">← ツール一覧</a>
+    </header>
+
+    <section class="hero">
+      <h1>QRコードスキャナー</h1>
+      <p>カメラで写す、または QR コードが写った画像を読み込むと、中身のテキスト・URL を取り出します。カメラ映像も画像も、この端末の中だけで処理され、外部には送信されません。</p>
+    </section>
+
+    <div class="card">
+      <div class="tabs" role="tablist">
+        <button id="tabCam" role="tab" aria-selected="true">カメラ</button>
+        <button id="tabImg" role="tab" aria-selected="false">画像ファイル</button>
+      </div>
+
+      <!-- カメラ -->
+      <div id="paneCam">
+        <div class="stage">
+          <video id="video" class="off" playsinline muted></video>
+          <div class="reticle" id="reticle" hidden></div>
+          <div class="stage-ph" id="stagePh">「カメラを起動」を押すと読み取りを開始します。<br>カメラの使用許可を求められたら「許可」を選んでください。</div>
+        </div>
+        <div class="cam-row">
+          <button class="btn primary" id="camStart">カメラを起動</button>
+          <button class="btn" id="camStop" disabled>停止</button>
+          <button class="btn" id="camTorch" hidden>ライト</button>
+          <select id="camList" hidden aria-label="使用するカメラ"></select>
+        </div>
+        <div class="status" id="camStatus"></div>
+      </div>
+
+      <!-- 画像ファイル -->
+      <div id="paneImg" hidden>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="画像を選択またはドロップ">
+          <b>画像を選択</b>
+          <span>クリックで選択 ／ ここにドラッグ＆ドロップ ／ 貼り付け（Ctrl+V）</span>
+          <input type="file" id="imgFile" accept="image/*" hidden>
+        </div>
+        <img id="imgPreview" class="empty" alt="読み込んだ画像">
+        <div class="status" id="imgStatus"></div>
+      </div>
+    </div>
+
+    <div class="card result">
+      <h2>読み取り結果</h2>
+      <div id="resList"></div>
+      <div class="res-empty" id="resEmpty">まだ読み取っていません。</div>
+    </div>
+
+    <div class="hist">
+      <div class="hist-head">
+        <h2>履歴</h2>
+        <button id="clearHist">すべて削除</button>
+      </div>
+      <ul class="hist-list" id="histList"></ul>
+      <div class="hist-empty" id="histEmpty">まだ履歴はありません。読み取ると自動で保存されます（この端末のブラウザ内のみ）。</div>
+    </div>
+
+    <span class="privacy">◇ <span><b>端末内処理</b> ／ カメラ映像・画像は外部に送信されません</span></span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="lib/jsqr.min.js"></script>
+  <script>
+  (function(){
+    'use strict';
+    var HIST_KEY = 'yos.qrscan.history.v1';
+    var MODE_KEY = 'yos.qrscan.mode.v1';
+    var HIST_MAX = 50;
+
+    var $ = function(id){ return document.getElementById(id); };
+    var els = {
+      tabCam:$('tabCam'), tabImg:$('tabImg'), paneCam:$('paneCam'), paneImg:$('paneImg'),
+      stage:document.querySelector('.stage'), video:$('video'), reticle:$('reticle'), stagePh:$('stagePh'),
+      camStart:$('camStart'), camStop:$('camStop'), camTorch:$('camTorch'), camList:$('camList'), camStatus:$('camStatus'),
+      drop:$('drop'), imgFile:$('imgFile'), imgPreview:$('imgPreview'), imgStatus:$('imgStatus'),
+      resList:$('resList'), resEmpty:$('resEmpty'),
+      histList:$('histList'), histEmpty:$('histEmpty'), clearHist:$('clearHist'),
+      toast:$('toast')
+    };
+
+    var hasJsQR = (typeof jsQR === 'function');
+    var detector = null;
+    if ('BarcodeDetector' in window){
+      try { detector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch(e){ detector = null; }
+    }
+    var canDecode = hasJsQR || !!detector;
+
+    var toastTimer = null;
+    function toast(msg){
+      els.toast.textContent = msg;
+      els.toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 1800);
+    }
+
+    /* ================= 種類の判定 ================= */
+    function classify(text){
+      var t = text.trim();
+      if (/^https?:\/\/\S+$/i.test(t)) return { kind: 'URL', url: t };
+      if (/^mailto:/i.test(t)) return { kind: 'メール' };
+      if (/^tel:/i.test(t)) return { kind: '電話番号' };
+      if (/^(smsto:|sms:)/i.test(t)) return { kind: 'SMS' };
+      if (/^wifi:/i.test(t)) return { kind: 'Wi-Fi 設定' };
+      if (/^geo:/i.test(t)) return { kind: '位置情報' };
+      if (/^begin:vcard/i.test(t)) return { kind: '連絡先（vCard）' };
+      if (/^begin:vevent/i.test(t)) return { kind: '予定（iCal）' };
+      if (/^bitcoin:/i.test(t)) return { kind: 'Bitcoin' };
+      return { kind: 'テキスト' };
+    }
+
+    /* ================= 結果の描画 ================= */
+    function showResults(list){
+      els.resList.innerHTML = '';
+      var arr = [];
+      var seen = Object.create(null);
+      list.forEach(function(x){ if (x && !seen[x]){ seen[x] = true; arr.push(x); } });
+      if (!arr.length) return;
+      els.resEmpty.style.display = 'none';
+      arr.forEach(function(text){
+        var info = classify(text);
+        var box = document.createElement('div');
+        box.className = 'res-box';
+
+        var kindEl = document.createElement('span');
+        kindEl.className = 'res-kind';
+        kindEl.textContent = info.kind;
+        box.appendChild(kindEl);
+
+        var pre = document.createElement('p');
+        pre.className = 'res-text';
+        if (info.url){
+          var a = document.createElement('a');
+          a.href = info.url; a.target = '_blank'; a.rel = 'noopener noreferrer nofollow';
+          a.textContent = text;
+          pre.appendChild(a);
+        } else {
+          pre.textContent = text;
+        }
+        box.appendChild(pre);
+
+        var acts = document.createElement('div');
+        acts.className = 'res-actions';
+        var copyBtn = document.createElement('button');
+        copyBtn.className = 'btn'; copyBtn.type = 'button'; copyBtn.textContent = 'コピー';
+        copyBtn.addEventListener('click', function(){ copyText(text); });
+        acts.appendChild(copyBtn);
+        if (info.url){
+          var open = document.createElement('a');
+          open.className = 'btn primary'; open.textContent = '開く';
+          open.href = info.url; open.target = '_blank'; open.rel = 'noopener noreferrer nofollow';
+          acts.appendChild(open);
+        }
+        box.appendChild(acts);
+        els.resList.appendChild(box);
+
+        addHistory(text);
+      });
+    }
+
+    function copyText(text){
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text)
+          .then(function(){ toast('コピーしました'); })
+          .catch(function(){ toast('コピーできませんでした'); });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); toast('コピーしました'); }
+        catch(e){ toast('コピーできませんでした'); }
+        ta.remove();
+      }
+    }
+
+    function notifyFound(){
+      try { if (navigator.vibrate) navigator.vibrate(60); } catch(e){}
+      try {
+        var C = window.AudioContext || window.webkitAudioContext;
+        if (C){
+          var ac = new C();
+          var o = ac.createOscillator(), g = ac.createGain();
+          o.type = 'sine'; o.frequency.value = 880;
+          g.gain.value = 0.05;
+          o.connect(g); g.connect(ac.destination);
+          o.start();
+          o.stop(ac.currentTime + 0.12);
+          setTimeout(function(){ try { ac.close(); } catch(e){} }, 400);
+        }
+      } catch(e){}
+    }
+
+    /* ================= デコード ================= */
+    // source: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement → 文字列の配列
+    var work = document.createElement('canvas');
+    var wctx = work.getContext('2d', { willReadFrequently: true });
+
+    function sourceSize(src){
+      if (src.tagName === 'VIDEO') return [src.videoWidth, src.videoHeight];
+      if (src.tagName === 'IMG') return [src.naturalWidth || src.width, src.naturalHeight || src.height];
+      return [src.width, src.height];
+    }
+
+    function toImageData(src, maxDim){
+      var s = sourceSize(src);
+      var w = s[0], h = s[1];
+      if (!w || !h) return null;
+      var scale = Math.min(1, maxDim / Math.max(w, h));
+      var cw = Math.max(1, Math.round(w * scale));
+      var ch = Math.max(1, Math.round(h * scale));
+      work.width = cw; work.height = ch;
+      wctx.drawImage(src, 0, 0, cw, ch);
+      try { return wctx.getImageData(0, 0, cw, ch); }
+      catch(e){ return null; }   // CORS 汚染など
+    }
+
+    async function decode(src, opts){
+      opts = opts || {};
+      if (detector){
+        try {
+          var codes = await detector.detect(src);
+          if (codes && codes.length){
+            var vals = codes.map(function(c){ return c.rawValue; }).filter(Boolean);
+            if (vals.length) return vals;
+          }
+        } catch(e){ /* jsQR にフォールバック */ }
+      }
+      if (hasJsQR){
+        var id = toImageData(src, opts.maxDim || 1000);
+        if (id){
+          var r = jsQR(id.data, id.width, id.height, { inversionAttempts: opts.invert || 'attemptBoth' });
+          if (r && r.data) return [r.data];
+        }
+      }
+      return [];
+    }
+
+    /* ================= カメラ ================= */
+    var stream = null, scanning = false, rafId = 0, lastScan = 0, track = null, torchOn = false;
+
+    function setCamStatus(msg, isErr){
+      els.camStatus.textContent = msg || '';
+      els.camStatus.classList.toggle('err', !!isErr);
+    }
+
+    async function listCameras(){
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+      try {
+        var devs = await navigator.mediaDevices.enumerateDevices();
+        var cams = devs.filter(function(d){ return d.kind === 'videoinput'; });
+        if (cams.length < 2){ els.camList.hidden = true; return; }
+        var cur = els.camList.value;
+        els.camList.innerHTML = '';
+        cams.forEach(function(d, i){
+          var op = document.createElement('option');
+          op.value = d.deviceId;
+          op.textContent = d.label || ('カメラ ' + (i + 1));
+          els.camList.appendChild(op);
+        });
+        if (cur) els.camList.value = cur;
+        els.camList.hidden = false;
+      } catch(e){}
+    }
+
+    async function startCamera(){
+      if (!canDecode){ setCamStatus('この環境では QR コードを読み取れません。', true); return; }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+        setCamStatus('このブラウザはカメラに対応していません。画像ファイルから読み取ってください。', true);
+        return;
+      }
+      stopCamera();
+      setCamStatus('カメラを起動しています…');
+      var sel = els.camList.hidden ? null : els.camList.value;
+      var constraints = sel
+        ? { video: { deviceId: { exact: sel } } }
+        : { video: { facingMode: { ideal: 'environment' } } };
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch(e){
+        if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')){
+          setCamStatus('カメラの使用が許可されませんでした。ブラウザの設定で許可するか、画像ファイルから読み取ってください。', true);
+        } else if (e && e.name === 'NotFoundError'){
+          setCamStatus('カメラが見つかりませんでした。画像ファイルから読み取ってください。', true);
+        } else if (location.protocol === 'file:'){
+          setCamStatus('ローカルファイル（file://）ではカメラを使えません。画像ファイルから読み取るか、公開版をご利用ください。', true);
+        } else {
+          setCamStatus('カメラを起動できませんでした：' + (e && e.name || e), true);
+        }
+        return;
+      }
+      els.video.srcObject = stream;
+      els.video.classList.remove('off');
+      els.stagePh.hidden = true;
+      els.reticle.hidden = false;
+      try { await els.video.play(); } catch(e){}
+      track = stream.getVideoTracks()[0] || null;
+      setupTorch();
+      els.camStart.textContent = '再起動';
+      els.camStop.disabled = false;
+      setCamStatus('読み取り中… QR コードを枠に合わせてください。');
+      listCameras();
+      scanning = true;
+      lastScan = 0;
+      loop();
+    }
+
+    function stopCamera(){
+      scanning = false;
+      cancelAnimationFrame(rafId);
+      if (stream){ stream.getTracks().forEach(function(t){ try { t.stop(); } catch(e){} }); }
+      stream = null; track = null; torchOn = false;
+      els.video.srcObject = null;
+      els.video.classList.add('off');
+      els.reticle.hidden = true;
+      els.stagePh.hidden = false;
+      els.camStop.disabled = true;
+      els.camTorch.hidden = true;
+    }
+
+    function setupTorch(){
+      try {
+        var caps = track && track.getCapabilities ? track.getCapabilities() : null;
+        if (caps && 'torch' in caps){
+          els.camTorch.hidden = false;
+          els.camTorch.textContent = 'ライト';
+        } else {
+          els.camTorch.hidden = true;
+        }
+      } catch(e){ els.camTorch.hidden = true; }
+    }
+
+    els.camTorch.addEventListener('click', function(){
+      if (!track) return;
+      torchOn = !torchOn;
+      track.applyConstraints({ advanced: [{ torch: torchOn }] })
+        .then(function(){ els.camTorch.textContent = torchOn ? 'ライト OFF' : 'ライト'; })
+        .catch(function(){ toast('ライトを切り替えられませんでした'); });
+    });
+
+    function loop(){
+      if (!scanning) return;
+      rafId = requestAnimationFrame(loop);
+      var now = performance.now();
+      if (now - lastScan < 180) return;         // 負荷を抑える
+      lastScan = now;
+      if (els.video.readyState < 2) return;
+      decode(els.video, { maxDim: 640 }).then(function(vals){
+        if (!scanning || !vals.length) return;
+        scanning = false;
+        cancelAnimationFrame(rafId);
+        notifyFound();
+        setCamStatus('読み取りました。続けて読む場合は「再開」を押してください。');
+        els.camStart.textContent = '再開';
+        showResults(vals);
+      }).catch(function(){});
+    }
+
+    els.camStart.addEventListener('click', startCamera);
+    els.camStop.addEventListener('click', function(){
+      stopCamera();
+      setCamStatus('停止しました。');
+      els.camStart.textContent = 'カメラを起動';
+    });
+    els.camList.addEventListener('change', function(){ if (stream) startCamera(); });
+
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden && stream) {
+        stopCamera();
+        setCamStatus('停止しました（タブが非表示になりました）。');
+        els.camStart.textContent = 'カメラを起動';
+      }
+    });
+
+    /* ================= 画像ファイル ================= */
+    function setImgStatus(msg, isErr){
+      els.imgStatus.textContent = msg || '';
+      els.imgStatus.classList.toggle('err', !!isErr);
+    }
+
+    function handleImageFile(file){
+      if (!file || !/^image\//.test(file.type)){ setImgStatus('画像ファイルを選んでください。', true); return; }
+      if (!canDecode){ setImgStatus('この環境では QR コードを読み取れません。', true); return; }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        els.imgPreview.src = url;
+        els.imgPreview.classList.remove('empty');
+        setImgStatus('読み取り中…');
+        decode(img, { maxDim: 1600 }).then(function(vals){
+          if (vals.length){
+            setImgStatus('読み取りました。');
+            notifyFound();
+            showResults(vals);
+          } else {
+            setImgStatus('QR コードを検出できませんでした。ピントが合った、なるべく大きく写った画像でお試しください。', true);
+          }
+          setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+        }).catch(function(){
+          setImgStatus('読み取りに失敗しました。', true);
+          URL.revokeObjectURL(url);
+        });
+      };
+      img.onerror = function(){ setImgStatus('画像を読み込めませんでした。', true); URL.revokeObjectURL(url); };
+      img.src = url;
+    }
+
+    els.drop.addEventListener('click', function(){ els.imgFile.click(); });
+    els.drop.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); els.imgFile.click(); }
+    });
+    els.imgFile.addEventListener('change', function(){
+      var f = els.imgFile.files && els.imgFile.files[0];
+      els.imgFile.value = '';
+      if (f) handleImageFile(f);
+    });
+    ['dragenter','dragover'].forEach(function(ev){
+      els.drop.addEventListener(ev, function(e){ e.preventDefault(); els.drop.classList.add('drag'); });
+    });
+    ['dragleave','drop'].forEach(function(ev){
+      els.drop.addEventListener(ev, function(e){ e.preventDefault(); els.drop.classList.remove('drag'); });
+    });
+    els.drop.addEventListener('drop', function(e){
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) handleImageFile(f);
+    });
+    window.addEventListener('paste', function(e){
+      if (els.paneImg.hidden) return;
+      var items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (var i = 0; i < items.length; i++){
+        if (items[i].type && items[i].type.indexOf('image/') === 0){
+          handleImageFile(items[i].getAsFile());
+          break;
+        }
+      }
+    });
+
+    /* ================= モード切替 ================= */
+    function setMode(mode){
+      var cam = mode !== 'img';
+      els.tabCam.setAttribute('aria-selected', cam ? 'true' : 'false');
+      els.tabImg.setAttribute('aria-selected', cam ? 'false' : 'true');
+      els.paneCam.hidden = !cam;
+      els.paneImg.hidden = cam;
+      if (!cam){
+        stopCamera();
+        els.camStart.textContent = 'カメラを起動';
+        setCamStatus('');
+      }
+      try { localStorage.setItem(MODE_KEY, cam ? 'cam' : 'img'); } catch(e){}
+    }
+    els.tabCam.addEventListener('click', function(){ setMode('cam'); });
+    els.tabImg.addEventListener('click', function(){ setMode('img'); });
+
+    /* ================= 履歴 ================= */
+    function loadHistory(){
+      try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]') || []; }
+      catch(e){ return []; }
+    }
+    function storeHistory(list){
+      try { localStorage.setItem(HIST_KEY, JSON.stringify(list)); } catch(e){}
+    }
+    function addHistory(text){
+      if (!text) return;
+      var list = loadHistory().filter(function(it){ return it.text !== text; });
+      list.unshift({ text: text, ts: Date.now() });
+      if (list.length > HIST_MAX) list = list.slice(0, HIST_MAX);
+      storeHistory(list);
+      renderHistory();
+    }
+    function fmtDate(ts){
+      var d = new Date(ts);
+      var p = function(n){ return (n < 10 ? '0' : '') + n; };
+      return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' +
+        p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    function renderHistory(){
+      var list = loadHistory();
+      els.histList.innerHTML = '';
+      els.histEmpty.style.display = list.length ? 'none' : '';
+      list.forEach(function(it, idx){
+        var li = document.createElement('li');
+        var txt = document.createElement('div');
+        txt.className = 'txt';
+        var b = document.createElement('b'); b.textContent = it.text;
+        var s = document.createElement('small');
+        var info = classify(it.text);
+        s.textContent = info.kind + '・' + fmtDate(it.ts);
+        txt.appendChild(b); txt.appendChild(s);
+
+        var copy = document.createElement('button');
+        copy.className = 'act'; copy.type = 'button'; copy.textContent = 'コピー';
+        copy.addEventListener('click', function(){ copyText(it.text); });
+
+        var del = document.createElement('button');
+        del.className = 'del'; del.type = 'button'; del.title = '削除';
+        del.setAttribute('aria-label', '削除'); del.textContent = '×';
+        del.addEventListener('click', function(){
+          var cur = loadHistory();
+          cur.splice(idx, 1);
+          storeHistory(cur);
+          renderHistory();
+        });
+
+        li.appendChild(txt);
+        if (info.url){
+          var open = document.createElement('a');
+          open.className = 'act'; open.textContent = '開く';
+          open.href = info.url; open.target = '_blank'; open.rel = 'noopener noreferrer nofollow';
+          li.appendChild(open);
+        }
+        li.appendChild(copy); li.appendChild(del);
+        els.histList.appendChild(li);
+      });
+    }
+    els.clearHist.addEventListener('click', function(){
+      if (!loadHistory().length) return;
+      if (!confirm('履歴をすべて削除しますか？')) return;
+      storeHistory([]);
+      renderHistory();
+    });
+
+    /* ================= 初期化 ================= */
+    if (!canDecode){
+      els.camStart.disabled = true;
+      setCamStatus('この環境では QR コードを読み取れません（読み取りライブラリが読み込めませんでした）。', true);
+      setImgStatus('この環境では QR コードを読み取れません（読み取りライブラリが読み込めませんでした）。', true);
+    }
+    var savedMode = 'cam';
+    try { savedMode = localStorage.getItem(MODE_KEY) || 'cam'; } catch(e){}
+    setMode(savedMode === 'img' ? 'img' : 'cam');
+    renderHistory();
+  })();
+  </script>
+</body>
+</html>

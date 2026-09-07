@@ -93,7 +93,7 @@
 
     <section class="hero">
       <h1>テキストクリーナー</h1>
-      <p>貼り付けたテキストの余分な改行・連続スペース・空行をまとめて整理します。全角⇔半角の変換、重複行の削除、行頭記号の一括付与にも対応。処理はすべてこの端末の中だけで行われます。</p>
+      <p>貼り付けたテキストの余分な改行・連続スペース・空行をまとめて整理します。全角⇔半角の変換、重複行の削除、行頭記号の一括付与、PDF からコピーしたときの不自然な改行の修復にも対応。処理はすべてこの端末の中だけで行われます。</p>
     </section>
 
     <div class="card">
@@ -137,6 +137,13 @@
         </fieldset>
 
         <fieldset class="grp">
+          <legend>PDF・段落</legend>
+          <label class="chk"><input type="checkbox" id="pdfReflow"><span>PDFコピー由来の改行を段落につなげる（空行は段落の区切りとして残す。箇条書き・番号見出しの行は結合しない）</span></label>
+          <label class="chk"><input type="checkbox" id="pdfDehyphen" checked><span>行末で分割された英単語のハイフンを結合（<code>exam-</code> ＋ <code>ple</code> → <code>example</code>）</span></label>
+          <label class="chk"><input type="checkbox" id="pdfSentenceBreak"><span>句点（<code>。！？</code>）ごとに改行する</span></label>
+        </fieldset>
+
+        <fieldset class="grp">
           <legend>行頭記号</legend>
           <label class="fld">
             <span>行頭に追加する文字（例: <code>- </code> / <code>&gt; </code> / <code>・</code>）</span>
@@ -152,6 +159,7 @@
       <button class="btn" id="toInputBtn" disabled>出力を入力に反映</button>
       <span class="sp"></span>
       <button class="btn link" id="sampleBtn">サンプルを入れる</button>
+      <button class="btn link" id="pdfSampleBtn">PDF貼り付け例</button>
       <button class="btn link" id="clearBtn">クリア</button>
       <button class="btn link" id="resetBtn">設定を初期化</button>
     </div>
@@ -183,14 +191,16 @@
       width:$('width'), tabToSpace:$('tabToSpace'), collapseSpaces:$('collapseSpaces'),
       trimTrail:$('trimTrail'), trimLead:$('trimLead'), trimAll:$('trimAll'),
       blankLines:$('blankLines'), dedupe:$('dedupe'), joinLines:$('joinLines'),
+      pdfReflow:$('pdfReflow'), pdfDehyphen:$('pdfDehyphen'), pdfSentenceBreak:$('pdfSentenceBreak'),
       prefix:$('prefix'), prefixSkipBlank:$('prefixSkipBlank'),
       inMeta:$('inMeta'), outMeta:$('outMeta'),
       copyBtn:$('copyBtn'), toInputBtn:$('toInputBtn'),
-      sampleBtn:$('sampleBtn'), clearBtn:$('clearBtn'), resetBtn:$('resetBtn'),
+      sampleBtn:$('sampleBtn'), pdfSampleBtn:$('pdfSampleBtn'), clearBtn:$('clearBtn'), resetBtn:$('resetBtn'),
       toast:$('toast')
     };
 
-    var CHECKS = ['tabToSpace','collapseSpaces','trimTrail','trimLead','trimAll','dedupe','joinLines','prefixSkipBlank'];
+    var CHECKS = ['tabToSpace','collapseSpaces','trimTrail','trimLead','trimAll','dedupe','joinLines',
+                  'pdfReflow','pdfDehyphen','pdfSentenceBreak','prefixSkipBlank'];
     var SELECTS = ['width','blankLines'];
 
     var toastTimer = null;
@@ -250,6 +260,50 @@
 
     var isBlank = function(line){ return /^\s*$/.test(line); };
 
+    /* ---------- PDFコピーの改行修復 ---------- */
+    // 前後どちらかが CJK 文字なら結合時にスペースを入れない
+    var CJK_RE = /[　-〿぀-ヿ㐀-䶿一-鿿豈-﫿＀-￯]/;
+    // 結合せず独立した行として残す「箇条書き・番号見出し」の行頭
+    var LIST_RE = /^(?:[-–—*+>＞･・‐]|[･・]\s|\d{1,3}[.)）、]\s?|[（(]\d{1,3}[)）]|[①-⑳㉑-㉟]|[■□◆◇▶▸●○◎]|[a-zA-Z][.)]\s|第[〇零一二三四五六七八九十百千]+[章節条項編話回])/;
+
+    // PDF からコピーした「1行ごとの強制改行」を段落へ結合する。
+    // 空行は段落の区切りとして 1 つ残す。箇条書き・番号見出しの行は結合しない。
+    function reflowParagraphs(text, dehyphen){
+      var lines = text.split('\n');
+      var out = [];
+      var buf = '', bufIsList = false;
+      function flush(){ if (buf !== ''){ out.push(buf); buf = ''; bufIsList = false; } }
+      for (var i = 0; i < lines.length; i++){
+        var line = lines[i].replace(/^[^\S\n]+|[^\S\n]+$/g, '');
+        if (line === ''){
+          flush();
+          if (out.length && out[out.length - 1] !== '') out.push('');
+          continue;
+        }
+        if (buf === ''){ buf = line; bufIsList = LIST_RE.test(line); continue; }
+        // 箇条書き・番号見出しの行は、それ自身も直後の行も結合しない
+        if (bufIsList || LIST_RE.test(line)){ flush(); buf = line; bufIsList = LIST_RE.test(line); continue; }
+        // 行末ハイフン（半角 "-" ／ソフトハイフン）で分割された英単語を結合
+        if (dehyphen && /[A-Za-z]­?-$/.test(buf) && /^[a-z]/.test(line)){
+          buf = buf.replace(/­?-$/, '') + line;
+          continue;
+        }
+        var joinNoSpace = CJK_RE.test(buf.slice(-1)) || CJK_RE.test(line.charAt(0));
+        buf += (joinNoSpace ? '' : ' ') + line;
+      }
+      flush();
+      while (out.length && out[0] === '') out.shift();
+      while (out.length && out[out.length - 1] === '') out.pop();
+      return out.join('\n');
+    }
+
+    // 句点（。！？）＋続く閉じ括弧・閉じ引用符のあとで改行する（行末はそのまま）
+    function sentenceBreak(text){
+      return text.split('\n').map(function(line){
+        return line.replace(/([。！？][」』）)】〕》”"’]*)(?!$)/g, '$1\n');
+      }).join('\n');
+    }
+
     /* ---------- メイン処理 ---------- */
     function clean(text, o){
       if (!text) return '';
@@ -274,6 +328,12 @@
 
       // 4. 連続する空白を1つに（改行は対象外）
       if (o.collapseSpaces) text = text.replace(/[^\S\n]{2,}/g, ' ');
+
+      // 4.5 PDFコピー由来の改行を段落へ結合（行頭・行末の空白は結合時に正規化）
+      if (o.pdfReflow) text = reflowParagraphs(text, o.pdfDehyphen);
+
+      // 4.6 句点ごとに改行
+      if (o.pdfSentenceBreak) text = sentenceBreak(text);
 
       // 5. 空行の扱い
       if (o.blankLines === 'remove'){
@@ -408,11 +468,31 @@
       run();
     });
 
+    els.pdfSampleBtn.addEventListener('click', function(){
+      els.input.value = [
+        'テキストクリーナーは、PDF からコピーした文章に',
+        'ありがちな段落の途中で切れた不自然な改行を、',
+        '1 つの段落へつなぎ直すことができます。',
+        '',
+        'It also re-joins hard-wrapped English text and',
+        'removes the hyphen inserted at the end of a',
+        'line, so that "exam-" and "ple" become one wo-',
+        'rd again.',
+        '',
+        '・箇条書きの行は結合せずにそのまま残します',
+        '・番号付きの見出しも同様です',
+        '1. 手順のような行も独立した行として保持します'
+      ].join('\n');
+      if (!els.pdfReflow.checked) els.pdfReflow.checked = true;
+      run();
+      toast('PDF貼り付け例を入れました');
+    });
+
     els.resetBtn.addEventListener('click', function(){
       try { localStorage.removeItem(OPTS_KEY); } catch (e){}
       els.width.value = 'none';
       els.blankLines.value = 'keep';
-      CHECKS.forEach(function(k){ els[k].checked = (k === 'prefixSkipBlank'); });
+      CHECKS.forEach(function(k){ els[k].checked = (k === 'prefixSkipBlank' || k === 'pdfDehyphen'); });
       els.prefix.value = '';
       run();
       toast('設定を初期化しました');
