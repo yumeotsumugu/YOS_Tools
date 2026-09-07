@@ -110,6 +110,17 @@ YOS_Tools/
   （例: `yos.qr.opts.v1` `yos.textcleaner.opts.v1` `yos.theme`）。
 - ダウンロードは `<a download>` を動的生成してクリックする方式で統一。
 
+## 変更履歴（Changelog）
+
+- 変更履歴は **YOS Tools 全体で一元管理**する。正本はリポジトリ直下の
+  [`CHANGELOG.md`](CHANGELOG.md)。日付（`YYYY-MM-DD`、コミット日）の見出しごとに、
+  新しいものを上にして箇条書きし、各行の先頭に対象（`[共通]` `[トップ]` またはツール名）を付ける。
+- 各ツールのページに個別の変更履歴 UI は持たせない。トップページ `index.html` の
+  `#changelog`（`.terms` と同じ `<details>`）に同じ内容を要約して載せ、各ツールからは
+  `href="../index.html#changelog"` でリンクするだけにする（`#terms` と同じ方式）。
+- 利用者に見える機能変更をしたら、`CHANGELOG.md` と `index.html#changelog` の
+  **両方**に日本語で追記する。日付はコミット日（絶対表記 `YYYY-MM-DD`）。
+
 ## Git 運用
 
 - **コミット・プッシュはユーザーから明示的に指示があったときだけ**行う。

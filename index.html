@@ -221,6 +221,36 @@
       </details>
     </section>
 
+    <section class="terms" id="changelog">
+      <details>
+        <summary>更新履歴</summary>
+        <div class="terms-body">
+          <p>YOS Tools 全体の更新履歴。詳細はリポジトリの
+            <a href="https://github.com/yumeotsumugu/YOS_Tools/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">CHANGELOG.md</a>
+            にまとめています。</p>
+
+          <h3>2026-09-07</h3>
+          <p>・<strong>QR Generator</strong>：中心にロゴ画像を重ねる機能を追加（大きさ％・白い下地、PNG／SVG書き出しに反映）。前景色・背景色の色見本外クリックでパレットが開く不具合を修正。前景色・背景色を16進コードで直接入力できるように。<br>
+            ・<strong>カラーパレットマスター</strong>：履歴の記録タイミングを調整。ピッカーのドラッグ中の中間色は記録せず、操作が落ち着いた時点の色だけを残すように。<br>
+            ・<strong>共通</strong>：変更履歴を YOS Tools 全体で一元管理する方式に移行。<br>
+            ・<strong>Image Converter</strong> を追加（HEIC／WebP／JPEG／PNG → JPG／PNG 一括変換、簡易EXIF、ZIP一括保存）。<br>
+            ・<strong>トップ</strong>：「YOS Toolsとは」セクションを追加。ヘッダーをスクロール追従に。ページ幅と改行を調整。</p>
+
+          <h3>2026-09-06</h3>
+          <p>・<strong>共通</strong>：YOS Tools として発足。トップページと PDF Craft／カラーパレットマスター を統合。<br>
+            ・<strong>ImageMaker</strong>／<strong>QR Generator</strong>／<strong>Text Cleaner</strong> を追加。<br>
+            ・<strong>共通</strong>：全ツールをトップページのデザインシステム（<code>assets/common.css</code>）に統一。テーマ設定（システム／ライト／ダーク）を全ツール共有化（<code>assets/theme.js</code>）。URL整形を <code>theme.js</code> に一本化。<br>
+            ・<strong>共通</strong>：ファビコンとロゴマークを共通アイコン（おとり様）に。開発ガイド <code>CLAUDE.md</code> を作成。<br>
+            ・<strong>トップ</strong>：作者プロフィールを追加。利用規約・ライセンスを <code>#terms</code> に集約・改訂。羽根と流れ星の装飾アニメーションを追加。</p>
+
+          <h3>統合前（カラーパレットマスター単体版）</h3>
+          <p>・<strong>2026-05-17（v1.1.0）</strong>：ライト／ダークモードを追加、favicon を追加。<br>
+            ・<strong>2026-02-17（v1.0.1）</strong>：変更履歴を折りたたみ式に、ヘルプのスクロール改善、Tailwind CDN の注記追加。<br>
+            ・<strong>2026-02-17（v1.0.0・初回リリース）</strong>：カラーピッカー、HEX／RGB／RGBA／HSL／HSLAコピー、ブックマーク、履歴、ハーモニー、グラデーション、コントラストチェッカー、パレット管理、JSON入出力。</p>
+        </div>
+      </details>
+    </section>
+
     <footer class="site">YOS Tools — 静的Webツール集。各ツールは単体でも動作します。</footer>
   </div>
 
@@ -260,8 +290,8 @@
         icon: '▩',
         status: 'live',
         path: 'QR_Generator/index.html',
-        desc: 'URLやテキストを入れるだけでQRコードを生成。誤り訂正レベル・サイズ・色を調整し、PNG／SVGで保存できます。生成履歴は端末内に自動保存。',
-        tags: ['QRコード', 'URL', 'PNG', 'SVG', '履歴保存'],
+        desc: 'URLやテキストを入れるだけでQRコードを生成。誤り訂正レベル・サイズ・色を調整でき、中心にロゴアイコンを重ねることも可能。PNG／SVGで保存でき、生成履歴は端末内に自動保存。',
+        tags: ['QRコード', 'URL', 'ロゴ入り', 'PNG', 'SVG', '履歴保存'],
       },
       {
         name: 'Text Cleaner',
@@ -305,14 +335,15 @@
         : `<div class="card disabled">${inner}</div>`;
     }).join('');
 
-    /* 各ツールから #terms でリンクされたときは利用規約を開いて表示 */
-    function openTermsFromHash() {
-      if (location.hash !== '#terms') return;
-      const d = document.querySelector('#terms details');
+    /* 各ツールから #terms / #changelog でリンクされたとき、その details を開いて表示 */
+    function openSectionFromHash() {
+      const id = location.hash.slice(1);
+      if (id !== 'terms' && id !== 'changelog') return;
+      const d = document.querySelector('#' + id + ' details');
       if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     }
-    openTermsFromHash();
-    window.addEventListener('hashchange', openTermsFromHash);
+    openSectionFromHash();
+    window.addEventListener('hashchange', openSectionFromHash);
   </script>
 
   <script>

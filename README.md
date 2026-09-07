@@ -9,8 +9,9 @@
 
 ```text
 YOS_Tools/
-├── index.html             トップページ（ツール一覧・作者プロフィール・利用規約）
+├── index.html             トップページ（ツール一覧・作者プロフィール・利用規約・更新履歴）
 ├── CLAUDE.md              開発ガイド（制作ルール）
+├── CHANGELOG.md           変更履歴（YOS Tools 全体で一元管理）
 ├── assets/                共通CSS・共通テーマスクリプト・共通アイコン
 ├── PDF_Craft/             PDF加工ツール（単体でも動作）
 ├── ColorPaletteMaster/    カラーパレット作成ツール（単体でも動作）
