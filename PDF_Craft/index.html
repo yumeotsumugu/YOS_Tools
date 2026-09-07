@@ -130,8 +130,8 @@
       <button data-yos-theme-toggle></button>
       <a class="yt-back" href="../index.html">← ツール一覧</a>
       <button class="ghost-btn" id="helpBtn">? ヘルプ</button>
-      <button class="primary-btn" id="addBtn">＋ PDFを追加</button>
-      <input id="fileInput" type="file" accept="application/pdf,.pdf" multiple hidden>
+      <button class="primary-btn" id="addBtn">＋ ファイルを追加</button>
+      <input id="fileInput" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,image/tiff" multiple hidden>
     </div>
   </header>
 
@@ -145,8 +145,11 @@
         <button class="tool-btn" data-mode="split">↕ 分割</button>
         <button class="tool-btn" data-mode="extract">⌗ ページ抽出</button>
         <button class="tool-btn" data-mode="rotate">↻ 回転</button>
+        <div class="side-label side-label-spaced">CONVERT</div>
+        <button class="tool-btn" data-mode="imgToPdf">▦ 画像→PDF</button>
+        <button class="tool-btn" data-mode="pdfToImg">◫ PDF→画像</button>
       </nav>
-      <div class="privacy-note"><span>◇</span><div><strong>端末内で処理</strong><p>PDFは外部へアップロードされません</p></div></div>
+      <div class="privacy-note"><span>◇</span><div><strong>端末内で処理</strong><p>PDF・画像は外部へアップロードされません</p></div></div>
     </aside>
 
     <main class="main-area">
@@ -168,9 +171,9 @@
 
       <section id="dropZone" class="drop-zone">
         <div class="drop-icon">↑</div>
-        <h2>PDFをここにドロップ</h2>
+        <h2>PDF・画像をここにドロップ</h2>
         <p>または <button class="inline-link" id="openLink">ファイルを選択</button>　複数ファイルにも対応しています</p>
-        <span class="drop-meta">PDF / 最大容量はブラウザのメモリに依存</span>
+        <span class="drop-meta">PDF ／ 画像（JPEG・PNG・WebP など）／ 最大容量はブラウザのメモリに依存</span>
       </section>
 
       <div id="workspace" class="workspace hidden">
@@ -188,9 +191,9 @@
 
       <div id="emptyState" class="empty-state">
         <div class="empty-illustration">▤</div>
-        <h2>編集するPDFを追加してください</h2>
+        <h2>PDF または画像を追加してください</h2>
         <p>ファイルはこのブラウザの中だけで処理されます。</p>
-        <button class="secondary-btn" id="emptyAdd">＋ PDFを追加</button>
+        <button class="secondary-btn" id="emptyAdd">＋ ファイルを追加</button>
       </div>
 
       <div class="status-line">
@@ -220,7 +223,7 @@
       <button class="footer-btn" id="resetBtn">↻ リセット</button>
     </div>
     <div class="save-actions">
-      <span id="saveHint">PDFを追加すると保存できます</span>
+      <span id="saveHint">ファイルを追加すると保存できます</span>
       <button class="save-btn" id="saveBtn" disabled>↓ PDFを保存</button>
     </div>
   </footer>

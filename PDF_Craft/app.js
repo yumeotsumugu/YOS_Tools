@@ -38,7 +38,12 @@ const MODES = {
   split:    { title: 'PDFを分割',   sub: '分割位置または一定ページ数を指定して複数のPDFに分けます。' },
   extract:  { title: 'ページを抽出', sub: '選択したページだけを新しいPDFとして書き出します。' },
   rotate:   { title: 'ページを回転', sub: '選択したページ、または対象を指定してまとめて回転します。' },
+  imgToPdf: { title: '画像をPDFに', sub: '画像を読み込み、順番を整えて1つのPDFにまとめます。' },
+  pdfToImg: { title: 'PDFを画像に', sub: '各ページをPNG / JPEG 画像として書き出します（複数ページはZIP）。' },
 }
+
+// 画像→PDF の用紙サイズ（pt）。auto は画像のピクセル寸法をそのままページにする。
+const PAGE_SIZES = { a4p: [595.28, 841.89], a4l: [841.89, 595.28], letterp: [612, 792] }
 
 const $ = (sel) => document.querySelector(sel)
 const $$ = (sel) => document.querySelectorAll(sel)
@@ -66,14 +71,19 @@ function saveSnapshot() {
 
 /* ---------- 読み込み ---------- */
 
-async function loadFiles(fileList) {
-  const files = [...fileList].filter(
-    (file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'),
-  )
-  if (!files.length) return toast('PDFファイルを選択してください。', true)
+const isPdfFile = (file) => file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
+const isImageFile = (file) => /^image\//.test(file.type) || /\.(jpe?g|png|webp|gif|bmp|avif|tiff?)$/i.test(file.name)
 
-  let loaded = 0
-  for (const file of files) {
+async function loadFiles(fileList) {
+  const all = [...fileList]
+  const pdfs = all.filter(isPdfFile)
+  const imgs = all.filter((f) => !isPdfFile(f) && isImageFile(f))
+  if (!pdfs.length && !imgs.length) return toast('PDF または画像ファイルを選択してください。', true)
+
+  let loadedPdf = 0
+  let loadedImg = 0
+
+  for (const file of pdfs) {
     if (file.size > LARGE_FILE_BYTES) {
       toast(`「${file.name}」はファイルサイズが大きいため処理に時間がかかる可能性があります。`)
     }
@@ -82,14 +92,14 @@ async function loadFiles(fileList) {
       const bytes = new Uint8Array(buffer)
       const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise // slice: worker への転送で元配列が detach されるのを防ぐ
       const sourceId = `${file.name}#${uuid()}`
-      state.files.set(sourceId, { name: file.name, size: file.size, bytes })
+      state.files.set(sourceId, { name: file.name, size: file.size, bytes, kind: 'pdf' })
       for (let n = 1; n <= pdf.numPages; n += 1) {
         state.pages.push({
-          id: uuid(), sourceId, sourcePage: n, rotation: 0,
+          id: uuid(), sourceId, sourcePage: n, rotation: 0, kind: 'pdf',
           thumbnail: await renderThumbnail(pdf, n),
         })
       }
-      loaded += 1
+      loadedPdf += 1
     } catch (error) {
       if (error && error.name === 'PasswordException') {
         toast(`「${file.name}」はパスワードで保護されています。`, true)
@@ -101,12 +111,116 @@ async function loadFiles(fileList) {
       }
     }
   }
-  if (loaded) {
-    saveSnapshot()
-    if (state.mode === 'home') setMode('organize')
-    else render()
-    toast(`${loaded}件のPDF（合計${state.pages.length}ページ）を読み込みました`)
+
+  for (const file of imgs) {
+    if (file.size > LARGE_FILE_BYTES) {
+      toast(`「${file.name}」はファイルサイズが大きいため処理に時間がかかる可能性があります。`)
+    }
+    try {
+      const info = await loadImageFile(file)
+      const sourceId = `${file.name}#${uuid()}`
+      state.files.set(sourceId, {
+        name: file.name, size: file.size, kind: 'image',
+        bytes: info.bytes, mime: info.mime, width: info.width, height: info.height, dataUrl: info.dataUrl,
+      })
+      state.pages.push({ id: uuid(), sourceId, sourcePage: 1, rotation: 0, kind: 'image', thumbnail: info.thumb })
+      loadedImg += 1
+    } catch (error) {
+      toast(`「${file.name}」を画像として読み込めませんでした。`, true)
+      console.error(error)
+    }
   }
+
+  if (loadedPdf || loadedImg) {
+    saveSnapshot()
+    if (state.mode === 'home') setMode(loadedPdf ? 'organize' : 'imgToPdf')
+    else render()
+    const parts = []
+    if (loadedPdf) parts.push(`PDF ${loadedPdf}件`)
+    if (loadedImg) parts.push(`画像 ${loadedImg}件`)
+    toast(`${parts.join(' / ')}（合計${state.pages.length}ページ）を読み込みました`)
+  }
+}
+
+/* ---------- 画像の読み込み・ラスタライズ ---------- */
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('画像を読み込めませんでした'))
+    img.src = src
+  })
+}
+
+function canvasToBlob(canvas, mime, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('画像を書き出せませんでした'))), mime, quality)
+  })
+}
+
+// 画像ファイル → { bytes(埋め込み用), mime('image/jpeg'|'image/png'), width, height, dataUrl, thumb }
+// JPEG / PNG はそのまま、その他（WebP など）は PNG に変換して埋め込む。
+async function loadImageFile(file) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const fr = new FileReader()
+    fr.onload = () => resolve(fr.result)
+    fr.onerror = () => reject(new Error('読み込みに失敗しました'))
+    fr.readAsDataURL(file)
+  })
+  const img = await loadImage(dataUrl)
+  const width = img.naturalWidth
+  const height = img.naturalHeight
+  if (!width || !height) throw new Error('画像サイズを取得できませんでした')
+
+  const isJpg = file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name)
+  const isPng = file.type === 'image/png' || /\.png$/i.test(file.name)
+
+  let bytes
+  let mime
+  let finalDataUrl = dataUrl
+  if (isJpg || isPng) {
+    bytes = new Uint8Array(await file.arrayBuffer())
+    mime = isPng ? 'image/png' : 'image/jpeg'
+  } else {
+    const cv = document.createElement('canvas')
+    cv.width = width
+    cv.height = height
+    cv.getContext('2d').drawImage(img, 0, 0)
+    const blob = await canvasToBlob(cv, 'image/png')
+    bytes = new Uint8Array(await blob.arrayBuffer())
+    mime = 'image/png'
+    finalDataUrl = cv.toDataURL('image/png')
+  }
+
+  // サムネイル（グリッドを軽く保つため長辺 320px に縮小）
+  const scale = Math.min(1, 320 / Math.max(width, height))
+  const tcv = document.createElement('canvas')
+  tcv.width = Math.max(1, Math.round(width * scale))
+  tcv.height = Math.max(1, Math.round(height * scale))
+  tcv.getContext('2d').drawImage(img, 0, 0, tcv.width, tcv.height)
+  const thumb = tcv.toDataURL('image/jpeg', 0.8)
+
+  return { bytes, mime, width, height, dataUrl: finalDataUrl, thumb }
+}
+
+// 画像ソースを回転させて再エンコード（回転付きページの埋め込み・書き出しに使用）
+async function rasterizeImage(source, rotation) {
+  const img = await loadImage(source.dataUrl)
+  const r = ((rotation % 360) + 360) % 360
+  const swap = r === 90 || r === 270
+  const iw = img.naturalWidth
+  const ih = img.naturalHeight
+  const cv = document.createElement('canvas')
+  cv.width = swap ? ih : iw
+  cv.height = swap ? iw : ih
+  const ctx = cv.getContext('2d')
+  ctx.translate(cv.width / 2, cv.height / 2)
+  ctx.rotate((r * Math.PI) / 180)
+  ctx.drawImage(img, -iw / 2, -ih / 2)
+  const mime = source.mime === 'image/png' ? 'image/png' : 'image/jpeg'
+  const blob = await canvasToBlob(cv, mime, 0.95)
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), mime, width: cv.width, height: cv.height }
 }
 
 async function renderThumbnail(pdf, pageNumber) {
@@ -228,7 +342,7 @@ function updateInspector() {
     <div class="inspector-preview"><img src="${page.thumbnail}" style="transform:rotate(${page.rotation}deg)" alt="プレビュー"></div>
     <dl>
       <div><dt>元ファイル</dt><dd title="${file?.name ?? ''}">${file?.name ?? 'PDF'}</dd></div>
-      <div><dt>元ページ</dt><dd>${page.sourcePage}</dd></div>
+      <div><dt>${page.kind === 'image' ? '種類' : '元ページ'}</dt><dd>${page.kind === 'image' ? '画像' : page.sourcePage}</dd></div>
       <div><dt>現在の位置</dt><dd>${state.pages.indexOf(page) + 1} / ${state.pages.length}</dd></div>
       <div><dt>回転</dt><dd>${page.rotation}°</dd></div>
       <div><dt>選択数</dt><dd>${selected.length}ページ</dd></div>
@@ -386,6 +500,33 @@ function renderModeBar() {
         rotatePages(ids, +btn.dataset.rot)
       }
     }
+  } else if (state.mode === 'imgToPdf' && state.pages.length) {
+    els.modeBar.classList.remove('hidden')
+    els.modeBar.innerHTML = `
+      <label>用紙</label>
+      <select id="imgPageSize">
+        <option value="auto">画像サイズのまま</option>
+        <option value="a4p">A4 縦（フィット）</option>
+        <option value="a4l">A4 横（フィット）</option>
+        <option value="letterp">レター 縦（フィット）</option>
+      </select>
+      <span class="hint">上のカードを並べ替えると、その順でページになります。回転・削除・複製も使えます。</span>`
+    els.modeBar.oninput = () => render()
+    els.modeBar.onclick = null
+  } else if (state.mode === 'pdfToImg' && state.pages.length) {
+    els.modeBar.classList.remove('hidden')
+    els.modeBar.innerHTML = `
+      <label>形式</label>
+      <select id="imgFormat"><option value="png">PNG</option><option value="jpeg">JPEG</option></select>
+      <label>解像度</label>
+      <select id="imgScale">
+        <option value="1">標準（1×）</option>
+        <option value="2" selected>高（2×）</option>
+        <option value="3">最高（3×）</option>
+      </select>
+      <span class="hint">ページを選択するとそのページだけ、未選択なら全ページを書き出します。</span>`
+    els.modeBar.oninput = () => render()
+    els.modeBar.onclick = null
   } else {
     els.modeBar.classList.add('hidden')
     els.modeBar.innerHTML = ''
@@ -430,14 +571,58 @@ function splitSegments() {
 
 function baseName() {
   const first = state.files.values().next().value
-  return (first?.name || 'document').replace(/\.pdf$/i, '')
+  return (first?.name || 'document').replace(/\.(pdf|jpe?g|png|webp|gif|bmp|avif|tiff?)$/i, '')
 }
 
-async function buildPdf(pages) {
+async function buildPdf(pages, opts = {}) {
   const out = await PDFDocument.create()
   const cache = new Map()
+  const imgEmbedCache = new Map()
+  const sizeKey = opts.imgPage && PAGE_SIZES[opts.imgPage] ? opts.imgPage : 'auto'
+
   for (const page of pages) {
     const source = state.files.get(page.sourceId)
+
+    if (source.kind === 'image') {
+      const rot = ((page.rotation % 360) + 360) % 360
+      let bytes = source.bytes
+      let mime = source.mime
+      let iw = source.width
+      let ih = source.height
+      if (rot !== 0) {
+        const r = await rasterizeImage(source, rot)
+        bytes = r.bytes; mime = r.mime; iw = r.width; ih = r.height
+      }
+
+      const cacheKey = `${page.sourceId}@${rot}`
+      let embedded = imgEmbedCache.get(cacheKey)
+      if (!embedded) {
+        try {
+          embedded = mime === 'image/png' ? await out.embedPng(bytes) : await out.embedJpg(bytes)
+        } catch (_) {
+          // CMYK / プログレッシブ JPEG など pdf-lib が扱えない画像は canvas 経由で作り直す
+          const r = await rasterizeImage(source, rot)
+          iw = r.width; ih = r.height
+          embedded = r.mime === 'image/png' ? await out.embedPng(r.bytes) : await out.embedJpg(r.bytes)
+        }
+        imgEmbedCache.set(cacheKey, embedded)
+      }
+
+      if (sizeKey === 'auto') {
+        const p = out.addPage([iw, ih])
+        p.drawImage(embedded, { x: 0, y: 0, width: iw, height: ih })
+      } else {
+        const [pw, ph] = PAGE_SIZES[sizeKey]
+        const margin = 24
+        const s = Math.min((pw - margin * 2) / iw, (ph - margin * 2) / ih)
+        const dw = iw * s
+        const dh = ih * s
+        const p = out.addPage([pw, ph])
+        p.drawImage(embedded, { x: (pw - dw) / 2, y: (ph - dh) / 2, width: dw, height: dh })
+      }
+      continue
+    }
+
     if (!cache.has(page.sourceId)) {
       cache.set(page.sourceId, await PDFDocument.load(source.bytes, { ignoreEncryption: true }))
     }
@@ -449,6 +634,77 @@ async function buildPdf(pages) {
     out.addPage(copied)
   }
   return out.save()
+}
+
+/* ---------- PDF → 画像 ---------- */
+
+const pdfjsDocCache = new Map()
+async function getPdfjsDoc(sourceId) {
+  if (!pdfjsDocCache.has(sourceId)) {
+    const src = state.files.get(sourceId)
+    pdfjsDocCache.set(sourceId, pdfjsLib.getDocument({ data: src.bytes.slice() }).promise)
+  }
+  return pdfjsDocCache.get(sourceId)
+}
+
+async function renderPageToCanvas(page, scale, fillWhite) {
+  const source = state.files.get(page.sourceId)
+  if (source.kind === 'image') {
+    // ラスター画像は拡大しても情報が増えないため等倍で書き出す
+    const base = await loadImage(source.dataUrl)
+    const rot = ((page.rotation % 360) + 360) % 360
+    const swap = rot === 90 || rot === 270
+    const cv = document.createElement('canvas')
+    cv.width = swap ? base.naturalHeight : base.naturalWidth
+    cv.height = swap ? base.naturalWidth : base.naturalHeight
+    const ctx = cv.getContext('2d')
+    if (fillWhite) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height) }
+    ctx.translate(cv.width / 2, cv.height / 2)
+    ctx.rotate((rot * Math.PI) / 180)
+    ctx.drawImage(base, -base.naturalWidth / 2, -base.naturalHeight / 2)
+    return cv
+  }
+  const doc = await getPdfjsDoc(page.sourceId)
+  const pdfPage = await doc.getPage(page.sourcePage)
+  const baseRotation = pdfPage.rotate || 0
+  const viewport = pdfPage.getViewport({ scale, rotation: (baseRotation + page.rotation) % 360 })
+  const cv = document.createElement('canvas')
+  cv.width = Math.max(1, Math.ceil(viewport.width))
+  cv.height = Math.max(1, Math.ceil(viewport.height))
+  const ctx = cv.getContext('2d')
+  if (fillWhite) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height) }
+  await pdfPage.render({ canvasContext: ctx, viewport }).promise
+  return cv
+}
+
+async function exportImages() {
+  const targets = state.selected.size
+    ? state.pages.filter((p) => state.selected.has(p.id))
+    : state.pages
+  if (!targets.length) return toast('書き出すページがありません。', true)
+
+  const fmt = $('#imgFormat')?.value === 'jpeg' ? 'jpeg' : 'png'
+  const scale = Math.max(1, Math.min(4, parseFloat($('#imgScale')?.value) || 2))
+  const mime = fmt === 'jpeg' ? 'image/jpeg' : 'image/png'
+  const ext = fmt === 'jpeg' ? 'jpg' : 'png'
+
+  const results = []
+  let index = 1
+  for (const page of targets) {
+    const canvas = await renderPageToCanvas(page, scale, fmt === 'jpeg')
+    const blob = await canvasToBlob(canvas, mime, 0.92)
+    results.push({ name: `${baseName()}_p${String(index).padStart(3, '0')}.${ext}`, blob })
+    index += 1
+  }
+
+  if (results.length === 1) {
+    downloadBlob(results[0].blob, results[0].name, mime)
+  } else {
+    const zip = new JSZip()
+    for (const r of results) zip.file(r.name, r.blob)
+    downloadBlob(await zip.generateAsync({ type: 'blob' }), `${baseName()}_images.zip`, 'application/zip')
+  }
+  toast(`${results.length}枚の画像を書き出しました`)
 }
 
 function downloadBlob(data, filename, type = 'application/pdf') {
@@ -478,6 +734,14 @@ function updateSaveButton() {
   } else if (state.mode === 'merge') {
     btn.textContent = '↓ 結合して保存'
     hint.textContent = `${state.files.size}ファイル / ${state.pages.length}ページを結合`
+  } else if (state.mode === 'imgToPdf') {
+    const imgs = state.pages.filter((p) => p.kind === 'image').length
+    btn.textContent = '↓ PDFを保存'
+    hint.textContent = `${state.pages.length}ページ（画像${imgs}枚）を1つのPDFに`
+  } else if (state.mode === 'pdfToImg') {
+    const n = state.selected.size || state.pages.length
+    btn.textContent = '↓ 画像を保存'
+    hint.textContent = n > 1 ? `${n}ページを画像化（ZIP）` : `${n}ページを画像化`
   } else {
     btn.textContent = '↓ PDFを保存'
     hint.textContent = `${state.pages.length}ページを編集中`
@@ -507,6 +771,13 @@ async function save() {
       }
       downloadBlob(await zip.generateAsync({ type: 'blob' }), `${baseName()}_split.zip`, 'application/zip')
       toast(`${segments.length}個のPDFに分割しました`)
+    } else if (state.mode === 'imgToPdf') {
+      if (!state.pages.length) return toast('画像を追加してください。', true)
+      const imgPage = $('#imgPageSize')?.value || 'auto'
+      downloadBlob(await buildPdf(state.pages, { imgPage }), `${baseName()}.pdf`)
+      toast('PDFを保存しました')
+    } else if (state.mode === 'pdfToImg') {
+      await exportImages()
     } else {
       const name = state.mode === 'merge' ? 'merged.pdf' : `${baseName()}_edited.pdf`
       downloadBlob(await buildPdf(state.pages), name)

@@ -13,7 +13,7 @@ YOS_Tools/
 ├── CLAUDE.md              開発ガイド（制作ルール）
 ├── CHANGELOG.md           変更履歴（YOS Tools 全体で一元管理）
 ├── assets/                共通CSS・共通テーマスクリプト・共通アイコン
-├── PDF_Craft/             PDF加工ツール（単体でも動作）
+├── PDF_Craft/             PDF加工・画像↔PDF変換ツール（単体でも動作）
 ├── ColorPaletteMaster/    カラーパレット作成ツール（単体でも動作）
 ├── ImageMaker/            画像メーカー（単体でも動作）
 ├── QR_Generator/          QRコード生成ツール（単体でも動作）
