@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Calc | ローカル関数電卓</title>
+  <link rel="icon" sizes="32x32" href="../assets/icon-32.png">
+  <link rel="icon" sizes="256x256" href="../assets/icon.png">
+  <link rel="apple-touch-icon" href="../assets/icon.png">
+  <link rel="stylesheet" href="../assets/common.css">
+  <script src="../assets/theme.js"></script>
+  <style>
+    body{min-height:100vh}
+    .wrap{max-width:720px; margin:0 auto; padding:40px 24px 80px}
+
+    header.site{position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:12px;
+      padding:14px 0 16px; background:var(--bg)}
+    .mark{width:34px; height:34px; border-radius:9px; object-fit:cover; display:block;
+      background:var(--navy); box-shadow:0 3px 9px #12305233}
+    header.site strong{font:700 18px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:.2px}
+    .back{display:inline-flex; align-items:center; gap:6px; margin-left:auto; padding:8px 12px;
+      border:1px solid var(--line); border-radius:999px; background:var(--paper);
+      color:var(--muted); font-size:12px; text-decoration:none}
+    .back:hover{border-color:var(--blue); color:var(--blue)}
+
+    .hero{margin-bottom:22px}
+    .hero h1{margin:0 0 8px; font-size:24px; letter-spacing:-.4px}
+    .hero p{margin:0; max-width:600px; color:var(--muted); font-size:13px}
+
+    .card{padding:18px; border:1px solid var(--line); border-radius:14px; background:var(--paper);
+      box-shadow:0 4px 16px #1c355910}
+
+    /* ---- ディスプレイ ---- */
+    .disp{border:1px solid var(--line); border-radius:12px; background:var(--bg); padding:12px 14px}
+    #expr{width:100%; border:0; background:transparent; color:var(--ink);
+      font:600 22px/1.3 ui-monospace,"SFMono-Regular",Menlo,Consolas,"Noto Sans Mono CJK JP",monospace;
+      letter-spacing:.5px}
+    #expr:focus{outline:none}
+    #expr::placeholder{color:var(--faint)}
+    .disp-foot{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-top:6px;
+      min-height:22px}
+    #result{font:700 15px/1 ui-monospace,Menlo,Consolas,monospace; color:var(--blue); word-break:break-all}
+    #result.err{color:var(--ng); font-weight:600; font-size:12px}
+    .flags{flex:0 0 auto; display:flex; gap:8px; color:var(--faint); font:700 10px/1 'DM Sans',sans-serif;
+      letter-spacing:1px}
+    .flags .on{color:var(--navy)}
+
+    /* ---- 上段コントロール ---- */
+    .ctl{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 10px}
+    .seg{display:inline-flex; padding:3px; border:1px solid var(--line); border-radius:999px; background:var(--bg)}
+    .seg button{padding:6px 14px; border-radius:999px; font:700 11px 'DM Sans','Yu Gothic',sans-serif;
+      color:var(--muted); background:none; cursor:pointer}
+    .seg button[aria-pressed="true"]{background:var(--paper); color:var(--navy); box-shadow:0 2px 6px #1c355914}
+    .mem{display:flex; gap:6px; margin-left:auto}
+    .mem button{padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:var(--paper);
+      color:var(--muted); font:700 11px 'DM Sans',sans-serif; cursor:pointer}
+    .mem button:hover{border-color:var(--blue); color:var(--blue)}
+
+    /* ---- キーパッド ---- */
+    .pad{display:grid; grid-template-columns:repeat(5,1fr); gap:8px}
+    .pad button{min-height:48px; padding:6px 4px; border:1px solid var(--line); border-radius:10px;
+      background:var(--paper); color:var(--ink); font:700 15px 'DM Sans','Yu Gothic',sans-serif; cursor:pointer;
+      transition:.1s}
+    .pad button:hover{border-color:var(--blue); color:var(--blue)}
+    .pad button:active{transform:translateY(1px)}
+    .pad .fn{font-size:12px; color:var(--muted); background:var(--bg)}
+    .pad .op{color:var(--navy); background:var(--soft)}
+    .pad .zero{grid-column:span 2}
+    .pad .eq{grid-column:span 2; background:var(--navy); color:#fff; border-color:var(--navy); font-size:17px}
+    .pad .eq:hover{background:var(--blue); border-color:var(--blue); color:#fff}
+    .pad .clr{color:var(--ng); background:color-mix(in srgb, var(--ng) 8%, transparent)}
+    .pad .clr:hover{border-color:var(--ng); color:var(--ng)}
+
+    /* ---- 履歴・ヘルプ ---- */
+    .hist{margin-top:24px}
+    .hist-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px}
+    .hist-head h2{margin:0; font-size:14px}
+    .hist-head button{padding:6px 10px; border:1px solid var(--line); border-radius:7px; background:var(--paper);
+      color:var(--muted); font-size:11px; cursor:pointer}
+    .hist-head button:hover{border-color:var(--ng); color:var(--ng)}
+    ul.hist-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+    ul.hist-list li{display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--line);
+      border-radius:9px; background:var(--paper); cursor:pointer}
+    ul.hist-list li:hover{border-color:var(--blue)}
+    ul.hist-list li .hx{flex:1; min-width:0; font:12px/1.5 ui-monospace,Menlo,Consolas,monospace}
+    ul.hist-list li .hx b{display:block; font-weight:400; color:var(--muted); white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis}
+    ul.hist-list li .hx span{color:var(--ink); font-weight:700}
+    ul.hist-list li .del{border:0; background:none; color:var(--faint); font-size:16px; cursor:pointer;
+      line-height:1; padding:2px 4px; flex:0 0 auto}
+    ul.hist-list li .del:hover{color:var(--ng)}
+    .hist-empty{color:var(--faint); font-size:12px; padding:6px 2px}
+
+    details.help{margin-top:20px; border:1px solid var(--line); border-radius:12px; background:var(--paper)}
+    details.help summary{cursor:pointer; padding:12px 16px; list-style:none;
+      font:700 10px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:1.6px; color:var(--faint)}
+    details.help summary::-webkit-details-marker{display:none}
+    details.help summary::after{content:"＋"; float:right; color:var(--faint)}
+    details.help[open] summary::after{content:"－"}
+    details.help .body{padding:6px 16px 16px; color:var(--muted); font-size:12px; line-height:1.8}
+    details.help code{background:var(--bg); border:1px solid var(--line); border-radius:5px; padding:1px 5px;
+      font-size:11px}
+
+    .privacy{display:inline-flex; align-items:center; gap:8px; margin-top:22px;
+      padding:8px 13px; border:1px solid var(--line); border-radius:999px;
+      background:var(--paper); color:var(--muted); font-size:11px}
+    .privacy b{color:var(--ink)}
+
+    .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(10px);
+      padding:10px 16px; border-radius:8px; background:var(--navy); color:#fff; font-size:12px;
+      opacity:0; pointer-events:none; transition:.2s; z-index:999}
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <img class="mark" src="../assets/icon.png" alt="">
+      <strong>Calc</strong>
+      <button data-yos-theme-toggle style="margin-left:auto"></button>
+      <a class="back" href="../index.html">← ツール一覧</a>
+    </header>
+
+    <section class="hero">
+      <h1>関数電卓</h1>
+      <p>三角関数・対数・累乗・平方根・階乗などに対応した電卓です。式をそのまま入力して計算できます。キーボード入力・計算履歴にも対応。計算はすべてこの端末の中だけで行われます。</p>
+    </section>
+
+    <div class="card">
+      <div class="disp">
+        <input id="expr" type="text" inputmode="text" autocomplete="off" autocapitalize="off"
+          spellcheck="false" placeholder="例: 2*(3+4)^2 - sqrt(16)" autofocus>
+        <div class="disp-foot">
+          <span id="result"></span>
+          <span class="flags">
+            <span id="flagDeg" class="on">DEG</span>
+            <span id="flagMem" hidden>M</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="ctl">
+        <span class="seg" role="group" aria-label="角度の単位">
+          <button id="segDeg" aria-pressed="true">度 (DEG)</button>
+          <button id="segRad" aria-pressed="false">ラジアン (RAD)</button>
+        </span>
+        <span class="mem">
+          <button data-mem="MC">MC</button>
+          <button data-mem="MR">MR</button>
+          <button data-mem="M+">M+</button>
+          <button data-mem="M-">M−</button>
+        </span>
+      </div>
+
+      <div class="pad" id="pad">
+        <button class="clr" data-act="clear">C</button>
+        <button class="clr" data-act="back">⌫</button>
+        <button class="op" data-ins="(">(</button>
+        <button class="op" data-ins=")">)</button>
+        <button class="op" data-ins="%">%</button>
+
+        <button class="fn" data-ins="sin(">sin</button>
+        <button class="fn" data-ins="cos(">cos</button>
+        <button class="fn" data-ins="tan(">tan</button>
+        <button class="op" data-ins="^">xʸ</button>
+        <button class="op" data-ins="÷">÷</button>
+
+        <button class="fn" data-ins="asin(">asin</button>
+        <button class="fn" data-ins="acos(">acos</button>
+        <button class="fn" data-ins="atan(">atan</button>
+        <button class="op" data-ins="√(">√</button>
+        <button class="op" data-ins="×">×</button>
+
+        <button class="fn" data-ins="ln(">ln</button>
+        <button class="fn" data-ins="log(">log</button>
+        <button class="op" data-ins="^2">x²</button>
+        <button class="op" data-ins="!">n!</button>
+        <button class="op" data-ins="-">−</button>
+
+        <button data-ins="7">7</button>
+        <button data-ins="8">8</button>
+        <button data-ins="9">9</button>
+        <button class="op" data-ins="^(-1)">1/x</button>
+        <button class="op" data-ins="+">＋</button>
+
+        <button data-ins="4">4</button>
+        <button data-ins="5">5</button>
+        <button data-ins="6">6</button>
+        <button class="op" data-ins="π">π</button>
+        <button class="op" data-ins="e">e</button>
+
+        <button data-ins="1">1</button>
+        <button data-ins="2">2</button>
+        <button data-ins="3">3</button>
+        <button class="fn" data-ins="Ans">Ans</button>
+        <button class="fn" data-act="neg">±</button>
+
+        <button class="zero" data-ins="0">0</button>
+        <button data-ins=".">.</button>
+        <button class="eq" data-act="equals">＝</button>
+      </div>
+    </div>
+
+    <div class="hist">
+      <div class="hist-head">
+        <h2>履歴</h2>
+        <button id="clearHist">すべて削除</button>
+      </div>
+      <ul class="hist-list" id="histList"></ul>
+      <div class="hist-empty" id="histEmpty">まだ履歴はありません。「＝」で計算すると保存されます（この端末のブラウザ内のみ）。</div>
+    </div>
+
+    <details class="help">
+      <summary>使える関数・記号</summary>
+      <div class="body">
+        <p>四則演算 <code>+ - × ÷</code>（キーボードは <code>* /</code> も可）／ 累乗 <code>^</code> ／ 括弧 <code>( )</code> ／
+          階乗 <code>!</code> ／ パーセント <code>%</code>（100 で割る）。数字のあとに関数や <code>(</code> を続けると自動で掛け算になります（例 <code>2π</code>、<code>3(4+5)</code>）。</p>
+        <p>関数：<code>sin cos tan asin acos atan sinh cosh tanh</code>／
+          <code>ln</code>（自然対数）<code>log</code>（常用対数）<code>log2</code>／
+          <code>sqrt</code>（＝<code>√</code>）<code>cbrt</code>（立方根）<code>exp</code> <code>abs</code>
+          <code>round</code> <code>floor</code> <code>ceil</code> <code>fact</code>。</p>
+        <p>定数：<code>π</code>（<code>pi</code>）<code>e</code> <code>tau</code>／ 直前の答え <code>Ans</code>。</p>
+        <p>三角関数の角度は上の <b>度 / ラジアン</b> 切り替えに従います。指数表記（<code>1e3</code>）は非対応です（<code>1×10^3</code> と入力）。</p>
+        <p>キーボード：<code>Enter</code>＝計算、<code>Esc</code>＝クリア、<code>Backspace</code>＝1文字削除。</p>
+      </div>
+    </details>
+
+    <span class="privacy">◇ <span><b>端末内処理</b> ／ 入力した式は外部に送信されません</span></span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (function(){
+    'use strict';
+    var OPTS_KEY = 'yos.calc.opts.v1';
+    var HIST_KEY = 'yos.calc.history.v1';
+    var HIST_MAX = 60;
+
+    var $ = function(id){ return document.getElementById(id); };
+    var els = {
+      expr:$('expr'), result:$('result'), flagDeg:$('flagDeg'), flagMem:$('flagMem'),
+      segDeg:$('segDeg'), segRad:$('segRad'), pad:$('pad'),
+      histList:$('histList'), histEmpty:$('histEmpty'), clearHist:$('clearHist'), toast:$('toast')
+    };
+
+    var state = { deg: true, mem: 0, ans: 0, justEval: false };
+
+    var toastTimer = null;
+    function toast(msg){
+      els.toast.textContent = msg;
+      els.toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 1600);
+    }
+
+    /* ============================================================
+       式の評価（eval は使わず、自前のトークナイザ＋操車場法）
+       ============================================================ */
+    function err(m){ return new Error(m); }
+
+    var CONSTS = { pi: Math.PI, e: Math.E, tau: Math.PI * 2 };
+    var FUNCS = {
+      sin:1, cos:1, tan:1, asin:1, acos:1, atan:1, sinh:1, cosh:1, tanh:1,
+      ln:1, log:1, lg:1, log2:1, sqrt:1, cbrt:1, exp:1, abs:1, sign:1,
+      round:1, floor:1, ceil:1, fact:1
+    };
+    var NAME_LIST = Object.keys(FUNCS).concat(['pi', 'e', 'tau', 'ans']);
+
+    // 入力欄に打てる文字を制限する。関数・定数名の「途中まで」は許可し、
+    // それ以外の英字の並び（gibberish）は取り除く。
+    function namePrefixOK(run){
+      var s = run.toLowerCase();
+      for (var i = 0; i < NAME_LIST.length; i++){
+        if (NAME_LIST[i].indexOf(s) === 0) return true;
+      }
+      return false;
+    }
+    function sanitizeExpr(v){
+      v = v.replace(/[^0-9.\s+\-*/^()!%×÷−–—√πA-Za-z]/g, '');
+      v = v.replace(/[A-Za-z]+/g, function(run){ return namePrefixOK(run) ? run : ''; });
+      return v;
+    }
+
+    function factorial(n){
+      if (n < 0) throw err('階乗は 0 以上の整数のみ対応しています');
+      var r = Math.round(n);
+      if (Math.abs(n - r) > 1e-9) throw err('階乗は整数のみ対応しています');
+      if (r > 170) return Infinity;
+      var f = 1;
+      for (var i = 2; i <= r; i++) f *= i;
+      return f;
+    }
+
+    function applyFunc(name, x, d2r, r2d){
+      switch (name){
+        case 'sin':  return Math.sin(x * d2r);
+        case 'cos':  return Math.cos(x * d2r);
+        case 'tan':  return Math.tan(x * d2r);
+        case 'asin': return Math.asin(x) * r2d;
+        case 'acos': return Math.acos(x) * r2d;
+        case 'atan': return Math.atan(x) * r2d;
+        case 'sinh': return Math.sinh(x);
+        case 'cosh': return Math.cosh(x);
+        case 'tanh': return Math.tanh(x);
+        case 'ln':   return Math.log(x);
+        case 'log':  case 'lg': return Math.log10(x);
+        case 'log2': return Math.log2(x);
+        case 'sqrt': if (x < 0) throw err('負の数の平方根は計算できません'); return Math.sqrt(x);
+        case 'cbrt': return Math.cbrt(x);
+        case 'exp':  return Math.exp(x);
+        case 'abs':  return Math.abs(x);
+        case 'sign': return Math.sign(x);
+        case 'round':return Math.round(x);
+        case 'floor':return Math.floor(x);
+        case 'ceil': return Math.ceil(x);
+        case 'fact': return factorial(x);
+      }
+      throw err('不明な関数: ' + name);
+    }
+
+    function tokenize(src, ans){
+      var s = String(src)
+        .replace(/\s+/g, '')
+        .replace(/×/g, '*').replace(/÷/g, '/')
+        .replace(/[−–—]/g, '-')
+        .replace(/√/g, 'sqrt').replace(/π/g, 'pi');
+      var isDigit = function(c){ return c >= '0' && c <= '9'; };
+      var isAlpha = function(c){ return /[A-Za-z]/.test(c); };
+      var raw = [];
+      var i = 0;
+      while (i < s.length){
+        var c = s[i];
+        if (isDigit(c) || c === '.'){
+          var j = i + 1;
+          while (j < s.length && (isDigit(s[j]) || s[j] === '.')) j++;
+          var num = s.slice(i, j);
+          if ((num.match(/\./g) || []).length > 1) throw err('数値の書式が正しくありません');
+          raw.push({ t: 'num', v: parseFloat(num) });
+          i = j; continue;
+        }
+        if (isAlpha(c)){
+          var k = i + 1;
+          while (k < s.length && (isAlpha(s[k]) || isDigit(s[k]))) k++;
+          var name = s.slice(i, k);
+          var low = name.toLowerCase();
+          if (low === 'ans') raw.push({ t: 'num', v: ans || 0 });
+          else if (CONSTS.hasOwnProperty(low)) raw.push({ t: 'num', v: CONSTS[low] });
+          else if (FUNCS.hasOwnProperty(low)) raw.push({ t: 'func', v: low });
+          else throw err('不明な関数・記号: ' + name);
+          i = k; continue;
+        }
+        if ('+-*/^'.indexOf(c) >= 0){ raw.push({ t: 'op', v: c }); i++; continue; }
+        if (c === '('){ raw.push({ t: 'lp' }); i++; continue; }
+        if (c === ')'){ raw.push({ t: 'rp' }); i++; continue; }
+        if (c === '!'){ raw.push({ t: 'post', v: '!' }); i++; continue; }
+        if (c === '%'){ raw.push({ t: 'post', v: '%' }); i++; continue; }
+        throw err('使用できない文字: ' + c);
+      }
+      // 暗黙の掛け算を挿入： 値 の直後に 値/関数/( が来たら *
+      var out = [];
+      for (var m = 0; m < raw.length; m++){
+        var cur = raw[m], prev = out[out.length - 1];
+        if (prev){
+          var a = (prev.t === 'num' || prev.t === 'rp' || prev.t === 'post');
+          var b = (cur.t === 'num' || cur.t === 'func' || cur.t === 'lp');
+          if (a && b) out.push({ t: 'op', v: '*' });
+        }
+        out.push(cur);
+      }
+      return out;
+    }
+
+    function toRPN(toks){
+      var out = [], ops = [];
+      var prec = { '+': 2, '-': 2, '*': 3, '/': 3, 'u-': 4, '^': 5 };
+      var rightAssoc = { '^': true, 'u-': true };
+      var prev = null;
+      for (var i = 0; i < toks.length; i++){
+        var tk = toks[i];
+        if (tk.t === 'num'){ out.push(tk); prev = 'val'; }
+        else if (tk.t === 'func'){ ops.push(tk); prev = 'func'; }
+        else if (tk.t === 'post'){ out.push(tk); prev = 'val'; }
+        else if (tk.t === 'op'){
+          var o = tk.v;
+          if (o === '-' && (prev === null || prev === 'op' || prev === 'lp' || prev === 'func')) o = 'u-';
+          else if (o === '+' && (prev === null || prev === 'op' || prev === 'lp' || prev === 'func')){ prev = 'op'; continue; }
+          // 前置（単項マイナス）は左に被演算子を持たないので、優先順位による pop はしない
+          if (o === 'u-'){ ops.push({ t: 'op', v: o }); prev = 'op'; continue; }
+          while (ops.length){
+            var top = ops[ops.length - 1];
+            if (top.t === 'func'){ out.push(ops.pop()); continue; }
+            if (top.t === 'op'){
+              var p1 = prec[o], p2 = prec[top.v];
+              if (p2 > p1 || (p2 === p1 && !rightAssoc[o])){ out.push(ops.pop()); continue; }
+            }
+            break;
+          }
+          ops.push({ t: 'op', v: o }); prev = 'op';
+        }
+        else if (tk.t === 'lp'){ ops.push(tk); prev = 'lp'; }
+        else if (tk.t === 'rp'){
+          while (ops.length && ops[ops.length - 1].t !== 'lp') out.push(ops.pop());
+          if (!ops.length) throw err('括弧が対応していません');
+          ops.pop();
+          if (ops.length && ops[ops.length - 1].t === 'func') out.push(ops.pop());
+          prev = 'val';
+        }
+      }
+      while (ops.length){
+        var t2 = ops.pop();
+        if (t2.t === 'lp') throw err('括弧が対応していません');
+        out.push(t2);
+      }
+      return out;
+    }
+
+    function evalRPN(rpn, deg){
+      var st = [];
+      var d2r = deg ? Math.PI / 180 : 1;
+      var r2d = deg ? 180 / Math.PI : 1;
+      function pop(){ if (!st.length) throw err('式が正しくありません'); return st.pop(); }
+      for (var i = 0; i < rpn.length; i++){
+        var tk = rpn[i];
+        if (tk.t === 'num'){ st.push(tk.v); continue; }
+        if (tk.t === 'op'){
+          if (tk.v === 'u-'){ st.push(-pop()); continue; }
+          var b = pop(), a = pop(), r;
+          switch (tk.v){
+            case '+': r = a + b; break;
+            case '-': r = a - b; break;
+            case '*': r = a * b; break;
+            case '/': if (b === 0) throw err('0 では割れません'); r = a / b; break;
+            case '^': r = Math.pow(a, b); break;
+            default: throw err('不明な演算子');
+          }
+          st.push(r); continue;
+        }
+        if (tk.t === 'post'){
+          var x = pop();
+          st.push(tk.v === '%' ? x / 100 : factorial(x));
+          continue;
+        }
+        if (tk.t === 'func'){ st.push(applyFunc(tk.v, pop(), d2r, r2d)); continue; }
+      }
+      if (st.length !== 1) throw err('式が正しくありません');
+      var res = st[0];
+      if (typeof res !== 'number' || isNaN(res)) throw err('計算できませんでした');
+      return res;
+    }
+
+    function evaluate(expr, opts){
+      opts = opts || {};
+      var toks = tokenize(expr, opts.ans);
+      if (!toks.length) throw err('式が空です');
+      return evalRPN(toRPN(toks), !!opts.deg);
+    }
+
+    function formatNumber(x){
+      if (x === Infinity) return '∞';
+      if (x === -Infinity) return '-∞';
+      if (typeof x !== 'number' || isNaN(x)) return 'NaN';
+      if (x === 0) return '0';
+      var a = Math.abs(x);
+      if (a >= 1e12 || a < 1e-9){
+        return x.toExponential(9).replace(/\.?0+e/, 'e').replace('e', ' × 10^').replace('^+', '^');
+      }
+      var s = x.toPrecision(12);
+      if (s.indexOf('e') >= 0 || s.indexOf('E') >= 0) s = String(Number(s));
+      if (s.indexOf('.') >= 0) s = s.replace(/\.?0+$/, '');
+      return s;
+    }
+
+    // テスト用に公開（DOM に依存しない）
+    window.CalcEngine = { evaluate: evaluate, format: formatNumber, sanitize: sanitizeExpr };
+
+    /* ============================================================
+       画面・操作
+       ============================================================ */
+    var previewTimer = null;
+    function schedulePreview(){ clearTimeout(previewTimer); previewTimer = setTimeout(preview, 60); }
+
+    function preview(){
+      var raw = els.expr.value.trim();
+      if (!raw){ els.result.textContent = ''; els.result.className = ''; return; }
+      try {
+        var v = evaluate(raw, { deg: state.deg, ans: state.ans });
+        els.result.textContent = '= ' + formatNumber(v);
+        els.result.className = '';
+      } catch (e){
+        els.result.textContent = '';
+        els.result.className = '';
+      }
+    }
+
+    function equals(){
+      var raw = els.expr.value.trim();
+      if (!raw) return;
+      var v;
+      try {
+        v = evaluate(raw, { deg: state.deg, ans: state.ans });
+      } catch (e){
+        els.result.textContent = e.message || '計算できませんでした';
+        els.result.className = 'err';
+        return;
+      }
+      var shown = formatNumber(v);
+      els.result.textContent = '= ' + shown;
+      els.result.className = '';
+      state.ans = v;
+      addHistory(raw, shown);
+      saveOpts();
+      // 素の数値として書き戻せる場合だけ式欄を結果で置き換える（指数表記や ∞ はそのまま残す）
+      if (/^-?\d+(\.\d+)?$/.test(shown)){
+        els.expr.value = shown;
+        state.justEval = true;
+      }
+      els.expr.focus();
+      els.expr.setSelectionRange(els.expr.value.length, els.expr.value.length);
+    }
+
+    function insertText(t){
+      var el = els.expr;
+      // ＝直後：数字・小数点・( を押したら新しい式を始める（演算子や関数なら結果から続ける）
+      if (state.justEval){
+        state.justEval = false;
+        if (/^[0-9.]/.test(t) || t === '(' || t === '√(' || FUNCS.hasOwnProperty(t.replace(/\($/, ''))){
+          el.value = '';
+          el.setSelectionRange(0, 0);
+        }
+      }
+      var s = el.selectionStart != null ? el.selectionStart : el.value.length;
+      var e = el.selectionEnd != null ? el.selectionEnd : el.value.length;
+      el.value = el.value.slice(0, s) + t + el.value.slice(e);
+      var pos = s + t.length;
+      el.focus();
+      el.setSelectionRange(pos, pos);
+      schedulePreview();
+    }
+
+    function backspace(){
+      var el = els.expr;
+      state.justEval = false;
+      var s = el.selectionStart, e = el.selectionEnd;
+      if (s == null){ el.value = el.value.slice(0, -1); }
+      else if (s !== e){ el.value = el.value.slice(0, s) + el.value.slice(e); el.setSelectionRange(s, s); }
+      else if (s > 0){ el.value = el.value.slice(0, s - 1) + el.value.slice(s); el.setSelectionRange(s - 1, s - 1); }
+      el.focus();
+      schedulePreview();
+    }
+
+    function clearAll(){
+      els.expr.value = '';
+      els.result.textContent = '';
+      els.result.className = '';
+      state.justEval = false;
+      els.expr.focus();
+    }
+
+    // 直前の数値（またはかっこ内）にマイナスを付け外しする簡易 ±
+    function negate(){
+      var el = els.expr, val = el.value;
+      var m = val.match(/(-?)(\d+\.?\d*|(?:pi|e|tau|Ans))\s*$/i);
+      if (m){
+        var start = val.length - m[0].length;
+        var body = m[2];
+        var rep = m[1] === '-' ? body : '-' + body;
+        el.value = val.slice(0, start) + rep;
+      } else if (val.trim() === ''){
+        el.value = '-';
+      } else {
+        el.value = val + '*(-1)';
+      }
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+      schedulePreview();
+    }
+
+    /* ---- メモリ ---- */
+    function currentValue(){
+      var raw = els.expr.value.trim();
+      if (raw){
+        try { return evaluate(raw, { deg: state.deg, ans: state.ans }); } catch (e){ return null; }
+      }
+      return state.ans;
+    }
+    function memOp(op){
+      if (op === 'MC'){ state.mem = 0; }
+      else if (op === 'MR'){ insertText(formatNumber(state.mem).replace(/ × 10\^/, 'e')); }
+      else {
+        var v = currentValue();
+        if (v == null){ toast('メモリに入れる値がありません'); return; }
+        state.mem += (op === 'M+' ? v : -v);
+      }
+      els.flagMem.hidden = (state.mem === 0);
+      saveOpts();
+      if (op !== 'MR') toast('メモリ: ' + formatNumber(state.mem));
+    }
+
+    /* ---- 角度単位 ---- */
+    function setDeg(deg){
+      state.deg = deg;
+      els.segDeg.setAttribute('aria-pressed', deg ? 'true' : 'false');
+      els.segRad.setAttribute('aria-pressed', deg ? 'false' : 'true');
+      els.flagDeg.textContent = deg ? 'DEG' : 'RAD';
+      saveOpts();
+      preview();
+    }
+
+    /* ---- 設定の保存 ---- */
+    function saveOpts(){
+      try { localStorage.setItem(OPTS_KEY, JSON.stringify({ deg: state.deg, mem: state.mem, ans: state.ans })); }
+      catch (e){}
+    }
+    function loadOpts(){
+      var o;
+      try { o = JSON.parse(localStorage.getItem(OPTS_KEY) || 'null'); } catch (e){ o = null; }
+      if (!o) return;
+      if (typeof o.deg === 'boolean') state.deg = o.deg;
+      if (typeof o.mem === 'number' && isFinite(o.mem)) state.mem = o.mem;
+      if (typeof o.ans === 'number' && isFinite(o.ans)) state.ans = o.ans;
+    }
+
+    /* ---- 履歴 ---- */
+    function loadHistory(){
+      try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]') || []; } catch (e){ return []; }
+    }
+    function storeHistory(list){
+      try { localStorage.setItem(HIST_KEY, JSON.stringify(list)); } catch (e){}
+    }
+    function addHistory(expr, result){
+      var list = loadHistory();
+      list.unshift({ expr: expr, result: result, ts: Date.now() });
+      if (list.length > HIST_MAX) list = list.slice(0, HIST_MAX);
+      storeHistory(list);
+      renderHistory();
+    }
+    function renderHistory(){
+      var list = loadHistory();
+      els.histList.innerHTML = '';
+      els.histEmpty.style.display = list.length ? 'none' : '';
+      list.forEach(function(it, idx){
+        var li = document.createElement('li');
+        var hx = document.createElement('div');
+        hx.className = 'hx';
+        var b = document.createElement('b'); b.textContent = it.expr;
+        var sp = document.createElement('span'); sp.textContent = '= ' + it.result;
+        hx.appendChild(b); hx.appendChild(sp);
+        li.appendChild(hx);
+
+        var del = document.createElement('button');
+        del.className = 'del'; del.type = 'button'; del.title = '削除';
+        del.setAttribute('aria-label', '削除'); del.textContent = '×';
+        del.addEventListener('click', function(ev){
+          ev.stopPropagation();
+          var cur = loadHistory(); cur.splice(idx, 1); storeHistory(cur); renderHistory();
+        });
+        li.appendChild(del);
+
+        li.addEventListener('click', function(){
+          els.expr.value = it.expr;
+          state.justEval = false;
+          els.expr.focus();
+          els.expr.setSelectionRange(it.expr.length, it.expr.length);
+          preview();
+        });
+        els.histList.appendChild(li);
+      });
+    }
+    els.clearHist.addEventListener('click', function(){
+      if (!loadHistory().length) return;
+      if (!confirm('履歴をすべて削除しますか？')) return;
+      storeHistory([]); renderHistory();
+    });
+
+    /* ---- 配線 ---- */
+    els.pad.addEventListener('click', function(e){
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      var act = btn.dataset.act;
+      if (act === 'equals') return equals();
+      if (act === 'clear') return clearAll();
+      if (act === 'back') return backspace();
+      if (act === 'neg') return negate();
+      if (btn.dataset.ins != null) insertText(btn.dataset.ins);
+    });
+
+    els.segDeg.addEventListener('click', function(){ setDeg(true); });
+    els.segRad.addEventListener('click', function(){ setDeg(false); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-mem]'), function(b){
+      b.addEventListener('click', function(){ memOp(b.dataset.mem); });
+    });
+
+    els.expr.addEventListener('input', function(){
+      state.justEval = false;
+      var raw = els.expr.value;
+      var clean = sanitizeExpr(raw);
+      if (clean !== raw){
+        var caret = els.expr.selectionStart;
+        var drop = raw.length - clean.length;
+        els.expr.value = clean;
+        var pos = Math.max(0, Math.min(clean.length, (caret == null ? clean.length : caret - drop)));
+        try { els.expr.setSelectionRange(pos, pos); } catch (e){}
+      }
+      schedulePreview();
+    });
+    els.expr.addEventListener('keydown', function(e){
+      if (e.key === 'Enter'){ e.preventDefault(); equals(); }
+      else if (e.key === 'Escape'){ e.preventDefault(); clearAll(); }
+    });
+
+    /* ---- 初期化 ---- */
+    loadOpts();
+    setDeg(state.deg);
+    els.flagMem.hidden = (state.mem === 0);
+    renderHistory();
+    preview();
+  })();
+  </script>
+</body>
+</html>
