@@ -230,7 +230,9 @@
             にまとめています。</p>
 
           <h3>2026-09-07</h3>
-          <p>・<strong>PDF Craft</strong>：「画像→PDF」「PDF→画像」を追加。画像（JPEG・PNG・WebP など）を並べ替え・回転して1つのPDFに（用紙は画像サイズ／A4・レターにフィット）。逆にPDFの各ページをPNG／JPEGで書き出し（解像度1〜3倍、複数ページはZIP、選択ページのみも可）。<br>
+          <p>・<strong>Barcode Generator</strong> を追加。商品番号や管理コードから1次元バーコード（CODE128・JAN／EAN-13・EAN-8・UPC-A・CODE39・ITF／ITF-14・MSI・Pharmacode・Codabar）を生成。バーの太さ（整数ピクセル）・高さ・余白・文字サイズ／位置／寄せ・線と背景の色・値の文字表示を調整でき、PNG（3倍）／SVGで保存、画像コピー、生成履歴の端末内保存に対応。<br>
+            ・<strong>Barcode Scan</strong> を追加。カメラ、またはバーコードが写った画像から中身の番号・テキスト・URLを読み取り。CODE128／39／93・JAN／EAN・UPC・ITF・Codabar などの1次元コードのほかQR・Data Matrix・PDF417・Aztec にも対応（MSI・Pharmacode は読み取り不可）。対応ブラウザの標準検出＋同梱ライブラリ（ZXing）を併用し、複数のバイナライザ・Otsu 2値化・拡大率・明暗反転・中央帯の切り出し・90°回転で読み取り精度を確保。カメラは連続で自動読み取りし、結果を一覧にためて端末内保存・CSV 書き出しに対応。<br>
+            ・<strong>PDF Craft</strong>：「画像→PDF」「PDF→画像」を追加。画像（JPEG・PNG・WebP など）を並べ替え・回転して1つのPDFに（用紙は画像サイズ／A4・レターにフィット）。逆にPDFの各ページをPNG／JPEGで書き出し（解像度1〜3倍、複数ページはZIP、選択ページのみも可）。<br>
             ・<strong>Wareki</strong>（和暦西暦 早見表）を追加。西暦⇄和暦（明治〜令和）の相互変換、改元をまたぐ年の両方表示、生年月日からの満年齢・数え年・干支、印刷・CSVコピーできる早見表に対応。<br>
             ・<strong>Calc</strong>（関数電卓）を追加。三角関数・対数・累乗・平方根・階乗などに対応し、式をそのまま入力して計算。度／ラジアン切替、メモリ、直前の答えAns、暗黙の掛け算、キーボード入力、計算履歴の端末内保存に対応。<br>
             ・<strong>QR Scan</strong> を追加。カメラ、またはQRコードが写った画像から中身のテキスト・URLを読み取り。対応ブラウザは標準のバーコード検出、非対応時は同梱ライブラリで読み取り。URLはその場で開けるリンク表示、種類判定（Wi-Fi・メール・電話など）、読み取り履歴の端末内保存に対応。<br>
@@ -305,6 +307,22 @@
         path: 'QR_Scan/index.html',
         desc: 'カメラで写す、またはQRコードが写った画像を読み込んで中身のテキスト・URLを取り出します。対応ブラウザは標準のバーコード検出を利用し、なければ同梱ライブラリで読み取り。読み取り履歴は端末内に自動保存。',
         tags: ['QRコード', '読み取り', 'カメラ', '画像', '履歴保存'],
+      },
+      {
+        name: 'Barcode Generator',
+        icon: '▮',
+        status: 'live',
+        path: 'Barcode_Generator/index.html',
+        desc: '商品番号や管理コードから1次元バーコードを生成。CODE128・JAN／EAN・UPC・CODE39・ITF などに対応し、バーの太さ・高さ・色・文字表示を調整可能。PNG／SVGで保存でき、生成履歴は端末内に自動保存。',
+        tags: ['バーコード', 'CODE128', 'JAN/EAN', 'PNG', 'SVG', '履歴保存'],
+      },
+      {
+        name: 'Barcode Scan',
+        icon: '⊡',
+        status: 'live',
+        path: 'Barcode_Scan/index.html',
+        desc: 'カメラで写す、またはバーコードが写った画像を読み込んで中身の番号・テキスト・URLを取り出します。JAN／EAN・UPC・CODE128・CODE39・ITF などの1次元コードとQRに対応。読み取り履歴は端末内に自動保存。',
+        tags: ['バーコード', '読み取り', 'JAN/EAN', 'カメラ', '履歴保存'],
       },
       {
         name: 'Calc',

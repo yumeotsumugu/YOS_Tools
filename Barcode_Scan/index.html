@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Barcode Scan | ローカルバーコード読み取り</title>
+  <link rel="icon" sizes="32x32" href="../assets/icon-32.png">
+  <link rel="icon" sizes="256x256" href="../assets/icon.png">
+  <link rel="apple-touch-icon" href="../assets/icon.png">
+  <link rel="stylesheet" href="../assets/common.css">
+  <script src="../assets/theme.js"></script>
+  <style>
+    body{min-height:100vh}
+    .wrap{max-width:940px; margin:0 auto; padding:40px 24px 80px}
+
+    header.site{position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:12px;
+      padding:14px 0 16px; background:var(--bg)}
+    .mark{width:34px; height:34px; border-radius:9px; object-fit:cover; display:block;
+      background:var(--navy); box-shadow:0 3px 9px #12305233}
+    header.site strong{font:700 18px/1 'DM Sans','Yu Gothic',sans-serif; letter-spacing:.2px}
+    .back{display:inline-flex; align-items:center; gap:6px; margin-left:auto; padding:8px 12px;
+      border:1px solid var(--line); border-radius:999px; background:var(--paper);
+      color:var(--muted); font-size:12px; text-decoration:none}
+    .back:hover{border-color:var(--blue); color:var(--blue)}
+
+    .hero{margin-bottom:26px}
+    .hero h1{margin:0 0 8px; font-size:24px; letter-spacing:-.4px}
+    .hero p{margin:0; max-width:620px; color:var(--muted); font-size:13px}
+
+    .card{padding:20px; border:1px solid var(--line); border-radius:14px; background:var(--paper);
+      box-shadow:0 4px 16px #1c355910}
+    .card + .card{margin-top:18px}
+
+    /* ---- モード切替 ---- */
+    .tabs{display:inline-flex; gap:4px; padding:4px; border:1px solid var(--line);
+      border-radius:999px; background:var(--bg); margin-bottom:16px}
+    .tabs button{padding:8px 16px; border-radius:999px; font:700 12px 'DM Sans','Yu Gothic',sans-serif;
+      color:var(--muted); background:none; cursor:pointer}
+    .tabs button[aria-selected="true"]{background:var(--paper); color:var(--navy);
+      box-shadow:0 2px 8px #1c355914}
+
+    /* ---- カメラ ---- */
+    .stage{position:relative; width:100%; aspect-ratio:4 / 3; border-radius:12px; overflow:hidden;
+      background:#0c1118; display:grid; place-items:center}
+    #video{width:100%; height:100%; object-fit:cover; display:block}
+    #video.off{display:none}
+    .stage .reticle{position:absolute; inset:0; margin:auto; width:80%; aspect-ratio:2.4 / 1;
+      border:2px solid #ffffffcc; border-radius:12px; box-shadow:0 0 0 100vmax #00000055;
+      pointer-events:none}
+    .stage .stage-ph{position:absolute; color:#9fb0c4; font-size:12px; text-align:center; padding:24px;
+      line-height:1.7}
+    .cam-row{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:14px}
+    .cam-row select{flex:1; min-width:160px; padding:9px 11px; border:1px solid var(--line);
+      border-radius:8px; font:inherit; font-size:12.5px; background:var(--bg); color:var(--ink)}
+    .cam-row select:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+
+    /* ---- 画像ファイル ---- */
+    .drop{display:grid; place-items:center; gap:8px; padding:34px 18px; text-align:center;
+      border:2px dashed var(--line); border-radius:12px; background:var(--bg); color:var(--muted);
+      font-size:12.5px; cursor:pointer; transition:.14s}
+    .drop:hover, .drop.drag{border-color:var(--blue); color:var(--blue);
+      background:color-mix(in srgb, var(--blue) 6%, transparent)}
+    .drop b{color:var(--ink); font-size:13px}
+    #imgPreview{margin-top:14px; max-width:100%; max-height:300px; border-radius:10px;
+      border:1px solid var(--line); display:block}
+    #imgPreview.empty{display:none}
+
+    button.btn{padding:10px 15px; border:1px solid var(--line); border-radius:8px;
+      background:var(--paper); color:var(--ink); font:700 12px 'DM Sans','Yu Gothic',sans-serif; cursor:pointer}
+    button.btn:hover:not(:disabled){border-color:var(--blue); color:var(--blue)}
+    button.btn.primary{background:var(--navy); color:#fff; border-color:var(--navy)}
+    button.btn.primary:hover:not(:disabled){background:var(--blue); border-color:var(--blue); color:#fff}
+    button.btn:disabled{opacity:.45; cursor:default}
+
+    .status{margin-top:12px; color:var(--faint); font-size:11.5px; min-height:1.2em}
+    .status.err{color:var(--ng)}
+
+    /* ---- 読み取り結果（連続スキャン） ---- */
+    .res-head{display:flex; align-items:center; justify-content:space-between; gap:10px;
+      flex-wrap:wrap; margin-bottom:12px}
+    .res-head h2{margin:0; font-size:14px; display:flex; align-items:center; gap:8px}
+    .res-count{padding:2px 8px; border-radius:999px; background:var(--soft); color:var(--muted);
+      font:700 10px/1.6 'DM Sans','Yu Gothic',sans-serif}
+    .res-head-btns{display:flex; gap:8px}
+    .res-head-btns .btn{padding:6px 12px; font-size:11px}
+    #clearRes:hover:not(:disabled){border-color:var(--ng); color:var(--ng)}
+    .res-empty{color:var(--faint); font-size:12px; padding:8px 2px}
+    ul.res-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+    ul.res-list li{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line);
+      border-radius:9px; background:var(--paper)}
+    ul.res-list li .txt{flex:1; min-width:0}
+    ul.res-list li .txt b{display:block; font-weight:600; font-size:13px; white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis;
+      font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Noto Sans Mono CJK JP",monospace}
+    ul.res-list li .txt small{color:var(--faint); font-size:10px}
+    ul.res-list li .chip{display:inline-block; margin-right:5px; padding:2px 7px; border-radius:999px;
+      background:var(--soft); color:var(--muted);
+      font:700 9px/1.5 'DM Sans','Yu Gothic',sans-serif; letter-spacing:.4px}
+    ul.res-list li .chip.fmt{background:color-mix(in srgb, var(--blue) 14%, transparent); color:var(--blue)}
+    ul.res-list li .act{padding:5px 9px; border:1px solid var(--line); border-radius:6px; background:var(--bg);
+      color:var(--blue); font:700 11px 'DM Sans',sans-serif; cursor:pointer; flex:0 0 auto; text-decoration:none}
+    ul.res-list li .act:hover{border-color:var(--blue)}
+    ul.res-list li .del{border:0; background:none; color:var(--faint); font-size:16px; cursor:pointer;
+      line-height:1; padding:2px 4px; flex:0 0 auto}
+    ul.res-list li .del:hover{color:var(--ng)}
+
+    .privacy{display:inline-flex; align-items:center; gap:8px; margin-top:22px;
+      padding:8px 13px; border:1px solid var(--line); border-radius:999px;
+      background:var(--paper); color:var(--muted); font-size:11px}
+    .privacy b{color:var(--ink)}
+
+    .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(10px);
+      padding:10px 16px; border-radius:8px; background:var(--navy); color:#fff; font-size:12px;
+      opacity:0; pointer-events:none; transition:.2s; z-index:999}
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <img class="mark" src="../assets/icon.png" alt="">
+      <strong>Barcode Scan</strong>
+      <button data-yos-theme-toggle style="margin-left:auto"></button>
+      <a class="back" href="../index.html">← ツール一覧</a>
+    </header>
+
+    <section class="hero">
+      <h1>バーコードスキャナー</h1>
+      <p>カメラで写す、またはバーコードが写った画像を読み込むと、中身の番号・テキスト・URL を取り出します。カメラは連続で自動読み取りし、結果を一覧にためて CSV で書き出せます。JAN／EAN・UPC・CODE128・CODE39・ITF などの 1 次元コードのほか QR コードにも対応。カメラ映像も画像も、この端末の中だけで処理され、外部には送信されません。</p>
+    </section>
+
+    <div class="card">
+      <div class="tabs" role="tablist">
+        <button id="tabCam" role="tab" aria-selected="true">カメラ</button>
+        <button id="tabImg" role="tab" aria-selected="false">画像ファイル</button>
+      </div>
+
+      <!-- カメラ -->
+      <div id="paneCam">
+        <div class="stage">
+          <video id="video" class="off" playsinline muted></video>
+          <div class="reticle" id="reticle" hidden></div>
+          <div class="stage-ph" id="stagePh">「カメラを起動」を押すと読み取りを開始します。<br>カメラの使用許可を求められたら「許可」を選んでください。</div>
+        </div>
+        <div class="cam-row">
+          <button class="btn primary" id="camStart">カメラを起動</button>
+          <button class="btn" id="camStop" disabled>停止</button>
+          <button class="btn" id="camTorch" hidden>ライト</button>
+          <select id="camList" hidden aria-label="使用するカメラ"></select>
+        </div>
+        <div class="status" id="camStatus"></div>
+      </div>
+
+      <!-- 画像ファイル -->
+      <div id="paneImg" hidden>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="画像を選択またはドロップ">
+          <b>画像を選択</b>
+          <span>クリックで選択 ／ ここにドラッグ＆ドロップ ／ 貼り付け（Ctrl+V）</span>
+          <input type="file" id="imgFile" accept="image/*" hidden>
+        </div>
+        <img id="imgPreview" class="empty" alt="読み込んだ画像">
+        <div class="status" id="imgStatus"></div>
+      </div>
+    </div>
+
+    <div class="card result">
+      <div class="res-head">
+        <h2>読み取り結果 <span class="res-count" id="resCount" hidden></span></h2>
+        <div class="res-head-btns">
+          <button class="btn" id="csvBtn" disabled>CSV保存</button>
+          <button class="btn" id="clearRes" disabled>すべて削除</button>
+        </div>
+      </div>
+      <ul class="res-list" id="resList"></ul>
+      <div class="res-empty" id="resEmpty">まだ読み取っていません。カメラは連続で自動読み取りします。読み取った結果はこの端末内に順番にたまり、CSV で書き出せます。</div>
+    </div>
+
+    <span class="privacy">◇ <span><b>端末内処理</b> ／ カメラ映像・画像は外部に送信されません</span></span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="lib/zxing.min.js"></script>
+  <script>
+  (function(){
+    'use strict';
+    var RESULTS_KEY = 'yos.barcodescan.results.v1';
+    var MODE_KEY = 'yos.barcodescan.mode.v1';
+    var RESULTS_MAX = 500;
+
+    var $ = function(id){ return document.getElementById(id); };
+    var els = {
+      tabCam:$('tabCam'), tabImg:$('tabImg'), paneCam:$('paneCam'), paneImg:$('paneImg'),
+      stage:document.querySelector('.stage'), video:$('video'), reticle:$('reticle'), stagePh:$('stagePh'),
+      camStart:$('camStart'), camStop:$('camStop'), camTorch:$('camTorch'), camList:$('camList'), camStatus:$('camStatus'),
+      drop:$('drop'), imgFile:$('imgFile'), imgPreview:$('imgPreview'), imgStatus:$('imgStatus'),
+      resList:$('resList'), resEmpty:$('resEmpty'), resCount:$('resCount'),
+      csvBtn:$('csvBtn'), clearRes:$('clearRes'),
+      toast:$('toast')
+    };
+
+    /* ================= 読み取りエンジンの準備 ================= */
+    // 対応ブラウザは標準の BarcodeDetector、非対応時は同梱の ZXing を使う
+    var WANT_FORMATS = ['aztec','codabar','code_39','code_93','code_128','data_matrix',
+      'ean_8','ean_13','itf','pdf417','qr_code','upc_a','upc_e'];
+    var detector = null;
+    function initDetector(){
+      if (!('BarcodeDetector' in window)) return Promise.resolve();
+      var mk = function(fmts){
+        try { detector = fmts ? new window.BarcodeDetector({ formats: fmts }) : new window.BarcodeDetector(); }
+        catch(e){ detector = null; }
+      };
+      if (window.BarcodeDetector.getSupportedFormats){
+        return window.BarcodeDetector.getSupportedFormats().then(function(sup){
+          var use = WANT_FORMATS.filter(function(f){ return sup.indexOf(f) !== -1; });
+          if (use.length) mk(use); else detector = null;
+        }).catch(function(){ mk(); });
+      }
+      mk();
+      return Promise.resolve();
+    }
+
+    var ZX = window.ZXing || null;
+    var zxingOK = !!(ZX && ZX.MultiFormatReader && ZX.RGBLuminanceSource && ZX.BinaryBitmap && ZX.HybridBinarizer);
+    var ZFMT = {};              // enum値 → フォーマット名（小文字）
+    var HINT_HARD = null, HINT_FORMATS = null;
+    if (zxingOK){
+      if (ZX.BarcodeFormat){
+        Object.keys(ZX.BarcodeFormat).forEach(function(k){
+          var v = ZX.BarcodeFormat[k];
+          if (typeof v === 'number') ZFMT[v] = k.toLowerCase();
+        });
+      }
+      try {
+        if (ZX.DecodeHintType){
+          HINT_HARD = new Map();
+          HINT_HARD.set(ZX.DecodeHintType.TRY_HARDER, true);
+          // Codabar・Code93 は POSSIBLE_FORMATS を明示しないと ZXing が読まないので、
+          // 生成側で作れる全規格＋主要2次元コードを列挙したヒントも用意する
+          if (ZX.BarcodeFormat){
+            var BF = ZX.BarcodeFormat, want = [];
+            ['CODE_128','CODE_39','CODE_93','CODABAR','ITF','EAN_13','EAN_8','UPC_A','UPC_E',
+             'QR_CODE','DATA_MATRIX','PDF_417','AZTEC'].forEach(function(k){
+              if (typeof BF[k] === 'number') want.push(BF[k]);
+            });
+            if (want.length){
+              HINT_FORMATS = new Map();
+              HINT_FORMATS.set(ZX.DecodeHintType.TRY_HARDER, true);
+              HINT_FORMATS.set(ZX.DecodeHintType.POSSIBLE_FORMATS, want);
+            }
+          }
+        }
+      } catch(e){ HINT_HARD = null; HINT_FORMATS = null; }
+    }
+    // MSI・Pharmacode は ZXing 非対応（読み取れない）ことをヒント文言用に保持
+    var UNREADABLE_HINT = 'MSI・Pharmacode はこのスキャナーでは読み取れません。';
+
+    var FMT_LABEL = {
+      qr_code:'QRコード', ean_13:'JAN / EAN-13', ean_8:'EAN-8', upc_a:'UPC-A', upc_e:'UPC-E',
+      code_128:'CODE128', code_39:'CODE39', code_93:'CODE93', codabar:'Codabar', itf:'ITF',
+      data_matrix:'Data Matrix', pdf_417:'PDF417', pdf417:'PDF417', aztec:'Aztec',
+      rss_14:'GS1 DataBar', rss_expanded:'GS1 DataBar 拡張', maxicode:'MaxiCode'
+    };
+    function fmtLabel(f){
+      if (!f) return '';
+      var key = String(f).toLowerCase().replace(/[\s-]+/g, '_');
+      return FMT_LABEL[key] || String(f).toUpperCase();
+    }
+
+    var toastTimer = null;
+    function toast(msg){
+      els.toast.textContent = msg;
+      els.toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 1800);
+    }
+
+    /* ================= 種類の判定 ================= */
+    function classify(text){
+      var t = text.trim();
+      if (/^https?:\/\/\S+$/i.test(t)) return { kind: 'URL', url: t };
+      if (/^mailto:/i.test(t)) return { kind: 'メール' };
+      if (/^tel:/i.test(t)) return { kind: '電話番号' };
+      if (/^(smsto:|sms:)/i.test(t)) return { kind: 'SMS' };
+      if (/^wifi:/i.test(t)) return { kind: 'Wi-Fi 設定' };
+      if (/^geo:/i.test(t)) return { kind: '位置情報' };
+      if (/^begin:vcard/i.test(t)) return { kind: '連絡先（vCard）' };
+      if (/^begin:vevent/i.test(t)) return { kind: '予定（iCal）' };
+      if (/^bitcoin:/i.test(t)) return { kind: 'Bitcoin' };
+      if (/^\d{8}$|^\d{12,14}$/.test(t)) return { kind: '商品コード（数字）' };
+      if (/^\d+$/.test(t)) return { kind: '数字' };
+      return { kind: 'テキスト' };
+    }
+
+    /* ================= 読み取り結果（連続スキャンで蓄積） ================= */
+    var results = loadResults();
+
+    function loadResults(){
+      try { return JSON.parse(localStorage.getItem(RESULTS_KEY) || '[]') || []; }
+      catch(e){ return []; }
+    }
+    function storeResults(){
+      try { localStorage.setItem(RESULTS_KEY, JSON.stringify(results)); } catch(e){}
+    }
+
+    function pad2(n){ return (n < 10 ? '0' : '') + n; }
+    function fmtStamp(ts){
+      var d = new Date(ts);
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' +
+        pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+    }
+    function fmtStampShort(ts){
+      var d = new Date(ts);
+      return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    }
+
+    // list: [{ text, format }] を結果一覧へ追加（同じ内容は先頭へ移動）。新規追加があれば true
+    function addResults(list){
+      var added = false;
+      (list || []).forEach(function(x){
+        if (!x || !x.text) return;
+        var idx = -1;
+        for (var i = 0; i < results.length; i++){ if (results[i].text === x.text){ idx = i; break; } }
+        if (idx >= 0) results.splice(idx, 1); else added = true;
+        results.unshift({ text: x.text, format: x.format || '', kind: classify(x.text).kind, ts: Date.now() });
+      });
+      if (results.length > RESULTS_MAX) results = results.slice(0, RESULTS_MAX);
+      storeResults();
+      renderResults();
+      return added;
+    }
+
+    function renderResults(){
+      els.resList.innerHTML = '';
+      var has = results.length > 0;
+      els.resEmpty.style.display = has ? 'none' : '';
+      els.resCount.hidden = !has;
+      els.resCount.textContent = has ? (results.length + ' 件') : '';
+      els.csvBtn.disabled = !has;
+      els.clearRes.disabled = !has;
+
+      results.forEach(function(it, idx){
+        var li = document.createElement('li');
+
+        var txt = document.createElement('div');
+        txt.className = 'txt';
+        var b = document.createElement('b'); b.textContent = it.text; b.title = it.text;
+        var s = document.createElement('small');
+        var info = classify(it.text);
+        var fl = fmtLabel(it.format);
+        s.textContent = (fl ? fl + '・' : '') + (it.kind || info.kind) + '・' + fmtStampShort(it.ts);
+        txt.appendChild(b); txt.appendChild(s);
+        li.appendChild(txt);
+
+        if (info.url){
+          var open = document.createElement('a');
+          open.className = 'act'; open.textContent = '開く';
+          open.href = info.url; open.target = '_blank'; open.rel = 'noopener noreferrer nofollow';
+          li.appendChild(open);
+        }
+        var copy = document.createElement('button');
+        copy.className = 'act'; copy.type = 'button'; copy.textContent = 'コピー';
+        copy.addEventListener('click', function(){ copyText(it.text); });
+        li.appendChild(copy);
+
+        var del = document.createElement('button');
+        del.className = 'del'; del.type = 'button'; del.title = '削除';
+        del.setAttribute('aria-label', '削除'); del.textContent = '×';
+        del.addEventListener('click', function(){
+          results.splice(idx, 1);
+          storeResults();
+          renderResults();
+        });
+        li.appendChild(del);
+
+        els.resList.appendChild(li);
+      });
+    }
+
+    /* ---- CSV 書き出し ---- */
+    function resultsCSV(){
+      var esc = function(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
+      var rows = results.slice().reverse();   // 古い順（読み取った順）に番号を振る
+      var out = [['番号', '内容', '規格', '種類', '読み取り日時'].map(esc).join(',')];
+      rows.forEach(function(r, i){
+        out.push([
+          i + 1, r.text, fmtLabel(r.format) || '', r.kind || classify(r.text).kind, fmtStamp(r.ts)
+        ].map(esc).join(','));
+      });
+      return String.fromCharCode(0xFEFF) + out.join('\r\n') + '\r\n';   // Excel 用に BOM 付き
+    }
+    function downloadText(filename, text, mime){
+      var blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    }
+    els.csvBtn.addEventListener('click', function(){
+      if (!results.length) return;
+      var d = new Date();
+      var name = 'barcode_scan_' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) +
+        '_' + pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds()) + '.csv';
+      downloadText(name, resultsCSV(), 'text/csv;charset=utf-8');
+      toast('CSV を保存しました（' + results.length + ' 件）');
+    });
+    els.clearRes.addEventListener('click', function(){
+      if (!results.length) return;
+      if (!confirm('読み取り結果をすべて削除しますか？')) return;
+      results = [];
+      storeResults();
+      renderResults();
+    });
+
+    function copyText(text){
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text)
+          .then(function(){ toast('コピーしました'); })
+          .catch(function(){ toast('コピーできませんでした'); });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); toast('コピーしました'); }
+        catch(e){ toast('コピーできませんでした'); }
+        ta.remove();
+      }
+    }
+
+    function notifyFound(){
+      try { if (navigator.vibrate) navigator.vibrate(60); } catch(e){}
+      try {
+        var C = window.AudioContext || window.webkitAudioContext;
+        if (C){
+          var ac = new C();
+          var o = ac.createOscillator(), g = ac.createGain();
+          o.type = 'sine'; o.frequency.value = 880;
+          g.gain.value = 0.05;
+          o.connect(g); g.connect(ac.destination);
+          o.start();
+          o.stop(ac.currentTime + 0.12);
+          setTimeout(function(){ try { ac.close(); } catch(e){} }, 400);
+        }
+      } catch(e){}
+    }
+
+    /* ================= デコード ================= */
+    // source: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement → [{text, format}]
+    var work = document.createElement('canvas');
+    var wctx = work.getContext('2d', { willReadFrequently: true });
+    // 作業用の canvas（同じ canvas を入出力に使うと width 変更で内容が消えるため用途で分ける）
+    var scratch = [
+      { c: document.createElement('canvas') }, { c: document.createElement('canvas') },
+      { c: document.createElement('canvas') }
+    ];
+    scratch.forEach(function(o){ o.ctx = o.c.getContext('2d', { willReadFrequently: true }); });
+
+    // canvas を時計回り90°回転した canvas（slot 2）
+    function rotated90(canvas){
+      var o = scratch[2];
+      o.c.width = canvas.height; o.c.height = canvas.width;
+      o.ctx.save();
+      o.ctx.translate(o.c.width / 2, o.c.height / 2);
+      o.ctx.rotate(Math.PI / 2);
+      o.ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+      o.ctx.restore();
+      return o.c;
+    }
+
+    function sourceSize(src){
+      if (src.tagName === 'VIDEO') return [src.videoWidth, src.videoHeight];
+      if (src.tagName === 'IMG') return [src.naturalWidth || src.width, src.naturalHeight || src.height];
+      return [src.width, src.height];
+    }
+
+    // src を canvas に写す。maxDim を超える場合だけ縮小（拡大はしない）
+    function toWorkCanvas(src, maxDim){
+      if (src.tagName === 'CANVAS') return src;
+      var s = sourceSize(src);
+      var w = s[0], h = s[1];
+      if (!w || !h) return null;
+      var scale = Math.min(1, maxDim / Math.max(w, h));
+      var cw = Math.max(1, Math.round(w * scale));
+      var ch = Math.max(1, Math.round(h * scale));
+      work.width = cw; work.height = ch;
+      wctx.drawImage(src, 0, 0, cw, ch);
+      return work;
+    }
+
+    // canvas（または一部矩形）を指定倍率で作業 canvas #slot に拡大コピー
+    function scaledCanvas(canvas, factor, rect, slot){
+      var o = scratch[slot || 0];
+      if (canvas === o.c) o = scratch[(slot || 0) === 0 ? 1 : 0];   // 自己参照を避ける
+      var sx = rect ? rect.x : 0, sy = rect ? rect.y : 0;
+      var sw = rect ? rect.w : canvas.width, sh = rect ? rect.h : canvas.height;
+      var dw = Math.max(1, Math.round(sw * factor));
+      var dh = Math.max(1, Math.round(sh * factor));
+      o.c.width = dw; o.c.height = dh;
+      o.ctx.imageSmoothingEnabled = factor < 1;   // 拡大時はニアレスト風でエッジを保つ
+      o.ctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, dw, dh);
+      return o.c;
+    }
+
+    var DIAG = '';   // 直近の decode() 失敗理由（デバッグ・利用者向けヒント用）
+
+    // canvas → グレースケール（Uint8ClampedArray, 長さ w*h）
+    function grayscale(canvas){
+      var ctx = canvas.getContext('2d');
+      var d;
+      try { d = ctx.getImageData(0, 0, canvas.width, canvas.height).data; }
+      catch(e){ DIAG = '画像の画素を読み取れませんでした（' + (e && e.name || e) + '）'; return null; }
+      var n = canvas.width * canvas.height;
+      var g = new Uint8ClampedArray(n);
+      for (var p = 0, q = 0; q < n; p += 4, q++){
+        g[q] = d[p + 3] === 0 ? 255 : (306 * d[p] + 601 * d[p + 1] + 117 * d[p + 2] + 512) >> 10;
+      }
+      return g;
+    }
+    function invertGray(g){
+      var o = new Uint8ClampedArray(g.length);
+      for (var i = 0; i < g.length; i++) o[i] = 255 - g[i];
+      return o;
+    }
+    // Otsu 法で2値化（バーが半端な幅で描かれてボケた画像＝アンチエイリアス対策）
+    function otsuThreshold(g){
+      var hist = new Array(256), i;
+      for (i = 0; i < 256; i++) hist[i] = 0;
+      for (i = 0; i < g.length; i++) hist[g[i]]++;
+      var total = g.length, sum = 0;
+      for (i = 0; i < 256; i++) sum += i * hist[i];
+      var sumB = 0, wB = 0, maxVar = -1, th = 127;
+      for (i = 0; i < 256; i++){
+        wB += hist[i];
+        if (!wB) continue;
+        var wF = total - wB;
+        if (!wF) break;
+        sumB += i * hist[i];
+        var mB = sumB / wB, mF = (sum - sumB) / wF;
+        var v = wB * wF * (mB - mF) * (mB - mF);
+        if (v > maxVar){ maxVar = v; th = i; }
+      }
+      var o = new Uint8ClampedArray(g.length);
+      for (i = 0; i < g.length; i++) o[i] = g[i] > th ? 255 : 0;
+      return o;
+    }
+
+    // グレースケール1枚を ZXing で試す。effort: 'fast'（カメラ毎フレーム）/ 'full'（画像・確定時）
+    function zxingTryGray(g, w, h, effort){
+      if (!zxingOK || !g) return null;
+      var binz = [function(s){ return new ZX.HybridBinarizer(s); }];
+      var hintSets;
+      if (effort === 'fast'){
+        // 速度優先：Hybrid のみ、既定 + 全規格指定（Codabar/Code93 を拾うため）
+        hintSets = HINT_FORMATS ? [null, HINT_FORMATS] : [null];
+      } else {
+        if (ZX.GlobalHistogramBinarizer) binz.push(function(s){ return new ZX.GlobalHistogramBinarizer(s); });
+        hintSets = [null];
+        if (HINT_HARD) hintSets.push(HINT_HARD);
+        if (HINT_FORMATS) hintSets.push(HINT_FORMATS);
+      }
+      for (var hi = 0; hi < hintSets.length; hi++){
+        for (var bi = 0; bi < binz.length; bi++){
+          try {
+            var src = new ZX.RGBLuminanceSource(g, w, h);
+            var bmp = new ZX.BinaryBitmap(binz[bi](src));
+            var reader = new ZX.MultiFormatReader();
+            var r = hintSets[hi] ? reader.decode(bmp, hintSets[hi]) : reader.decode(bmp);
+            if (r && r.getText()){
+              return { text: r.getText(), format: ZFMT[r.getBarcodeFormat()] || '' };
+            }
+          } catch(e){ /* 次の組み合わせへ */ }
+        }
+      }
+      return null;
+    }
+
+    // 1枚の canvas を、正転／反転・必要なら拡大を織り交ぜて読む
+    function zxingDecodeCanvas(canvas, effort){
+      if (!zxingOK || !canvas || !canvas.width) return null;
+      var g = grayscale(canvas);
+      if (!g) return null;
+      var hit = zxingTryGray(g, canvas.width, canvas.height, effort)
+             || zxingTryGray(invertGray(g), canvas.width, canvas.height, effort);
+      if (hit) return hit;
+      if (effort === 'fast') return null;
+      // アンチエイリアスで滲んだバー向けに Otsu 2値化してから再挑戦
+      var gt = otsuThreshold(g);
+      hit = zxingTryGray(gt, canvas.width, canvas.height, effort)
+         || zxingTryGray(invertGray(gt), canvas.width, canvas.height, effort);
+      if (hit) return hit;
+      // 解像度が低いときは拡大して再挑戦
+      var minSide = Math.min(canvas.width, canvas.height);
+      if (minSide < 900){
+        var f = Math.min(4, Math.max(2, Math.round(1100 / minSide)));
+        var sc = scaledCanvas(canvas, f, null, 1);
+        var g2 = grayscale(sc);
+        var g2t = otsuThreshold(g2);
+        hit = zxingTryGray(g2, sc.width, sc.height, effort)
+           || zxingTryGray(g2t, sc.width, sc.height, effort)
+           || zxingTryGray(invertGray(g2t), sc.width, sc.height, effort);
+        if (hit) return hit;
+      }
+      return null;
+    }
+
+    // BarcodeDetector を短いタイムアウト付きで試す（固まっても ZXing に必ず進む）
+    function detectorTry(src){
+      if (!detector) return Promise.resolve(null);
+      return new Promise(function(resolve){
+        var done = false;
+        var t = setTimeout(function(){ if (!done){ done = true; resolve(null); } }, 900);
+        Promise.resolve().then(function(){ return detector.detect(src); }).then(function(codes){
+          if (done) return;
+          done = true; clearTimeout(t);
+          var vals = (codes || []).map(function(c){ return { text: c.rawValue, format: c.format }; })
+                                  .filter(function(v){ return v.text; });
+          resolve(vals.length ? vals : null);
+        }).catch(function(){ if (!done){ done = true; clearTimeout(t); resolve(null); } });
+      });
+    }
+
+    async function decode(src, opts){
+      opts = opts || {};
+      var effort = opts.effort || 'full';
+      DIAG = '';
+      var fromDet = await detectorTry(src);
+      if (fromDet) return fromDet;
+      if (!zxingOK){ DIAG = '読み取りライブラリ（ZXing）が読み込めていません'; return []; }
+
+      var cv = toWorkCanvas(src, opts.maxDim || 1600);
+      if (!cv){ DIAG = '画像サイズを取得できませんでした'; return []; }
+      var hit = zxingDecodeCanvas(cv, effort);
+      if (hit) return [hit];
+
+      // 中央の帯だけを切り出して拡大し、もう一度（1次元コード向け）
+      if (opts.cropBand !== false && cv.width > 200){
+        var bw = Math.round(cv.width * 0.9);
+        var bh = Math.max(1, Math.round(cv.height * 0.5));
+        var rect = { x: Math.round((cv.width - bw) / 2), y: Math.round((cv.height - bh) / 2), w: bw, h: bh };
+        var f = cv.width < 1000 ? 2 : 1.4;
+        var band = scaledCanvas(cv, f, rect, 0);
+        hit = zxingDecodeCanvas(band, effort);
+        if (hit) return [hit];
+      }
+
+      // 縦向き（バーが横倒し）の写真向けに 90°回転しても試す
+      if (effort !== 'fast'){
+        hit = zxingDecodeCanvas(rotated90(cv), effort);
+        if (hit) return [hit];
+      }
+      if (!DIAG) DIAG = 'コードを検出できませんでした（画像 ' + cv.width + '×' + cv.height + 'px で解析）';
+      try { console.warn('[Barcode Scan] ' + DIAG); } catch(e){}
+      return [];
+    }
+
+    /* ================= カメラ ================= */
+    var stream = null, scanning = false, rafId = 0, lastScan = 0, track = null, torchOn = false;
+
+    function setCamStatus(msg, isErr){
+      els.camStatus.textContent = msg || '';
+      els.camStatus.classList.toggle('err', !!isErr);
+    }
+
+    async function listCameras(){
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+      try {
+        var devs = await navigator.mediaDevices.enumerateDevices();
+        var cams = devs.filter(function(d){ return d.kind === 'videoinput'; });
+        if (cams.length < 2){ els.camList.hidden = true; return; }
+        var cur = els.camList.value;
+        els.camList.innerHTML = '';
+        cams.forEach(function(d, i){
+          var op = document.createElement('option');
+          op.value = d.deviceId;
+          op.textContent = d.label || ('カメラ ' + (i + 1));
+          els.camList.appendChild(op);
+        });
+        if (cur) els.camList.value = cur;
+        els.camList.hidden = false;
+      } catch(e){}
+    }
+
+    async function startCamera(){
+      if (!canDecode){ setCamStatus('この環境ではバーコードを読み取れません。', true); return; }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+        setCamStatus('このブラウザはカメラに対応していません。画像ファイルから読み取ってください。', true);
+        return;
+      }
+      stopCamera();
+      setCamStatus('カメラを起動しています…');
+      var sel = els.camList.hidden ? null : els.camList.value;
+      var constraints = sel
+        ? { video: { deviceId: { exact: sel } } }
+        : { video: { facingMode: { ideal: 'environment' } } };
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch(e){
+        if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')){
+          setCamStatus('カメラの使用が許可されませんでした。ブラウザの設定で許可するか、画像ファイルから読み取ってください。', true);
+        } else if (e && e.name === 'NotFoundError'){
+          setCamStatus('カメラが見つかりませんでした。画像ファイルから読み取ってください。', true);
+        } else if (location.protocol === 'file:'){
+          setCamStatus('ローカルファイル（file://）ではカメラを使えません。画像ファイルから読み取るか、公開版をご利用ください。', true);
+        } else {
+          setCamStatus('カメラを起動できませんでした：' + (e && e.name || e), true);
+        }
+        return;
+      }
+      els.video.srcObject = stream;
+      els.video.classList.remove('off');
+      els.stagePh.hidden = true;
+      els.reticle.hidden = false;
+      try { await els.video.play(); } catch(e){}
+      track = stream.getVideoTracks()[0] || null;
+      setupTorch();
+      els.camStart.textContent = '再起動';
+      els.camStop.disabled = false;
+      setCamStatus('連続読み取り中… バーコードを枠に合わせてください。読み取るたび結果に追加されます。');
+      listCameras();
+      scanning = true;
+      lastScan = 0;
+      lastHit = { text: '', at: 0 };
+      loop();
+    }
+
+    function stopCamera(){
+      scanning = false;
+      lastHit = { text: '', at: 0 };
+      cancelAnimationFrame(rafId);
+      if (stream){ stream.getTracks().forEach(function(t){ try { t.stop(); } catch(e){} }); }
+      stream = null; track = null; torchOn = false;
+      els.video.srcObject = null;
+      els.video.classList.add('off');
+      els.reticle.hidden = true;
+      els.stagePh.hidden = false;
+      els.camStop.disabled = true;
+      els.camTorch.hidden = true;
+    }
+
+    function setupTorch(){
+      try {
+        var caps = track && track.getCapabilities ? track.getCapabilities() : null;
+        if (caps && 'torch' in caps){
+          els.camTorch.hidden = false;
+          els.camTorch.textContent = 'ライト';
+        } else {
+          els.camTorch.hidden = true;
+        }
+      } catch(e){ els.camTorch.hidden = true; }
+    }
+
+    els.camTorch.addEventListener('click', function(){
+      if (!track) return;
+      torchOn = !torchOn;
+      track.applyConstraints({ advanced: [{ torch: torchOn }] })
+        .then(function(){ els.camTorch.textContent = torchOn ? 'ライト OFF' : 'ライト'; })
+        .catch(function(){ toast('ライトを切り替えられませんでした'); });
+    });
+
+    var decoding = false;
+    var lastHit = { text: '', at: 0 };
+    function shortText(t){ t = String(t); return t.length > 28 ? t.slice(0, 28) + '…' : t; }
+
+    function loop(){
+      if (!scanning) return;
+      rafId = requestAnimationFrame(loop);
+      var now = performance.now();
+      if (decoding || now - lastScan < 250) return;   // 多重実行を避けつつ負荷を抑える
+      lastScan = now;
+      if (els.video.readyState < 2) return;
+      decoding = true;
+      decode(els.video, { maxDim: 1280, effort: 'fast' }).then(function(vals){
+        decoding = false;
+        if (!scanning || !vals.length) return;
+        var v = vals[0];
+        var tnow = performance.now();
+        // 連続読み取り：同じコードを短時間で繰り返し拾うのは無視（チャタリング防止）
+        if (v.text === lastHit.text && tnow - lastHit.at < 2500) return;
+        lastHit = { text: v.text, at: tnow };
+        notifyFound();
+        addResults(vals);
+        setCamStatus('「' + shortText(v.text) + '」を追加しました。続けて次のコードを枠に合わせてください。');
+      }).catch(function(){ decoding = false; });
+    }
+
+    els.camStart.addEventListener('click', startCamera);
+    els.camStop.addEventListener('click', function(){
+      stopCamera();
+      setCamStatus('停止しました。');
+      els.camStart.textContent = 'カメラを起動';
+    });
+    els.camList.addEventListener('change', function(){ if (stream) startCamera(); });
+
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden && stream) {
+        stopCamera();
+        setCamStatus('停止しました（タブが非表示になりました）。');
+        els.camStart.textContent = 'カメラを起動';
+      }
+    });
+
+    /* ================= 画像ファイル ================= */
+    function setImgStatus(msg, isErr){
+      els.imgStatus.textContent = msg || '';
+      els.imgStatus.classList.toggle('err', !!isErr);
+    }
+
+    function handleImageFile(file){
+      if (!file || !/^image\//.test(file.type)){ setImgStatus('画像ファイルを選んでください。', true); return; }
+      if (!canDecode){ setImgStatus('この環境ではバーコードを読み取れません。', true); return; }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        els.imgPreview.src = url;
+        els.imgPreview.classList.remove('empty');
+        setImgStatus('読み取り中…');
+        decode(img, { maxDim: 2400 }).then(function(vals){
+          if (vals.length){
+            notifyFound();
+            addResults(vals);
+            setImgStatus('読み取りました：' + vals[0].text + '（結果一覧に追加）');
+          } else {
+            setImgStatus('バーコードを検出できませんでした。ピントが合った、なるべく大きく・まっすぐ写った画像でお試しください。'
+              + (DIAG ? '（詳細: ' + DIAG + '）' : ''), true);
+          }
+          setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+        }).catch(function(){
+          setImgStatus('読み取りに失敗しました。', true);
+          URL.revokeObjectURL(url);
+        });
+      };
+      img.onerror = function(){ setImgStatus('画像を読み込めませんでした。', true); URL.revokeObjectURL(url); };
+      img.src = url;
+    }
+
+    els.drop.addEventListener('click', function(){ els.imgFile.click(); });
+    els.drop.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); els.imgFile.click(); }
+    });
+    els.imgFile.addEventListener('change', function(){
+      var f = els.imgFile.files && els.imgFile.files[0];
+      els.imgFile.value = '';
+      if (f) handleImageFile(f);
+    });
+    ['dragenter','dragover'].forEach(function(ev){
+      els.drop.addEventListener(ev, function(e){ e.preventDefault(); els.drop.classList.add('drag'); });
+    });
+    ['dragleave','drop'].forEach(function(ev){
+      els.drop.addEventListener(ev, function(e){ e.preventDefault(); els.drop.classList.remove('drag'); });
+    });
+    els.drop.addEventListener('drop', function(e){
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) handleImageFile(f);
+    });
+    window.addEventListener('paste', function(e){
+      if (els.paneImg.hidden) return;
+      var items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (var i = 0; i < items.length; i++){
+        if (items[i].type && items[i].type.indexOf('image/') === 0){
+          handleImageFile(items[i].getAsFile());
+          break;
+        }
+      }
+    });
+
+    /* ================= モード切替 ================= */
+    function setMode(mode){
+      var cam = mode !== 'img';
+      els.tabCam.setAttribute('aria-selected', cam ? 'true' : 'false');
+      els.tabImg.setAttribute('aria-selected', cam ? 'false' : 'true');
+      els.paneCam.hidden = !cam;
+      els.paneImg.hidden = cam;
+      if (!cam){
+        stopCamera();
+        els.camStart.textContent = 'カメラを起動';
+        setCamStatus('');
+      }
+      try { localStorage.setItem(MODE_KEY, cam ? 'cam' : 'img'); } catch(e){}
+    }
+    els.tabCam.addEventListener('click', function(){ setMode('cam'); });
+    els.tabImg.addEventListener('click', function(){ setMode('img'); });
+
+    /* ================= 初期化 ================= */
+    var canDecode = false;
+    function refreshCanDecode(){
+      canDecode = !!detector || zxingOK;
+      if (!canDecode){
+        els.camStart.disabled = true;
+        setCamStatus('この環境ではバーコードを読み取れません（読み取りライブラリが読み込めませんでした）。', true);
+        setImgStatus('この環境ではバーコードを読み取れません（読み取りライブラリが読み込めませんでした）。', true);
+      } else {
+        els.camStart.disabled = false;
+      }
+    }
+
+    initDetector().then(refreshCanDecode);
+    refreshCanDecode();
+
+    var savedMode = 'cam';
+    try { savedMode = localStorage.getItem(MODE_KEY) || 'cam'; } catch(e){}
+    setMode(savedMode === 'img' ? 'img' : 'cam');
+    renderResults();
+  })();
+  </script>
+</body>
+</html>

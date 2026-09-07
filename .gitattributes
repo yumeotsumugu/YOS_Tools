@@ -3,6 +3,8 @@
 
 # Vendored minified libraries: store verbatim, never convert
 PDF_Craft/lib/** -text
+Barcode_Generator/lib/** -text
+Barcode_Scan/lib/** -text
 
 # Binary assets
 *.png binary
