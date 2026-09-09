@@ -63,6 +63,22 @@
     .tags span{padding:3px 8px; border:1px solid var(--line); border-radius:6px; color:var(--muted); font-size:10px}
     .go{display:inline-flex; align-items:center; gap:6px; color:var(--blue); font:700 12px 'DM Sans','Yu Gothic',sans-serif}
 
+    /* ---- ツール検索 ---- */
+    .toolsearch{position:relative; max-width:440px; margin:0 0 22px}
+    .toolsearch .ic{position:absolute; left:14px; top:50%; transform:translateY(-50%);
+      width:16px; height:16px; color:var(--faint); pointer-events:none}
+    .toolsearch input{width:100%; padding:11px 40px; border:1px solid var(--line);
+      border-radius:999px; background:var(--paper); color:var(--ink); font:inherit; font-size:13px}
+    .toolsearch input:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+    .toolsearch input::-webkit-search-cancel-button,
+    .toolsearch input::-webkit-search-decoration{display:none}
+    .toolsearch .clear{position:absolute; right:8px; top:50%; transform:translateY(-50%);
+      width:26px; height:26px; display:grid; place-items:center; border-radius:50%;
+      color:var(--muted); font-size:16px; line-height:1}
+    .toolsearch .clear:hover{background:var(--soft); color:var(--ink)}
+    .toolsearch-empty{margin:-4px 0 34px; color:var(--muted); font-size:13px}
+    .toolsearch-empty b{color:var(--ink)}
+
     .profile{display:flex; gap:18px; align-items:flex-start; padding:22px;
       border:1px solid var(--line); border-radius:14px; background:var(--paper);
       box-shadow:0 4px 16px #1c355910}
@@ -171,6 +187,14 @@
     </section>
 
     <p class="section-label">TOOLS</p>
+    <div class="toolsearch">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input id="toolq" type="search" autocomplete="off" placeholder="ツールを検索（名前・機能・キーワード）" aria-label="ツールを検索">
+      <button class="clear" id="toolq-clear" type="button" aria-label="検索をクリア" hidden>×</button>
+    </div>
+    <p class="toolsearch-empty" id="toolq-empty" hidden>「<b></b>」に一致するツールはありませんでした。</p>
     <div class="grid" id="grid"></div>
 
     <p class="section-label" style="margin-top:44px">ABOUT</p>
@@ -229,6 +253,10 @@
             <a href="https://github.com/yumeotsumugu/YOS_Tools/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">CHANGELOG.md</a>
             にまとめています。</p>
 
+          <h3>2026-09-09</h3>
+          <p>・<strong>Image Converter</strong>：変換パターンを拡張。HEIC・WebP・JPEG・JPG・PNG を相互に変換できるようになり（WebP 書き出しに対応）、<strong>PDF のページを画像に書き出す</strong>／<strong>画像を PDF にする</strong>変換も追加しました。PDF を読み込むとページごとに一覧へ並び、解像度（1〜3倍）を指定して書き出せます。画像→PDF は「1画像＝1PDF」と「1つのPDFにまとめる」を選べます。※ HEIC への書き出しはブラウザの制約により非対応（読み込みは可能）。<br>
+            ・<strong>トップ</strong>：ツール一覧に検索ボックスを追加。ツール名・説明・タグに加え、各ツールへ用意した検索用キーワード（別名・英語表記・略称・用途の言い回し）でも絞り込めます。スペース区切りは全語一致で、カタカナ・ひらがな・英字の大文字小文字の違いは無視します。Esc かクリアボタン（×）でリセットできます。</p>
+
           <h3>2026-09-07</h3>
           <p>・<strong>Barcode Generator</strong> を追加。商品番号や管理コードから1次元バーコード（CODE128・JAN／EAN-13・EAN-8・UPC-A・CODE39・ITF／ITF-14・MSI・Pharmacode・Codabar）を生成。バーの太さ（整数ピクセル）・高さ・余白・文字サイズ／位置／寄せ・線と背景の色・値の文字表示を調整でき、PNG（3倍）／SVGで保存、画像コピー、生成履歴の端末内保存に対応。<br>
             ・<strong>Barcode Scan</strong> を追加。カメラ、またはバーコードが写った画像から中身の番号・テキスト・URLを読み取り。CODE128／39／93・JAN／EAN・UPC・ITF・Codabar などの1次元コードのほかQR・Data Matrix・PDF417・Aztec にも対応（MSI・Pharmacode は読み取り不可）。対応ブラウザの標準検出＋同梱ライブラリ（ZXing）を併用し、複数のバイナライザ・Otsu 2値化・拡大率・明暗反転・中央帯の切り出し・90°回転で読み取り精度を確保。カメラは連続で自動読み取りし、結果を一覧にためて端末内保存・CSV 書き出しに対応。<br>
@@ -265,8 +293,10 @@
 
   <script>
     /* ツールを追加するときはこの配列に1件足すだけ。
-       status: 'live' = 公開 / 'soon' = 準備中（リンク無効）
-       path  : このindex.htmlからの相対パス */
+       status  : 'live' = 公開 / 'soon' = 準備中（リンク無効）
+       path    : このindex.htmlからの相対パス
+       keywords: 検索用の別名・用途・関連語（カード上には表示しない）。
+                 日本語の別表記・英語・略称・「〜したい」の言い回しを広めに入れておく。 */
     const tools = [
       {
         name: 'PDF Craft',
@@ -275,6 +305,7 @@
         path: 'PDF_Craft/index.html',
         desc: 'PDFの結合・分割・ページ並べ替え・削除・複製・回転・抽出に加え、画像→PDF・PDF→画像の変換にも対応。元PDFは変更せず新しいファイルとして保存します。',
         tags: ['結合', '分割', 'ページ整理', '回転', '画像↔PDF'],
+        keywords: ['pdf', 'ピーディーエフ', 'ぴーでぃーえふ', '書類', '資料', 'ファイル', 'マージ', 'merge', 'くっつける', 'つなげる', 'まとめる', 'split', 'ページ削除', 'ページ抽出', 'ページ入れ替え', '並び替え', 'ソート', 'rotate', '向き', '90度', '画像化', 'jpg', 'jpeg', 'png', '画像からpdf', 'pdfから画像', 'スキャン', 'サムネイル', '圧縮しない', '加工'],
       },
       {
         name: 'Color Palette Master',
@@ -283,6 +314,7 @@
         path: 'ColorPaletteMaster/index.html',
         desc: 'カラーピッカー・配色ハーモニー・グラデーション生成・コントラスト比チェック・パレット管理。HEX/RGB/HSLで出力し、インポート／エクスポートにも対応。',
         tags: ['ピッカー', 'ハーモニー', 'グラデーション', 'コントラスト', 'パレット'],
+        keywords: ['color', 'カラー', '色', 'いろ', '配色', 'カラーコード', 'カラーパレット', 'palette', 'カラーピッカー', 'color picker', 'スポイト', '色抽出', 'hex', '16進', 'rgb', 'rgba', 'hsl', 'hsla', 'gradient', 'グラデ', '補色', '類似色', 'トライアド', 'トーン', 'コントラスト比', 'コントラストチェック', 'wcag', 'アクセシビリティ', '色覚', '色見本', 'スウォッチ', 'デザイン', 'ui', 'テーマカラー'],
       },
       {
         name: 'ImageMaker',
@@ -291,6 +323,7 @@
         path: 'ImageMaker/index.html',
         desc: '「Canvaやフォトショを使うほどではない。けれど簡単な画像加工ができたらいいな」——そんな時の画像メーカー。画像／テキスト／図形の配置、レイヤー、フィルター、PNG・APNG書き出し、プロジェクト保存に対応。',
         tags: ['画像編集', 'レイヤー', '図形', 'APNG', 'テキスト'],
+        keywords: ['画像', 'image', 'がぞう', '画像編集', '画像加工', '画像作成', 'メーカー', 'エディタ', 'canva', 'キャンバ', 'フォトショ', 'photoshop', 'ペイント', 'trpg', 'ココフォリア', 'cocofolia', 'ユドナリウム', '立ち絵', '素材作成', 'アイコン作成', 'アイコン加工', 'バナー', 'ヘッダー', 'サムネ', 'サムネイル', 'ロゴ', 'コラージュ', '合成', '切り抜き', 'レイヤー', '図形', '矢印', '吹き出し', '文字入れ', 'テキスト入れ', 'キャプション', 'フィルター', 'モザイク', 'ぼかし', 'png', '透過', 'apng', 'アニメ', 'アニメーション', 'gif'],
       },
       {
         name: 'QR Generator',
@@ -299,6 +332,7 @@
         path: 'QR_Generator/index.html',
         desc: 'URLやテキストを入れるだけでQRコードを生成。誤り訂正レベル・サイズ・色を調整でき、中心にロゴアイコンを重ねることも可能。PNG／SVGで保存でき、生成履歴は端末内に自動保存。',
         tags: ['QRコード', 'URL', 'ロゴ入り', 'PNG', 'SVG', '履歴保存'],
+        keywords: ['qr', 'キューアール', 'qrコード', 'qrcode', '二次元コード', '2次元コード', '生成', '作成', '作る', 'つくる', 'url', 'リンク', 'アドレス', 'テキスト', '名刺', 'ポスター', 'チラシ', 'ロゴ入り', 'ロゴ重ね', 'png', 'svg', '色付き', 'vcard', 'wi-fi', 'wifi'],
       },
       {
         name: 'QR Scan',
@@ -307,6 +341,7 @@
         path: 'QR_Scan/index.html',
         desc: 'カメラで写す、またはQRコードが写った画像を読み込んで中身のテキスト・URLを取り出します。対応ブラウザは標準のバーコード検出を利用し、なければ同梱ライブラリで読み取り。読み取り履歴は端末内に自動保存。',
         tags: ['QRコード', '読み取り', 'カメラ', '画像', '履歴保存'],
+        keywords: ['qr', 'キューアール', 'qrコード', 'qrcode', '二次元コード', '2次元コード', '読み取り', '読取', '読み込み', '読む', 'スキャン', 'scan', 'scanner', 'スキャナー', 'reader', 'リーダー', 'カメラ', '撮影', 'デコード', '解析', '中身', 'url', 'リンク', 'wi-fi', 'wifi', '連絡先', 'vcard'],
       },
       {
         name: 'Barcode Generator',
@@ -315,6 +350,7 @@
         path: 'Barcode_Generator/index.html',
         desc: '商品番号や管理コードから1次元バーコードを生成。CODE128・JAN／EAN・UPC・CODE39・ITF などに対応し、バーの太さ・高さ・色・文字表示を調整可能。PNG／SVGで保存でき、生成履歴は端末内に自動保存。',
         tags: ['バーコード', 'CODE128', 'JAN/EAN', 'PNG', 'SVG', '履歴保存'],
+        keywords: ['バーコード', 'barcode', 'ばーこーど', '1次元コード', '一次元コード', '生成', '作成', '作る', 'つくる', 'code128', 'code 128', 'jan', 'janコード', 'ean', 'ean13', 'ean-13', 'ean8', 'ean-8', 'upc', 'upc-a', 'code39', 'code 39', 'itf', 'itf-14', 'msi', 'pharmacode', 'codabar', 'nw-7', '商品コード', '商品番号', '型番', '品番', '管理番号', '管理コード', '在庫管理', '値札', 'ラベル', '棚札', 'png', 'svg', 'jsbarcode'],
       },
       {
         name: 'Barcode Scan',
@@ -323,6 +359,7 @@
         path: 'Barcode_Scan/index.html',
         desc: 'カメラで写す、またはバーコードが写った画像を読み込んで中身の番号・テキスト・URLを取り出します。JAN／EAN・UPC・CODE128・CODE39・ITF などの1次元コードとQRに対応。読み取り履歴は端末内に自動保存。',
         tags: ['バーコード', '読み取り', 'JAN/EAN', 'カメラ', '履歴保存'],
+        keywords: ['バーコード', 'barcode', 'ばーこーど', '1次元コード', '一次元コード', '読み取り', '読取', '読み込み', '読む', 'スキャン', 'scan', 'scanner', 'スキャナー', 'reader', 'リーダー', 'カメラ', '撮影', 'デコード', '解析', 'jan', 'janコード', 'ean', 'upc', 'code128', 'code39', 'code93', 'itf', 'codabar', 'data matrix', 'pdf417', 'aztec', '商品コード', '商品番号', '型番', '品番', '在庫', '棚卸し', '検品', 'csv', 'zxing'],
       },
       {
         name: 'Calc',
@@ -331,6 +368,7 @@
         path: 'Calc/index.html',
         desc: '三角関数・対数・累乗・平方根・階乗などに対応した関数電卓。式をそのまま入力して計算でき、度／ラジアン切替、メモリ、キーボード入力、計算履歴に対応。',
         tags: ['電卓', '関数電卓', '三角関数', '対数', '履歴保存'],
+        keywords: ['計算', '計算機', '電卓', 'でんたく', 'けいさん', 'calc', 'calculator', '関数電卓', '科学計算', '数式', '式', 'math', '数学', '三角関数', 'sin', 'cos', 'tan', 'サイン', 'コサイン', 'タンジェント', '対数', 'log', 'ln', 'exp', '指数', '累乗', 'べき乗', '平方根', 'ルート', 'sqrt', '√', '階乗', 'factorial', '円周率', 'pi', 'π', 'ラジアン', 'radian', '度数', 'deg', 'メモリ', 'ans', '計算履歴'],
       },
       {
         name: 'Wareki',
@@ -339,6 +377,7 @@
         path: 'Wareki/index.html',
         desc: '西暦と和暦（明治〜令和）を相互に変換。改元をまたぐ年は両方を表示し、生年月日からの満年齢・干支、印刷できる早見表にも対応。',
         tags: ['和暦西暦', '元号', '年齢計算', '干支', '早見表'],
+        keywords: ['和暦', '西暦', 'wareki', 'われき', 'せいれき', '元号', '年号', 'げんごう', '改元', '明治', '大正', '昭和', '平成', '令和', 'めいじ', 'たいしょう', 'しょうわ', 'へいせい', 'れいわ', 'meiji', 'taisho', 'showa', 'heisei', 'reiwa', '年齢計算', '満年齢', '数え年', '干支', 'えと', '十二支', '早見表', '変換', '換算', '生年月日', '誕生日', '西暦変換', '和暦変換', 'カレンダー', '暦'],
       },
       {
         name: 'Text Cleaner',
@@ -347,14 +386,16 @@
         path: 'TextCleaner/index.html',
         desc: '貼り付けたテキストの余計な改行・連続スペース・空行をまとめて整理。全角⇔半角変換、英数字だけ半角化、重複行の削除、行頭記号の一括付与にも対応。',
         tags: ['整形', '全角半角', '空行整理', '重複行', '行頭記号'],
+        keywords: ['テキスト', 'text', '文字', '文章', '整形', '整える', 'クリーナー', 'cleaner', 'クリーニング', 'フォーマット', 'format', '改行', '改行削除', '改行整理', '余分な改行', '不要な改行', '空行', '空行削除', 'スペース', '連続スペース', '空白', 'トリム', 'trim', '全角', '半角', '全角半角', '全角半角変換', 'かな', '英数字', '重複行', '重複削除', 'ユニーク', 'ソート', '並び替え', '行頭', '行頭記号', '箇条書き', 'インデント', 'pdfコピー', 'pdf コピー', 'pdf 改行', '段落', '連結'],
       },
       {
         name: 'Image Converter',
         icon: '⇄',
         status: 'live',
         path: 'ImageConverter/index.html',
-        desc: 'HEIC・WebP・JPEG・PNG などの画像を JPG／JPEG／PNG へまとめて変換。JPEG ⇄ JPG は再エンコードせず拡張子だけ変更。簡易EXIF操作・ZIP一括保存に対応。',
-        tags: ['形式変換', 'HEIC', 'WebP', '一括変換', 'EXIF'],
+        desc: 'HEIC・WebP・JPEG・JPG・PNG を相互に変換。PDF のページを画像に書き出す／画像を PDF にする変換にも対応。JPEG ⇄ JPG は再エンコードせず拡張子だけ変更。簡易EXIF操作・ZIP一括保存に対応。',
+        tags: ['形式変換', 'HEIC', 'WebP', 'PDF↔画像', '一括変換', 'EXIF'],
+        keywords: ['画像変換', '画像', 'image', 'converter', 'convert', '変換', '形式変換', '相互変換', 'ファイル形式', '拡張子', '拡張子変換', 'heic', 'heif', 'iphone写真', 'iphone 写真', 'アイフォン', 'webp', 'jpeg', 'jpg', 'png', 'ビットマップ', 'pdf', 'pdfを画像', 'pdf 画像', 'pdfから画像', '画像からpdf', '画像をpdf', 'pdf化', 'ページを画像', 'スクショ化', '一括変換', 'まとめて変換', 'バッチ', 'batch', 'exif', 'メタデータ', '位置情報', 'gps', '位置情報削除', 'zip', '一括保存'],
       },
       {
         name: '（ツール準備中）',
@@ -362,12 +403,21 @@
         status: 'soon',
         desc: '次のツールを準備中です。',
         tags: [],
+        keywords: [],
       },
     ];
 
     const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-    document.getElementById('grid').innerHTML = tools.map((t) => {
+    /* 検索用の正規化：小文字化・カタカナ→ひらがな・空白畳み込み */
+    const normalize = (s) => (s || '')
+      .toLowerCase()
+      .replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60))
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const grid = document.getElementById('grid');
+    const entries = tools.map((t) => {
       const inner = `
         <div class="card-top">
           <div class="tile">${esc(t.icon || '□')}</div>
@@ -377,10 +427,40 @@
         <p>${esc(t.desc || '')}</p>
         ${t.tags && t.tags.length ? `<div class="tags">${t.tags.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
         ${t.status === 'live' ? '<span class="go">開く →</span>' : ''}`;
-      return t.status === 'live'
-        ? `<a class="card" href="${esc(t.path)}">${inner}</a>`
-        : `<div class="card disabled">${inner}</div>`;
-    }).join('');
+      const el = document.createElement(t.status === 'live' ? 'a' : 'div');
+      el.className = t.status === 'live' ? 'card' : 'card disabled';
+      if (t.status === 'live') el.href = t.path;
+      el.innerHTML = inner;
+      grid.appendChild(el);
+      const haystack = normalize([t.name, t.desc, ...(t.tags || []), ...(t.keywords || [])].join(' '));
+      return { el, haystack, live: t.status === 'live' };
+    });
+
+    /* 検索ボックスで絞り込み。空白区切りは AND 一致。検索中は準備中カードを隠す。 */
+    const q = document.getElementById('toolq');
+    const qClear = document.getElementById('toolq-clear');
+    const qEmpty = document.getElementById('toolq-empty');
+
+    function applyFilter() {
+      const raw = q.value.trim();
+      const terms = normalize(raw).split(' ').filter(Boolean);
+      let shown = 0;
+      entries.forEach((e) => {
+        const hit = terms.length === 0
+          ? true
+          : (e.live && terms.every((tm) => e.haystack.includes(tm)));
+        e.el.hidden = !hit;
+        if (hit) shown++;
+      });
+      qClear.hidden = raw === '';
+      const noHit = terms.length > 0 && shown === 0;
+      qEmpty.hidden = !noHit;
+      if (noHit) qEmpty.querySelector('b').textContent = raw;
+    }
+
+    q.addEventListener('input', applyFilter);
+    q.addEventListener('keydown', (e) => { if (e.key === 'Escape') { q.value = ''; applyFilter(); } });
+    qClear.addEventListener('click', () => { q.value = ''; applyFilter(); q.focus(); });
 
     /* 各ツールから #terms / #changelog でリンクされたとき、その details を開いて表示 */
     function openSectionFromHash() {
