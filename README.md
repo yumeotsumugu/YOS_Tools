@@ -23,7 +23,7 @@ YOS_Tools/
 ├── Calc/                  関数電卓（単体でも動作）
 ├── Wareki/                和暦西暦 早見表・変換（単体でも動作）
 ├── TextCleaner/           テキスト整形ツール（単体でも動作）
-└── ImageConverter/        画像形式変換ツール（単体でも動作）
+└── ImageConverter/        画像形式変換・PDF↔画像変換ツール（単体でも動作）
 ```
 
 ## 使い方

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f4f7fb">
-  <title>Image Converter | ローカル画像形式変換</title>
+  <title>Image Converter | ローカル画像・PDF変換</title>
   <link rel="icon" sizes="32x32" href="../assets/icon-32.png">
   <link rel="icon" sizes="256x256" href="../assets/icon.png">
   <link rel="apple-touch-icon" href="../assets/icon.png">
@@ -31,15 +31,15 @@
     .card{padding:20px; border:1px solid var(--line); border-radius:14px; background:var(--paper);
       box-shadow:0 4px 16px #1c355910}
 
-    /* オプション（2列固定。PNG時に下段が消えても上段の幅は変わらない） */
+    /* オプション（2列固定。項目が消えても上段の幅は変わらない） */
     .opts{display:grid; grid-template-columns:1fr 1fr; gap:18px 22px}
     @media (max-width:640px){ .opts{grid-template-columns:1fr} }
     .fld{display:block; min-width:0}
     .fld > span{display:block; margin-bottom:6px; color:var(--faint);
       font:700 10px/1 var(--font-head); letter-spacing:1.2px}
-    .seg{display:flex; gap:6px}
-    .seg button{flex:1; padding:9px 6px; border:1px solid var(--line); border-radius:8px;
-      background:var(--bg); color:var(--muted); font:700 12px var(--font-head); cursor:pointer}
+    .seg{display:flex; gap:5px}
+    .seg button{flex:1; padding:9px 3px; border:1px solid var(--line); border-radius:8px;
+      background:var(--bg); color:var(--muted); font:700 11px var(--font-head); cursor:pointer}
     .seg button:hover{border-color:var(--blue); color:var(--blue)}
     .seg button.active{background:var(--navy); border-color:var(--navy); color:#fff}
     .row-inline{display:flex; align-items:center; gap:10px}
@@ -51,6 +51,9 @@
     select:focus, input:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
     output.qv{font:600 12px/1 var(--font-head); color:var(--muted); min-width:34px; text-align:right}
     .hint{margin:6px 0 0; font-size:10.5px; color:var(--faint)}
+    .chk{display:flex; align-items:flex-start; gap:8px; color:var(--muted);
+      font-size:12.5px; line-height:1.5; cursor:pointer}
+    .chk input{width:16px; height:16px; margin-top:1px; accent-color:var(--blue); flex:0 0 auto}
 
     /* ドロップ / 追加 */
     .drop{margin-top:16px; display:flex; align-items:center; justify-content:center; gap:10px;
@@ -122,7 +125,7 @@
 
     <section class="hero">
       <h1>画像コンバーター</h1>
-      <p>HEIC・WebP・JPEG・PNG などの画像を JPG / JPEG / PNG へまとめて変換します。JPEG と JPG の相互変換は再エンコードせず拡張子だけ変更。処理はすべてこの端末の中だけで行われ、画像は外部に送信されません。</p>
+      <p>HEIC・WebP・JPEG・JPG・PNG を相互に変換します。PDF を読み込んでページを画像に書き出す／画像から PDF を作ることにも対応（JPEG ⇄ JPG は再エンコードせず拡張子だけ変更）。処理はすべてこの端末の中だけで行われ、ファイルは外部に送信されません。<br>※ HEIC への書き出しは、ブラウザの制約により対応していません（読み込みは可能です）。</p>
     </section>
 
     <div class="card">
@@ -133,10 +136,12 @@
             <button type="button" data-fmt="jpg">JPG</button>
             <button type="button" data-fmt="jpeg">JPEG</button>
             <button type="button" data-fmt="png">PNG</button>
+            <button type="button" data-fmt="webp">WebP</button>
+            <button type="button" data-fmt="pdf">PDF</button>
           </div>
         </label>
 
-        <label class="fld">
+        <label class="fld" id="exifFld">
           <span>EXIF情報</span>
           <select id="exif">
             <option value="keep">そのまま保持</option>
@@ -147,7 +152,7 @@
         </label>
 
         <label class="fld" id="qualityFld">
-          <span>画質（JPG / JPEG・再エンコード時）</span>
+          <span>画質（JPG / JPEG / WebP）</span>
           <div class="row-inline">
             <input type="range" id="quality" min="0.5" max="1" step="0.01" value="0.92">
             <output class="qv" id="qualityVal">92</output>
@@ -162,12 +167,27 @@
             <output class="qv" id="bgVal">#ffffff</output>
           </div>
         </label>
+
+        <label class="fld" id="pdfScaleFld" hidden>
+          <span>PDF→画像の解像度</span>
+          <div class="row-inline">
+            <input type="range" id="pdfScale" min="1" max="3" step="0.5" value="1">
+            <output class="qv" id="pdfScaleVal">1.0×</output>
+          </div>
+          <p class="hint">読み込んだ PDF の1ページあたりの書き出し倍率です。</p>
+        </label>
+
+        <div class="fld" id="mergeFld" hidden>
+          <span>PDFのまとめ方</span>
+          <label class="chk"><input type="checkbox" id="mergePdf"> 複数の画像を1つのPDFにまとめる</label>
+          <p class="hint">オフのときは画像ごとに個別の PDF を書き出します（複数は ZIP で保存）。</p>
+        </div>
       </div>
 
       <div class="drop" id="drop">
-        <span>ここに画像をドラッグ＆ドロップ</span>
+        <span>ここに画像・PDF をドラッグ＆ドロップ</span>
         <button type="button" id="pick">ファイルを選択</button>
-        <input type="file" id="file" accept="image/*,.heic,.heif,.HEIC,.HEIF" multiple hidden>
+        <input type="file" id="file" accept="image/*,.heic,.heif,.HEIC,.HEIF,application/pdf,.pdf" multiple hidden>
       </div>
 
       <ul class="list" id="list"></ul>
@@ -180,7 +200,7 @@
       </div>
     </div>
 
-    <span class="privacy">◇ <span><b>端末内処理</b> ／ 画像は外部に送信されません</span></span>
+    <span class="privacy">◇ <span><b>端末内処理</b> ／ ファイルは外部に送信されません</span></span>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -188,21 +208,29 @@
   <script src="lib/heic2any.min.js"></script>
   <script src="lib/piexif.js"></script>
   <script src="lib/jszip.min.js"></script>
+  <script src="lib/pdf-lib.min.js"></script>
+  <script src="lib/pdf.min.js"></script>
   <script>
   (function () {
     'use strict';
     var OPTS_KEY = 'yos.imageconv.opts.v1';
     var $ = function (id) { return document.getElementById(id); };
 
+    if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+    var PDFDoc = (window.PDFLib && PDFLib.PDFDocument) || null;
+
     var els = {
-      fmtSeg: $('fmtSeg'), quality: $('quality'), qualityVal: $('qualityVal'),
-      qualityFld: $('qualityFld'), bg: $('bg'), bgVal: $('bgVal'), bgFld: $('bgFld'),
-      exif: $('exif'), exifHint: $('exifHint'),
+      fmtSeg: $('fmtSeg'), quality: $('quality'), qualityVal: $('qualityVal'), qualityFld: $('qualityFld'),
+      bg: $('bg'), bgVal: $('bgVal'), bgFld: $('bgFld'),
+      exif: $('exif'), exifHint: $('exifHint'), exifFld: $('exifFld'),
+      pdfScale: $('pdfScale'), pdfScaleVal: $('pdfScaleVal'), pdfScaleFld: $('pdfScaleFld'),
+      mergePdf: $('mergePdf'), mergeFld: $('mergeFld'),
       drop: $('drop'), pick: $('pick'), file: $('file'), list: $('list'),
       convert: $('convert'), zip: $('zip'), clear: $('clear'), toast: $('toast')
     };
 
-    var state = { fmt: 'jpg', items: [], seq: 0 };
+    var state = { fmt: 'jpg', items: [], seq: 0, merged: null };
+    var pdfDocs = new Map(); // pdfId -> pdfjs ドキュメントの Promise
     var toastTimer = null;
     function toast(msg, isErr) {
       els.toast.textContent = msg;
@@ -220,8 +248,10 @@
       return (n / 1048576).toFixed(2) + ' MB';
     }
     function baseName(name) { return name.replace(/\.[^.\/\\]+$/, ''); }
-    function extFor(fmt) { return fmt === 'png' ? '.png' : fmt === 'jpeg' ? '.jpeg' : '.jpg'; }
-    function outMime(fmt) { return fmt === 'png' ? 'image/png' : 'image/jpeg'; }
+    function extFor(fmt) { return { jpg: '.jpg', jpeg: '.jpeg', png: '.png', webp: '.webp', pdf: '.pdf' }[fmt] || '.jpg'; }
+    function outMime(fmt) { return fmt === 'png' ? 'image/png' : fmt === 'webp' ? 'image/webp' : 'image/jpeg'; }
+    var LOSSY = { jpg: 1, jpeg: 1, webp: 1 };   // 画質スライダーが効く出力
+    var NEEDS_BG = { jpg: 1, jpeg: 1 };         // 透過をつぶす背景色が要る出力
 
     function readHead(file, n) {
       return new Promise(function (res) {
@@ -265,6 +295,7 @@
       var str = function (i, len) {
         var s = ''; for (var k = 0; k < len; k++) s += String.fromCharCode(h[i + k] || 0); return s;
       };
+      if (str(0, 4) === '%PDF') return 'pdf';
       if (a(0) === 0xFF && a(1) === 0xD8 && a(2) === 0xFF) return 'jpeg';
       if (a(0) === 0x89 && a(1) === 0x50 && a(2) === 0x4E && a(3) === 0x47) return 'png';
       if (str(0, 4) === 'RIFF' && str(8, 4) === 'WEBP') return 'webp';
@@ -275,13 +306,14 @@
       // 拡張子フォールバック
       var m = /\.(\w+)$/.exec(file.name.toLowerCase());
       var ext = m ? m[1] : '';
+      if (ext === 'pdf') return 'pdf';
       if (ext === 'heic' || ext === 'heif') return 'heic';
       if (ext === 'webp') return 'webp';
       if (ext === 'png') return 'png';
       if (ext === 'jpg' || ext === 'jpeg') return 'jpeg';
       return 'unknown';
     }
-    var LABEL = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP', heic: 'HEIC', unknown: '不明' };
+    var LABEL = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP', heic: 'HEIC', pdf: 'PDF', unknown: '不明' };
 
     /* ---------- HEIC から EXIF を取り出す（ベストエフォート） ---------- */
     function u32(dv, p) { return dv.getUint32(p, false); }
@@ -397,14 +429,18 @@
       }
     }
 
-    /* ---------- 変換 ---------- */
-    function makeItem(file, srcFormat) {
-      return {
+    /* ---------- item ---------- */
+    function makeItem(file, srcFormat, extra) {
+      var it = {
         id: ++state.seq, file: file, srcFormat: srcFormat, srcSize: file.size,
-        status: 'waiting', note: '', outBlob: null, outName: '', outSize: null, url: null, thumbUrl: null
+        status: 'waiting', note: '', outBlob: null, outName: '', outSize: null, url: null, thumbUrl: null,
+        pdfId: null, pdfPage: 0, pdfLabel: ''
       };
+      if (extra) for (var k in extra) it[k] = extra[k];
+      return it;
     }
 
+    /* ---------- キャンバス / デコード ---------- */
     async function decodeToCanvas(blob, orient) {
       var bmp;
       try {
@@ -423,14 +459,94 @@
       });
     }
 
+    function ensureFormat(blob, fmt) {
+      if (fmt === 'webp' && blob && blob.type && blob.type !== 'image/webp') {
+        throw new Error('このブラウザは WebP の書き出しに対応していません');
+      }
+    }
+
+    /* ---------- PDF ---------- */
+    function getPdfDoc(id) { return pdfDocs.get(id); }
+
+    async function renderPdfPageToCanvas(it, scale, bgColor) {
+      if (!window.pdfjsLib) throw new Error('PDFライブラリを読み込めませんでした');
+      var doc = await getPdfDoc(it.pdfId);
+      if (!doc) throw new Error('PDFを読み込めませんでした');
+      var page = await doc.getPage(it.pdfPage);
+      var vp = page.getViewport({ scale: scale });
+      var cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.ceil(vp.width));
+      cv.height = Math.max(1, Math.ceil(vp.height));
+      var ctx = cv.getContext('2d');
+      if (bgColor) { ctx.fillStyle = bgColor; ctx.fillRect(0, 0, cv.width, cv.height); }
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      return cv;
+    }
+
+    // 画像 item → pdf-lib で埋め込めるバイト列（jpeg / png）
+    async function imageEmbedBytes(it) {
+      if (it.srcFormat === 'jpeg') return { bytes: new Uint8Array(await readArrayBuffer(it.file)), mime: 'image/jpeg' };
+      if (it.srcFormat === 'png') return { bytes: new Uint8Array(await readArrayBuffer(it.file)), mime: 'image/png' };
+      return { bytes: await rasterToPngBytes(it), mime: 'image/png' };
+    }
+    // WebP / HEIC などを canvas 経由で PNG バイト列に
+    async function rasterToPngBytes(it) {
+      var srcBlob = it.file;
+      if (it.srcFormat === 'heic') {
+        if (typeof heic2any !== 'function') throw new Error('HEICライブラリを読み込めませんでした');
+        srcBlob = await heic2any({ blob: it.file, toType: 'image/png' });
+        if (Array.isArray(srcBlob)) srcBlob = srcBlob[0];
+      }
+      var d = await decodeToCanvas(srcBlob, true);
+      d.cv.getContext('2d').drawImage(d.bmp, 0, 0);
+      if (d.bmp.close) d.bmp.close();
+      var b = await canvasToBlob(d.cv, 'image/png');
+      return new Uint8Array(await readArrayBuffer(b));
+    }
+
+    async function embedImage(doc, it) {
+      var emb = await imageEmbedBytes(it);
+      try {
+        return emb.mime === 'image/png' ? await doc.embedPng(emb.bytes) : await doc.embedJpg(emb.bytes);
+      } catch (e) {
+        // CMYK / プログレッシブ JPEG など pdf-lib が扱えない画像は canvas 経由で作り直す
+        return await doc.embedPng(await rasterToPngBytes(it));
+      }
+    }
+
+    /* ---------- 変換（1件） ---------- */
     async function convertOne(it, opts) {
       var outFmt = opts.fmt;
-      var toJpeg = outFmt !== 'png';
+
+      // ===== 出力: PDF（画像 → 1ページ PDF） =====
+      if (outFmt === 'pdf') {
+        if (it.srcFormat === 'pdf') throw new Error('PDF→PDF は対象外です（PDF Craft をご利用ください）');
+        if (!PDFDoc) throw new Error('PDFライブラリを読み込めませんでした');
+        var doc = await PDFDoc.create();
+        var img = await embedImage(doc, it);
+        var pg = doc.addPage([img.width, img.height]);
+        pg.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+        var outBytes = await doc.save();
+        return { blob: new Blob([outBytes], { type: 'application/pdf' }), name: baseName(it.file.name) + '.pdf' };
+      }
+
+      // ===== 出力: 画像形式 =====
+      var wantJpeg = (outFmt === 'jpg' || outFmt === 'jpeg');
+      var needsBg = !!NEEDS_BG[outFmt];
+      var lossy = !!LOSSY[outFmt];
       var mime = outMime(outFmt);
       var outName = baseName(it.file.name) + extFor(outFmt);
 
-      // 1) 実JPEG → JPG/JPEG：再エンコードなし（拡張子のみ変更）
-      if (it.srcFormat === 'jpeg' && toJpeg) {
+      // 入力: PDF ページ → 画像
+      if (it.srcFormat === 'pdf') {
+        var cv = await renderPdfPageToCanvas(it, opts.pdfScale, needsBg ? opts.bg : null);
+        var pb = await canvasToBlob(cv, mime, lossy ? opts.quality : undefined);
+        ensureFormat(pb, outFmt);
+        return { blob: pb, name: baseName(it.file.name) + '_p' + it.pdfPage + extFor(outFmt) };
+      }
+
+      // 実JPEG → JPG/JPEG：再エンコードなし（拡張子のみ変更）
+      if (it.srcFormat === 'jpeg' && wantJpeg) {
         var blob = it.file;
         if (opts.exif === 'strip') {
           var du = await blobToDataURL(it.file);
@@ -446,27 +562,42 @@
         return { blob: new Blob([blob], { type: 'image/jpeg' }), name: outName };
       }
 
-      // 1b) PNG → PNG：中身は同じなので拡張子（名前）だけ整えて返す
+      // 同一形式：中身はそのままで拡張子（名前）だけ整えて返す
       if (it.srcFormat === 'png' && outFmt === 'png') {
         return { blob: new Blob([it.file], { type: 'image/png' }), name: outName };
       }
+      if (it.srcFormat === 'webp' && outFmt === 'webp') {
+        return { blob: new Blob([it.file], { type: 'image/webp' }), name: outName };
+      }
 
-      // 2) デコード
-      var srcExifObj = null;
+      // HEIC → 画像
       if (it.srcFormat === 'heic') {
         if (typeof heic2any !== 'function') throw new Error('HEICライブラリを読み込めませんでした');
-        if (toJpeg && opts.exif !== 'strip') {
+        var srcExifObj = null;
+        if (wantJpeg && opts.exif !== 'strip') {
           try {
             var ab = await readArrayBuffer(it.file);
             var tiff = extractHeicExif(ab);
             if (tiff) srcExifObj = tiffToExifObj(tiff);
           } catch (e) { /* noop */ }
-          if (toJpeg && opts.exif !== 'strip' && !srcExifObj) it.note = 'EXIF: 取得できませんでした';
+          if (!srcExifObj) it.note = 'EXIF: 取得できませんでした';
         }
-        var heicBlob = await heic2any({ blob: it.file, toType: mime, quality: toJpeg ? opts.quality : undefined });
+        // heic2any は webp 出力に非対応 → いったん PNG にしてから canvas で変換
+        var heicType = wantJpeg ? 'image/jpeg' : 'image/png';
+        var heicBlob = await heic2any({ blob: it.file, toType: heicType, quality: wantJpeg ? opts.quality : undefined });
         if (Array.isArray(heicBlob)) heicBlob = heicBlob[0];
+
+        if (outFmt === 'webp') {
+          var dw = await decodeToCanvas(heicBlob, false);
+          dw.cv.getContext('2d').drawImage(dw.bmp, 0, 0);
+          if (dw.bmp.close) dw.bmp.close();
+          var wb = await canvasToBlob(dw.cv, 'image/webp', opts.quality);
+          ensureFormat(wb, 'webp');
+          return { blob: wb, name: outName };
+        }
+
         var outBlob = heicBlob;
-        if (toJpeg && srcExifObj) {
+        if (wantJpeg && srcExifObj) {
           try {
             srcExifObj['0th'] = srcExifObj['0th'] || {};
             srcExifObj['0th'][piexif.ImageIFD.Orientation] = 1; // heic2any が回転済みのため
@@ -481,20 +612,31 @@
       // WebP / PNG（および拡張子詐称でここに来た画像）→ canvas 経由
       var d = await decodeToCanvas(it.file, true);
       var ctx = d.cv.getContext('2d');
-      if (toJpeg) { ctx.fillStyle = opts.bg; ctx.fillRect(0, 0, d.cv.width, d.cv.height); }
+      if (needsBg) { ctx.fillStyle = opts.bg; ctx.fillRect(0, 0, d.cv.width, d.cv.height); }
       ctx.drawImage(d.bmp, 0, 0);
       if (d.bmp.close) d.bmp.close();
-      var cvBlob = await canvasToBlob(d.cv, mime, toJpeg ? opts.quality : undefined);
+      var cvBlob = await canvasToBlob(d.cv, mime, lossy ? opts.quality : undefined);
+      ensureFormat(cvBlob, outFmt);
       return { blob: cvBlob, name: outName };
     }
 
+    /* ---------- 変換（実行） ---------- */
     async function runConvert() {
       var opts = readOpts();
       setBusy(true);
+
+      if (opts.fmt === 'pdf' && opts.merge) {
+        await runMerge(opts);
+        setBusy(false);
+        updateActions();
+        return;
+      }
+      state.merged = null;
+
       var okCount = 0;
       for (var i = 0; i < state.items.length; i++) {
         var it = state.items[i];
-        if (it.status === 'done') { okCount++; continue; }
+        if (it.status === 'done' && it.outBlob) { okCount++; continue; }
         it.status = 'working'; it.note = ''; renderRow(it);
         try {
           var r = await convertOne(it, opts);
@@ -518,10 +660,45 @@
       else toast('変換に失敗しました', true);
     }
 
+    // 画像をまとめて 1 つの PDF に
+    async function runMerge(opts) {
+      if (!PDFDoc) { toast('PDFライブラリを読み込めませんでした', true); return; }
+      var imgs = state.items.filter(function (x) { return x.srcFormat !== 'pdf'; });
+      var pdfs = state.items.filter(function (x) { return x.srcFormat === 'pdf'; });
+      pdfs.forEach(function (it) { it.status = 'error'; it.note = 'PDF→PDF は対象外です'; renderRow(it); });
+      if (!imgs.length) { state.merged = null; toast('まとめる画像がありません', true); return; }
+      imgs.forEach(function (it) { it.status = 'working'; it.note = ''; renderRow(it); });
+      try {
+        var doc = await PDFDoc.create();
+        for (var i = 0; i < imgs.length; i++) {
+          var it = imgs[i];
+          var img = await embedImage(doc, it);
+          var pg = doc.addPage([img.width, img.height]);
+          pg.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+          it.status = 'done'; it.note = 'まとめPDFに追加'; it.outBlob = null; it.outSize = null;
+          if (it.url) { URL.revokeObjectURL(it.url); it.url = null; }
+          renderRow(it);
+        }
+        var outBytes = await doc.save();
+        var name = stampName('images', '.pdf');
+        state.merged = { blob: new Blob([outBytes], { type: 'application/pdf' }), name: name };
+        imgs.forEach(function (it) { it.outName = name; renderRow(it); });
+        toast(imgs.length + ' 枚を1つのPDFにまとめました');
+      } catch (e) {
+        imgs.forEach(function (it) { it.status = 'error'; it.note = (e && e.message) || 'PDF作成に失敗しました'; renderRow(it); });
+        state.merged = null;
+        toast('PDFの作成に失敗しました', true);
+      }
+    }
+
+    function hasSaveable() {
+      return !!state.merged || state.items.some(function (x) { return x.status === 'done' && x.outBlob; });
+    }
+
     function setBusy(b) {
       els.convert.disabled = b || !state.items.length;
       els.clear.disabled = b || !state.items.length;
-      els.zip.disabled = b || !state.items.some(function (x) { return x.status === 'done'; });
+      els.zip.disabled = b || !hasSaveable();
       els.pick.disabled = b;
       els.convert.textContent = b ? '変換中…' : '変換する';
     }
@@ -533,6 +710,11 @@
       a.href = url; a.download = name;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+
+    function stampName(prefix, ext) {
+      var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+      return prefix + '_' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + ext;
     }
 
     function dedupeNames(items) {
@@ -554,8 +736,7 @@
       done.forEach(function (it, i) { zip.file(names[i], it.outBlob); });
       try {
         var blob = await zip.generateAsync({ type: 'blob' });
-        var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
-        triggerDownload(blob, 'images_' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + '.zip');
+        triggerDownload(blob, stampName('images', '.zip'));
       } catch (e) {
         toast('ZIPの作成に失敗しました', true);
       }
@@ -581,16 +762,20 @@
         li.querySelector('.rm').addEventListener('click', function () { removeItem(it.id); });
         li.querySelector('.dl').addEventListener('click', function () {
           if (it.outBlob) triggerDownload(it.outBlob, it.outName);
+          else if (state.merged) triggerDownload(state.merged.blob, state.merged.name);
         });
       }
       var thumb = li.querySelector('.thumb');
       if (it.thumbUrl && thumb.src !== it.thumbUrl) thumb.src = it.thumbUrl;
-      li.querySelector('.fname').textContent = it.file.name;
+      li.querySelector('.fname').textContent = it.srcFormat === 'pdf'
+        ? (it.file.name + ' — ' + it.pdfLabel)
+        : it.file.name;
+      var srcTxt = it.srcFormat === 'pdf' ? ('PDF p.' + it.pdfPage) : LABEL[it.srcFormat];
       var outLabel = state.fmt.toUpperCase();
       var sizeTxt = it.outSize != null
         ? '<b>' + fmtBytes(it.srcSize) + '</b> → <b>' + fmtBytes(it.outSize) + '</b>'
         : '<b>' + fmtBytes(it.srcSize) + '</b>';
-      li.querySelector('.sub').innerHTML = LABEL[it.srcFormat] + ' → ' + outLabel + ' ・ ' + sizeTxt;
+      li.querySelector('.sub').innerHTML = srcTxt + ' → ' + outLabel + ' ・ ' + sizeTxt;
       li.querySelector('.note').textContent = it.note || '';
       var st = li.querySelector('.status');
       st.className = 'status ' + it.status;
@@ -604,7 +789,32 @@
       var n = state.items.length;
       els.convert.disabled = !n;
       els.clear.disabled = !n;
-      els.zip.disabled = !state.items.some(function (x) { return x.status === 'done' && x.outBlob; });
+      els.zip.disabled = !hasSaveable();
+      els.zip.textContent = state.merged ? 'PDFを保存' : 'ZIPで保存';
+    }
+
+    // 出力条件が変わったら変換済みを破棄（再変換が必要）
+    function invalidateDone() {
+      var changed = false;
+      state.items.forEach(function (it) {
+        if (it.status === 'done') {
+          it.status = 'waiting'; it.note = ''; it.outBlob = null; it.outSize = null;
+          if (it.url) { URL.revokeObjectURL(it.url); it.url = null; }
+          renderRow(it); changed = true;
+        }
+      });
+      if (state.merged) { state.merged = null; changed = true; }
+      if (changed) updateActions();
+    }
+
+    function cleanupPdf(it) {
+      if (it.srcFormat !== 'pdf' || !it.pdfId) return;
+      var stillUsed = state.items.some(function (x) { return x.pdfId === it.pdfId; });
+      if (!stillUsed && pdfDocs.has(it.pdfId)) {
+        var pr = pdfDocs.get(it.pdfId);
+        pdfDocs.delete(it.pdfId);
+        pr.then(function (d) { try { d.destroy(); } catch (e) {} }).catch(function () {});
+      }
     }
 
     function removeItem(id) {
@@ -612,20 +822,27 @@
       if (idx < 0) return;
       var it = state.items[idx];
       if (it.url) URL.revokeObjectURL(it.url);
-      if (it.thumbUrl) URL.revokeObjectURL(it.thumbUrl);
+      if (it.thumbUrl && it.thumbUrl.slice(0, 5) === 'blob:') URL.revokeObjectURL(it.thumbUrl);
       state.items.splice(idx, 1);
       var li = rowEl(it); if (li) li.remove();
+      cleanupPdf(it);
+      state.merged = null;
       updateActions();
+      syncFieldVisibility();
     }
 
     function clearAll() {
       state.items.forEach(function (it) {
         if (it.url) URL.revokeObjectURL(it.url);
-        if (it.thumbUrl) URL.revokeObjectURL(it.thumbUrl);
+        if (it.thumbUrl && it.thumbUrl.slice(0, 5) === 'blob:') URL.revokeObjectURL(it.thumbUrl);
       });
+      pdfDocs.forEach(function (pr) { pr.then(function (d) { try { d.destroy(); } catch (e) {} }).catch(function () {}); });
+      pdfDocs.clear();
       state.items = [];
+      state.merged = null;
       els.list.innerHTML = '';
       updateActions();
+      syncFieldVisibility();
     }
 
     /* ---------- ファイル追加 ---------- */
@@ -635,17 +852,46 @@
         var f = arr[i];
         var fmt = await sniffFormat(f);
         if (fmt === 'unknown') { toast('未対応の形式です: ' + f.name, true); continue; }
+        if (fmt === 'pdf') { await addPdf(f); continue; }
         var it = makeItem(f, fmt);
         state.items.push(it);
         renderRow(it);
         makeThumb(it);
       }
       updateActions();
+      syncFieldVisibility();
+    }
+
+    async function addPdf(file) {
+      if (!window.pdfjsLib) { toast('PDFライブラリを読み込めませんでした: ' + file.name, true); return; }
+      try {
+        var buf = await readArrayBuffer(file);
+        var docPromise = pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+        var pdfId = 'pdf_' + (++state.seq);
+        pdfDocs.set(pdfId, docPromise);
+        var doc = await docPromise;
+        var n = doc.numPages;
+        for (var p = 1; p <= n; p++) {
+          var it = makeItem(file, 'pdf', { pdfId: pdfId, pdfPage: p, pdfLabel: 'p.' + p + ' / ' + n });
+          state.items.push(it);
+          renderRow(it);
+          makeThumb(it);
+        }
+      } catch (e) {
+        toast('PDFを読み込めませんでした: ' + file.name, true);
+      }
     }
 
     function makeThumb(it) {
-      // HEIC はブラウザが直接描画できないので、変換後の画像をサムネに使う（後段で設定）
-      if (it.srcFormat === 'heic') return;
+      if (it.srcFormat === 'heic') return; // 変換後の画像をサムネに使う（後段で設定）
+      if (it.srcFormat === 'pdf') {
+        renderPdfPageToCanvas(it, 0.4, '#ffffff').then(function (cv) {
+          it.thumbUrl = cv.toDataURL('image/png');
+          var li = rowEl(it);
+          if (li) li.querySelector('.thumb').src = it.thumbUrl;
+        }).catch(function () { /* サムネなしでも可 */ });
+        return;
+      }
       try {
         it.thumbUrl = URL.createObjectURL(it.file);
         var li = rowEl(it);
@@ -659,7 +905,9 @@
         fmt: state.fmt,
         quality: clamp(parseFloat(els.quality.value), 0.5, 1, 0.92),
         bg: els.bg.value || '#ffffff',
-        exif: els.exif.value
+        exif: els.exif.value,
+        pdfScale: clamp(parseFloat(els.pdfScale.value), 1, 3, 1),
+        merge: !!els.mergePdf.checked
       };
     }
     function clamp(v, lo, hi, d) { v = isNaN(v) ? d : v; return Math.min(hi, Math.max(lo, v)); }
@@ -671,31 +919,39 @@
       var o;
       try { o = JSON.parse(localStorage.getItem(OPTS_KEY) || 'null'); } catch (e) { o = null; }
       if (!o) return;
-      if (o.fmt && /^(jpg|jpeg|png)$/.test(o.fmt)) state.fmt = o.fmt;
+      if (o.fmt && /^(jpg|jpeg|png|webp|pdf)$/.test(o.fmt)) state.fmt = o.fmt;
       if (typeof o.quality === 'number') els.quality.value = o.quality;
       if (o.bg) els.bg.value = o.bg;
       if (o.exif && /^(keep|strip|gps)$/.test(o.exif)) els.exif.value = o.exif;
+      if (typeof o.pdfScale === 'number') els.pdfScale.value = o.pdfScale;
+      if (typeof o.merge === 'boolean') els.mergePdf.checked = o.merge;
     }
 
-    function syncOptUI() {
+    // 出力形式に応じてフィールドの表示/非表示だけを更新（変換済みは触らない）
+    function syncFieldVisibility() {
+      var f = state.fmt;
       Array.prototype.forEach.call(els.fmtSeg.children, function (b) {
-        b.classList.toggle('active', b.dataset.fmt === state.fmt);
+        b.classList.toggle('active', b.dataset.fmt === f);
       });
-      var isJpeg = state.fmt !== 'png';
-      els.qualityFld.hidden = !isJpeg;
-      els.bgFld.hidden = !isJpeg;
+      els.qualityFld.hidden = !LOSSY[f];
+      els.bgFld.hidden = !NEEDS_BG[f];
+      els.exifFld.hidden = !(f === 'jpg' || f === 'jpeg');
+      els.mergeFld.hidden = f !== 'pdf';
+      var hasPdf = state.items.some(function (x) { return x.srcFormat === 'pdf'; });
+      els.pdfScaleFld.hidden = !(hasPdf && f !== 'pdf');
+
       els.qualityVal.textContent = Math.round(parseFloat(els.quality.value) * 100);
       els.bgVal.textContent = els.bg.value;
-      els.exifHint.textContent = state.fmt === 'png'
-        ? '※ PNG 出力では EXIF は保持されません'
-        : 'JPEG ⇄ JPG の拡張子変更だけの場合、EXIF は変更されません';
-      // 出力形式が変わったら再変換が必要
-      state.items.forEach(function (it) {
-        if (it.status === 'done') {
-          it.status = 'waiting'; it.note = ''; it.outBlob = null; it.outSize = null;
-          if (it.url) { URL.revokeObjectURL(it.url); it.url = null; }
-        }
-      });
+      els.pdfScaleVal.textContent = parseFloat(els.pdfScale.value).toFixed(1) + '×';
+      els.exifHint.textContent = (f === 'jpg' || f === 'jpeg')
+        ? 'JPEG ⇄ JPG の拡張子変更だけの場合、EXIF は変更されません'
+        : 'この出力形式では EXIF は保持されません';
+    }
+
+    // 出力形式が変わったとき
+    function syncOptUI() {
+      syncFieldVisibility();
+      invalidateDone();
       renderAll();
       saveOpts();
     }
@@ -709,10 +965,21 @@
     });
     els.quality.addEventListener('input', function () {
       els.qualityVal.textContent = Math.round(parseFloat(els.quality.value) * 100);
+      invalidateDone();
       saveOpts();
     });
-    els.bg.addEventListener('input', function () { els.bgVal.textContent = els.bg.value; saveOpts(); });
-    els.exif.addEventListener('change', saveOpts);
+    els.bg.addEventListener('input', function () {
+      els.bgVal.textContent = els.bg.value;
+      invalidateDone();
+      saveOpts();
+    });
+    els.pdfScale.addEventListener('input', function () {
+      els.pdfScaleVal.textContent = parseFloat(els.pdfScale.value).toFixed(1) + '×';
+      invalidateDone();
+      saveOpts();
+    });
+    els.exif.addEventListener('change', function () { invalidateDone(); saveOpts(); });
+    els.mergePdf.addEventListener('change', function () { invalidateDone(); saveOpts(); });
 
     els.pick.addEventListener('click', function () { els.file.click(); });
     els.file.addEventListener('change', function () { addFiles(els.file.files); els.file.value = ''; });
@@ -730,12 +997,17 @@
     window.addEventListener('drop', function (e) { e.preventDefault(); });
 
     els.convert.addEventListener('click', function () { if (!els.convert.disabled) runConvert(); });
-    els.zip.addEventListener('click', function () { if (!els.zip.disabled) saveZip(); });
+    els.zip.addEventListener('click', function () {
+      if (els.zip.disabled) return;
+      if (state.merged) triggerDownload(state.merged.blob, state.merged.name);
+      else saveZip();
+    });
     els.clear.addEventListener('click', function () { if (!els.clear.disabled) clearAll(); });
 
     /* ---------- 初期化 ---------- */
     loadOpts();
-    syncOptUI();
+    syncFieldVisibility();
+    updateActions();
   })();
   </script>
 </body>
